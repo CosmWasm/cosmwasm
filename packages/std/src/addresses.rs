@@ -299,8 +299,7 @@ impl fmt::Display for Instantiate2AddressError {
 ///     let canonical_creator = deps.api.addr_canonicalize(env.contract.address.as_str())?;
 ///     let checksum = HexBinary::from_hex("9af782a3a1bcbcd22dbb6a45c751551d9af782a3a1bcbcd22dbb6a45c751551d")?;
 ///     let salt = b"instance 1231";
-///     let canonical_addr = instantiate2_address(&checksum, &canonical_creator, salt)
-///         .map_err(|_| StdError::generic_err("Could not calculate addr"))?;
+///     let canonical_addr = instantiate2_address(&checksum, &canonical_creator, salt)?;
 ///     let addr = deps.api.addr_humanize(&canonical_addr)?;
 ///
 /// #   Ok(Default::default())

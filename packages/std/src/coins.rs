@@ -380,7 +380,7 @@ mod tests {
         assert_eq!(Coins::default().to_string(), "");
         assert_eq!(
             Coins::from_str(invalid).unwrap_err().to_string(),
-            "Generic error: Parsing Coin: Missing amount or non-digit characters in amount"
+            "kind: Other, error: Missing amount or non-digit characters in amount"
         );
     }
 
@@ -452,12 +452,10 @@ mod tests {
         let mut coins: Coins = coin(12345, "uatom").into();
 
         // sub more than available
-        let err = coins.sub(coin(12346, "uatom")).unwrap_err();
-        assert!(matches!(err, StdError::Overflow { .. }));
+        assert!(coins.sub(coin(12346, "uatom")).is_err());
 
         // sub non-existent denom
-        let err = coins.sub(coin(12345, "uusd")).unwrap_err();
-        assert!(matches!(err, StdError::Overflow { .. }));
+        assert!(coins.sub(coin(12345, "uusd")).is_err());
 
         // partial sub
         coins.sub(coin(1, "uatom")).unwrap();

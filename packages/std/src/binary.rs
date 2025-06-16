@@ -6,7 +6,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::{
     encoding::{from_base64, to_base64},
-    errors::{StdError, StdResult},
+    errors::{ErrorKind, StdError, StdResult},
 };
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
@@ -62,7 +62,10 @@ impl Binary {
     /// ```
     pub fn to_array<const LENGTH: usize>(&self) -> StdResult<[u8; LENGTH]> {
         if self.len() != LENGTH {
-            return Err(StdError::invalid_data_size(LENGTH, self.len()));
+            return Err(StdError::msg(format_args!(
+                "invalid length. expected {LENGTH}, got {}",
+                self.len()
+            )));
         }
 
         let mut out: [u8; LENGTH] = [0; LENGTH];
@@ -71,7 +74,8 @@ impl Binary {
     }
 
     pub fn from_hex(input: &str) -> StdResult<Self> {
-        let binary = hex::decode(input).map_err(StdError::invalid_hex)?;
+        let binary = hex::decode(input)
+            .map_err(|err| StdError::from(err).with_kind(ErrorKind::InvalidData))?;
         Ok(Self(binary))
     }
 
@@ -280,7 +284,6 @@ impl de::Visitor<'_> for BytesVisitor {
 mod tests {
     use super::*;
     use crate::assert_hash_works;
-    use crate::errors::StdError;
 
     #[test]
     fn to_array_works() {
@@ -297,15 +300,9 @@ mod tests {
         // invalid size
         let binary = Binary::from(&[1, 2, 3]);
         let error = binary.to_array::<8>().unwrap_err();
-        match error {
-            StdError::InvalidDataSize {
-                expected, actual, ..
-            } => {
-                assert_eq!(expected, 8);
-                assert_eq!(actual, 3);
-            }
-            err => panic!("Unexpected error: {err:?}"),
-        }
+        assert!(error
+            .to_string()
+            .ends_with("invalid length. expected 8, got 3"));
 
         // long array (32 bytes)
         let binary = Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvA=").unwrap();
@@ -345,8 +342,8 @@ mod tests {
         ] {
             let value = Binary::from(value);
             assert_eq!(encoded, value.to_base64());
-            assert_eq!(Ok(value.clone()), Binary::from_base64(encoded));
-            assert_eq!(Ok(value.clone()), Binary::from_base64(encoded_no_pad));
+            assert_eq!(value.clone(), Binary::from_base64(encoded).unwrap());
+            assert_eq!(value.clone(), Binary::from_base64(encoded_no_pad).unwrap());
         }
     }
 
@@ -356,10 +353,10 @@ mod tests {
             ("cm%uZG9taVo", "Invalid symbol 37, offset 2."),
             ("cmFuZ", "Invalid input length: 5"),
         ] {
-            match Binary::from_base64(invalid_base64) {
-                Err(StdError::InvalidBase64 { msg, .. }) => assert_eq!(want, msg),
-                result => panic!("Unexpected result: {result:?}"),
-            }
+            assert!(Binary::from_base64(invalid_base64)
+                .unwrap_err()
+                .to_string()
+                .ends_with(want));
         }
     }
 

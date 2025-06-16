@@ -7,7 +7,8 @@ use core::ops::{
 use core::str::FromStr;
 
 use crate::errors::{
-    ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
+    ConversionOverflowError, DivideByZeroError, ErrorKind, OverflowError, OverflowOperation,
+    StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
@@ -428,7 +429,9 @@ impl FromStr for Uint512 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match U512::from_str_radix(s, 10) {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u512: {e}"))),
+            Err(e) => {
+                Err(StdError::msg(format_args!("Parsing u512: {e}")).with_kind(ErrorKind::Parsing))
+            }
         }
     }
 }

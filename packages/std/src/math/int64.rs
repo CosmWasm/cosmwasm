@@ -6,7 +6,9 @@ use core::ops::{
 };
 use core::str::FromStr;
 
-use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
+use crate::errors::{
+    DivideByZeroError, DivisionError, ErrorKind, OverflowError, OverflowOperation, StdError,
+};
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
     CheckedMultiplyRatioError, Int128, Int256, Int512, Uint128, Uint256, Uint512, Uint64,
@@ -319,7 +321,9 @@ impl FromStr for Int64 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.parse::<i64>() {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing Int64: {e}"))),
+            Err(e) => {
+                Err(StdError::msg(format_args!("Parsing Int64: {e}")).with_kind(ErrorKind::Parsing))
+            }
         }
     }
 }

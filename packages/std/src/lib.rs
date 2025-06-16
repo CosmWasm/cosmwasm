@@ -65,7 +65,7 @@ pub use crate::errors::{
     CheckedMultiplyRatioError, CoinFromStrError, CoinsError, ConversionOverflowError,
     DivideByZeroError, DivisionError, OverflowError, OverflowOperation, PairingEqualityError,
     RecoverPubkeyError, RoundDownOverflowError, RoundUpOverflowError, StdError, StdResult,
-    SystemError, VerificationError,
+    StdResultExt, SystemError, VerificationError,
 };
 pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::IbcChannelOpenResponse;

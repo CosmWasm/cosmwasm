@@ -6,7 +6,7 @@ use core::str::FromStr;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
-    CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
+    CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, ErrorKind, OverflowError,
     OverflowOperation, RoundUpOverflowError, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
@@ -564,20 +564,14 @@ impl FromStr for Decimal256 {
         let mut parts_iter = input.split('.');
 
         let whole_part = parts_iter.next().unwrap(); // split always returns at least one element
-        let whole = whole_part
-            .parse::<Uint256>()
-            .map_err(|_| StdError::generic_err("Error parsing whole"))?;
-        let mut atomics = whole
-            .checked_mul(Self::DECIMAL_FRACTIONAL)
-            .map_err(|_| StdError::generic_err("Value too big"))?;
+        let whole = whole_part.parse::<Uint256>()?;
+        let mut atomics = whole.checked_mul(Self::DECIMAL_FRACTIONAL)?;
 
         if let Some(fractional_part) = parts_iter.next() {
-            let fractional = fractional_part
-                .parse::<Uint256>()
-                .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
+            let fractional = fractional_part.parse::<Uint256>()?;
             let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
                 || {
-                    StdError::generic_err(format!(
+                    StdError::msg(format_args!(
                         "Cannot parse more than {} fractional digits",
                         Self::DECIMAL_PLACES
                     ))
@@ -585,17 +579,15 @@ impl FromStr for Decimal256 {
             )?;
             debug_assert!(exp <= Self::DECIMAL_PLACES);
             let fractional_factor = Uint256::from(10u128).pow(exp);
-            atomics = atomics
-                .checked_add(
-                    // The inner multiplication can't overflow because
-                    // fractional < 10^DECIMAL_PLACES && fractional_factor <= 10^DECIMAL_PLACES
-                    fractional.checked_mul(fractional_factor).unwrap(),
-                )
-                .map_err(|_| StdError::generic_err("Value too big"))?;
+            atomics = atomics.checked_add(
+                // The inner multiplication can't overflow because
+                // fractional < 10^DECIMAL_PLACES && fractional_factor <= 10^DECIMAL_PLACES
+                fractional.checked_mul(fractional_factor).unwrap(),
+            )?;
         }
 
         if parts_iter.next().is_some() {
-            return Err(StdError::generic_err("Unexpected number of dots"));
+            return Err(StdError::msg("Unexpected number of dots").with_kind(ErrorKind::Parsing));
         }
 
         Ok(Self(atomics))
@@ -798,7 +790,6 @@ impl de::Visitor<'_> for Decimal256Visitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::errors::StdError;
 
     use alloc::vec::Vec;
 
@@ -1132,101 +1123,56 @@ mod tests {
 
     #[test]
     fn decimal256_from_str_errors_for_broken_whole_part() {
-        match Decimal256::from_str("").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match Decimal256::from_str(" ").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match Decimal256::from_str("-1").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        assert!(Decimal256::from_str("").is_err());
+        assert!(Decimal256::from_str(" ").is_err());
+        assert!(Decimal256::from_str("-1").is_err());
     }
 
     #[test]
     fn decimal256_from_str_errors_for_broken_fractional_part() {
-        match Decimal256::from_str("1.").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match Decimal256::from_str("1. ").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match Decimal256::from_str("1.e").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match Decimal256::from_str("1.2e3").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        assert!(Decimal256::from_str("1.").is_err());
+        assert!(Decimal256::from_str("1. ").is_err());
+        assert!(Decimal256::from_str("1.e").is_err());
+        assert!(Decimal256::from_str("1.2e3").is_err());
     }
 
     #[test]
     fn decimal256_from_str_errors_for_more_than_36_fractional_digits() {
-        match Decimal256::from_str("7.1234567890123456789").unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Cannot parse more than 18 fractional digits")
-            }
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        assert!(Decimal256::from_str("7.1234567890123456789")
+            .unwrap_err()
+            .to_string()
+            .ends_with("Cannot parse more than 18 fractional digits"));
 
         // No special rules for trailing zeros. This could be changed but adds gas cost for the happy path.
-        match Decimal256::from_str("7.1230000000000000000").unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Cannot parse more than 18 fractional digits")
-            }
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        assert!(Decimal256::from_str("7.1230000000000000000")
+            .unwrap_err()
+            .to_string()
+            .ends_with("Cannot parse more than 18 fractional digits"));
     }
 
     #[test]
     fn decimal256_from_str_errors_for_invalid_number_of_dots() {
-        match Decimal256::from_str("1.2.3").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match Decimal256::from_str("1.2.3.4").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        assert!(Decimal256::from_str("1.2.3").is_err());
+        assert!(Decimal256::from_str("1.2.3.4").is_err());
     }
 
     #[test]
     fn decimal256_from_str_errors_for_more_than_max_value() {
         // Integer
-        match Decimal256::from_str("115792089237316195423570985008687907853269984665640564039458")
-            .unwrap_err()
-        {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        assert!(Decimal256::from_str(
+            "115792089237316195423570985008687907853269984665640564039458"
+        )
+        .is_err());
 
         // Decimal
-        match Decimal256::from_str("115792089237316195423570985008687907853269984665640564039458.0")
-            .unwrap_err()
-        {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-        match Decimal256::from_str(
+        assert!(Decimal256::from_str(
+            "115792089237316195423570985008687907853269984665640564039458.0"
+        )
+        .is_err());
+        assert!(Decimal256::from_str(
             "115792089237316195423570985008687907853269984665640564039457.584007913129639936",
         )
-        .unwrap_err()
-        {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        .is_err());
     }
 
     #[test]

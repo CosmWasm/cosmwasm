@@ -8,7 +8,7 @@ use core::str::FromStr;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
-    CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
+    CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, ErrorKind, OverflowError,
     OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
@@ -671,20 +671,14 @@ impl FromStr for SignedDecimal256 {
         let whole_part = parts_iter.next().unwrap(); // split always returns at least one element
         let is_neg = whole_part.starts_with('-');
 
-        let whole = whole_part
-            .parse::<Int256>()
-            .map_err(|_| StdError::generic_err("Error parsing whole"))?;
-        let mut atomics = whole
-            .checked_mul(Self::DECIMAL_FRACTIONAL)
-            .map_err(|_| StdError::generic_err("Value too big"))?;
+        let whole = whole_part.parse::<Int256>()?;
+        let mut atomics = whole.checked_mul(Self::DECIMAL_FRACTIONAL)?;
 
         if let Some(fractional_part) = parts_iter.next() {
-            let fractional = fractional_part
-                .parse::<u64>() // u64 is enough for 18 decimal places
-                .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
+            let fractional = fractional_part.parse::<u64>()?; // u64 is enough for 18 decimal places
             let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
                 || {
-                    StdError::generic_err(format!(
+                    StdError::msg(format_args!(
                         "Cannot parse more than {} fractional digits",
                         Self::DECIMAL_PLACES
                     ))
@@ -704,12 +698,11 @@ impl FromStr for SignedDecimal256 {
                 atomics.checked_sub(fractional_part)
             } else {
                 atomics.checked_add(fractional_part)
-            }
-            .map_err(|_| StdError::generic_err("Value too big"))?;
+            }?;
         }
 
         if parts_iter.next().is_some() {
-            return Err(StdError::generic_err("Unexpected number of dots"));
+            return Err(StdError::msg("Unexpected number of dots").with_kind(ErrorKind::Parsing));
         }
 
         Ok(SignedDecimal256(atomics))
@@ -1373,96 +1366,65 @@ mod tests {
 
     #[test]
     fn signed_decimal_256_from_str_errors_for_broken_whole_part() {
-        let expected_err = StdError::generic_err("Error parsing whole");
-        assert_eq!(SignedDecimal256::from_str("").unwrap_err(), expected_err);
-        assert_eq!(SignedDecimal256::from_str(" ").unwrap_err(), expected_err);
-        assert_eq!(SignedDecimal256::from_str("-").unwrap_err(), expected_err);
+        assert!(SignedDecimal256::from_str("").is_err());
+        assert!(SignedDecimal256::from_str(" ").is_err());
+        assert!(SignedDecimal256::from_str("-").is_err());
     }
 
     #[test]
     fn signed_decimal_256_from_str_errors_for_broken_fractional_part() {
-        let expected_err = StdError::generic_err("Error parsing fractional");
-        assert_eq!(SignedDecimal256::from_str("1.").unwrap_err(), expected_err);
-        assert_eq!(SignedDecimal256::from_str("1. ").unwrap_err(), expected_err);
-        assert_eq!(SignedDecimal256::from_str("1.e").unwrap_err(), expected_err);
-        assert_eq!(
-            SignedDecimal256::from_str("1.2e3").unwrap_err(),
-            expected_err
-        );
-        assert_eq!(
-            SignedDecimal256::from_str("1.-2").unwrap_err(),
-            expected_err
-        );
+        assert!(SignedDecimal256::from_str("1.").is_err());
+        assert!(SignedDecimal256::from_str("1. ").is_err());
+        assert!(SignedDecimal256::from_str("1.e").is_err());
+        assert!(SignedDecimal256::from_str("1.2e3").is_err());
+        assert!(SignedDecimal256::from_str("1.-2").is_err());
     }
 
     #[test]
     fn signed_decimal_256_from_str_errors_for_more_than_18_fractional_digits() {
-        let expected_err = StdError::generic_err("Cannot parse more than 18 fractional digits");
-        assert_eq!(
-            SignedDecimal256::from_str("7.1234567890123456789").unwrap_err(),
-            expected_err
-        );
+        assert!(SignedDecimal256::from_str("7.1234567890123456789").is_err());
         // No special rules for trailing zeros. This could be changed but adds gas cost for the happy path.
-        assert_eq!(
-            SignedDecimal256::from_str("7.1230000000000000000").unwrap_err(),
-            expected_err
-        );
+        assert!(SignedDecimal256::from_str("7.1230000000000000000").is_err());
     }
 
     #[test]
     fn signed_decimal_256_from_str_errors_for_invalid_number_of_dots() {
-        let expected_err = StdError::generic_err("Unexpected number of dots");
-        assert_eq!(
-            SignedDecimal256::from_str("1.2.3").unwrap_err(),
-            expected_err
-        );
-        assert_eq!(
-            SignedDecimal256::from_str("1.2.3.4").unwrap_err(),
-            expected_err
-        );
+        assert!(SignedDecimal256::from_str("1.2.3")
+            .unwrap_err()
+            .to_string()
+            .ends_with("Unexpected number of dots"));
+
+        assert!(SignedDecimal256::from_str("1.2.3.4")
+            .unwrap_err()
+            .to_string()
+            .ends_with("Unexpected number of dots"));
     }
 
     #[test]
     fn signed_decimal_256_from_str_errors_for_more_than_max_value() {
-        let expected_err = StdError::generic_err("Value too big");
         // Integer
-        assert_eq!(
-            SignedDecimal256::from_str(
-                "57896044618658097711785492504343953926634992332820282019729",
-            )
-            .unwrap_err(),
-            expected_err
-        );
-        assert_eq!(
-            SignedDecimal256::from_str(
-                "-57896044618658097711785492504343953926634992332820282019729",
-            )
-            .unwrap_err(),
-            expected_err
-        );
+        assert!(SignedDecimal256::from_str(
+            "57896044618658097711785492504343953926634992332820282019729",
+        )
+        .is_err());
+        assert!(SignedDecimal256::from_str(
+            "-57896044618658097711785492504343953926634992332820282019729",
+        )
+        .is_err());
 
         // SignedDecimal256
-        assert_eq!(
-            SignedDecimal256::from_str(
-                "57896044618658097711785492504343953926634992332820282019729.0",
-            )
-            .unwrap_err(),
-            expected_err
-        );
-        assert_eq!(
-            SignedDecimal256::from_str(
-                "57896044618658097711785492504343953926634992332820282019728.792003956564819968",
-            )
-            .unwrap_err(),
-            expected_err
-        );
-        assert_eq!(
-            SignedDecimal256::from_str(
-                "-57896044618658097711785492504343953926634992332820282019728.792003956564819969",
-            )
-            .unwrap_err(),
-            expected_err
-        );
+        assert!(SignedDecimal256::from_str(
+            "57896044618658097711785492504343953926634992332820282019729.0",
+        )
+        .is_err());
+        assert!(SignedDecimal256::from_str(
+            "57896044618658097711785492504343953926634992332820282019728.792003956564819968",
+        )
+        .is_err());
+        assert!(SignedDecimal256::from_str(
+            "-57896044618658097711785492504343953926634992332820282019728.792003956564819969",
+        )
+        .is_err());
     }
 
     #[test]
@@ -3270,7 +3232,7 @@ mod tests {
 
         // invalid: not properly defined signed decimal value
         assert_eq!(
-            "Error parsing decimal '1.e': Generic error: Error parsing fractional at line 1 column 5",
+            "Error parsing decimal '1.e': kind: Other, error: invalid digit found in string at line 1 column 5",
             serde_json::from_str::<SignedDecimal256>(r#""1.e""#)
                 .err()
                 .unwrap()

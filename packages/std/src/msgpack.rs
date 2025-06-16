@@ -3,11 +3,9 @@
 // 1. To easily ensure that all calling libraries use the same version (minimize code size)
 // 2. To allow us to switch out to another MessagePack library if needed
 
-use core::any::type_name;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::Binary;
-use crate::{StdError, StdResult};
+use crate::{Binary, StdResult};
 
 /// Deserializes the given MessagePack bytes to a data structure.
 ///
@@ -33,7 +31,7 @@ use crate::{StdError, StdResult};
 /// let decoded: MyPacket  = from_msgpack(&encoded).unwrap();
 /// assert_eq!(decoded, packet);
 pub fn from_msgpack<T: DeserializeOwned>(value: impl AsRef<[u8]>) -> StdResult<T> {
-    rmp_serde::from_read(value.as_ref()).map_err(|e| StdError::parse_err(type_name::<T>(), e))
+    Ok(rmp_serde::from_read(value.as_ref())?)
 }
 
 /// Serializes the given data structure as a MessagePack byte vector.
@@ -61,7 +59,7 @@ pub fn to_msgpack_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
-    rmp_serde::to_vec_named(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
+    Ok(rmp_serde::to_vec_named(data)?)
 }
 
 /// Serializes the given data structure as MessagePack bytes.

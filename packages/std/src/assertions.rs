@@ -107,17 +107,17 @@ macro_rules! ensure_ne {
 
 #[cfg(test)]
 mod tests {
-    use crate::StdError;
+    use crate::{errors::ErrorKind, StdError};
 
     #[test]
     fn ensure_works() {
         fn check(a: usize, b: usize) -> Result<(), StdError> {
-            ensure!(a == b, StdError::generic_err("foobar"));
+            ensure!(a == b, StdError::msg("foobar"));
             Ok(())
         }
 
         let err = check(5, 6).unwrap_err();
-        assert!(matches!(err, StdError::GenericErr { .. }));
+        assert!(matches!(err.kind(), ErrorKind::Other));
 
         check(5, 5).unwrap();
     }
@@ -125,12 +125,12 @@ mod tests {
     #[test]
     fn ensure_can_infer_error_type() {
         let check = |a, b| {
-            ensure!(a == b, StdError::generic_err("foobar"));
+            ensure!(a == b, StdError::msg("foobar"));
             Ok(())
         };
 
-        let err = check(5, 6).unwrap_err();
-        assert!(matches!(err, StdError::GenericErr { .. }));
+        let err: StdError = check(5, 6).unwrap_err();
+        assert!(matches!(err.kind(), ErrorKind::Other));
 
         check(5, 5).unwrap();
     }
@@ -147,7 +147,7 @@ mod tests {
         }
 
         fn check(a: usize, b: usize) -> Result<(), ContractError> {
-            ensure!(a == b, StdError::generic_err("foobar"));
+            ensure!(a == b, StdError::msg("foobar"));
             Ok(())
         }
 
@@ -160,12 +160,12 @@ mod tests {
     #[test]
     fn ensure_eq_works() {
         let check = |a, b| {
-            ensure_eq!(a, b, StdError::generic_err("foobar"));
+            ensure_eq!(a, b, StdError::msg("foobar"));
             Ok(())
         };
 
-        let err = check("123", "456").unwrap_err();
-        assert!(matches!(err, StdError::GenericErr { .. }));
+        let err: StdError = check("123", "456").unwrap_err();
+        assert!(matches!(err.kind(), ErrorKind::Other));
         check("123", "123").unwrap();
     }
 
@@ -176,7 +176,7 @@ mod tests {
 
         #[allow(clippy::nonminimal_bool)]
         fn check() -> Result<(), StdError> {
-            ensure_eq!(true || false, false, StdError::generic_err("foobar"));
+            ensure_eq!(true || false, false, StdError::msg("foobar"));
             Ok(())
         }
 
@@ -186,12 +186,12 @@ mod tests {
     #[test]
     fn ensure_ne_works() {
         let check = |a, b| {
-            ensure_ne!(a, b, StdError::generic_err("foobar"));
+            ensure_ne!(a, b, StdError::msg("foobar"));
             Ok(())
         };
 
-        let err = check("123", "123").unwrap_err();
-        assert!(matches!(err, StdError::GenericErr { .. }));
+        let err: StdError = check("123", "123").unwrap_err();
+        assert!(matches!(err.kind(), ErrorKind::Other));
         check("123", "456").unwrap();
     }
 
@@ -202,7 +202,7 @@ mod tests {
 
         #[allow(clippy::nonminimal_bool)]
         fn check() -> Result<(), StdError> {
-            ensure_ne!(true || false, false, StdError::generic_err("foobar"));
+            ensure_ne!(true || false, false, StdError::msg("foobar"));
             Ok(())
         }
 

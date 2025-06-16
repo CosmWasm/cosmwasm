@@ -393,15 +393,13 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
     /// Performs a query and returns the binary result without deserializing it,
     /// wrapping any errors that may occur into `StdError`.
     fn query_raw(&self, request: &QueryRequest<C>) -> StdResult<Binary> {
-        let raw = to_json_vec(request).map_err(|serialize_err| {
-            StdError::generic_err(format!("Serializing QueryRequest: {serialize_err}"))
-        })?;
+        let raw = to_json_vec(request)?;
         match self.raw_query(&raw) {
-            SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
+            SystemResult::Err(system_err) => Err(StdError::msg(format_args!(
                 "Querier system error: {system_err}"
             ))),
-            SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
-                format!("Querier contract error: {contract_err}"),
+            SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::msg(
+                format_args!("Querier contract error: {contract_err}"),
             )),
             SystemResult::Ok(ContractResult::Ok(value)) => Ok(value),
         }
@@ -553,15 +551,13 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         .into();
         // we cannot use query, as it will try to parse the binary data, when we just want to return it,
         // so a bit of code copy here...
-        let raw = to_json_vec(&request).map_err(|serialize_err| {
-            StdError::generic_err(format!("Serializing QueryRequest: {serialize_err}"))
-        })?;
+        let raw = to_json_vec(&request)?;
         match self.raw_query(&raw) {
-            SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
+            SystemResult::Err(system_err) => Err(StdError::msg(format_args!(
                 "Querier system error: {system_err}"
             ))),
-            SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
-                format!("Querier contract error: {contract_err}"),
+            SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::msg(
+                format_args!("Querier contract error: {contract_err}"),
             )),
             SystemResult::Ok(ContractResult::Ok(value)) => {
                 if value.is_empty() {
@@ -770,13 +766,9 @@ mod tests {
         let wrapper = QuerierWrapper::<Empty>::new(&querier);
 
         let err = wrapper.query_wasm_contract_info("unknown").unwrap_err();
-        assert!(matches!(
-            err,
-            StdError::GenericErr {
-                msg,
-                ..
-            } if msg == "Querier system error: No such contract: foobar"
-        ));
+        assert!(err
+            .to_string()
+            .ends_with("Querier system error: No such contract: foobar"));
     }
 
     #[test]
