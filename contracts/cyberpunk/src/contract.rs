@@ -56,7 +56,7 @@ fn execute_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractErr
         ad: &[],
         hash_length: 32,
     };
-    let hash = argon2::hash_encoded(password, salt, &config)?;
+    let hash = argon2::hash_encoded(password, salt, &config).map_err(StdError::from)?;
     // let matches = argon2::verify_encoded(&hash, password).unwrap();
     // assert!(matches);
     Ok(Response::new().set_data(hash.into_bytes()))

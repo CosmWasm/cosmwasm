@@ -42,8 +42,7 @@ pub fn load_map<T: DeserializeOwned>(
     prefix: &[u8],
     key: &CanonicalAddr,
 ) -> StdResult<T> {
-    may_load_map(storage, prefix, key)?
-        .ok_or_else(|| StdError::not_found(format!("map value for {key}")))
+    may_load_map(storage, prefix, key)?.ok_or_else(|| StdError::msg(format!("map value for {key}")))
 }
 
 /// Investment info is fixed at initialization, and is used to control the function of the contract
@@ -88,7 +87,7 @@ pub struct Supply {
 pub fn load_item<T: DeserializeOwned>(storage: &dyn Storage, key: &[u8]) -> StdResult<T> {
     storage
         .get(&to_length_prefixed(key))
-        .ok_or_else(|| StdError::not_found(type_name::<T>()))
+        .ok_or_else(|| StdError::msg(type_name::<T>()))
         .and_then(from_json)
 }
 

@@ -98,7 +98,7 @@ mod tests {
     use cosmwasm_std::testing::{
         message_info, mock_dependencies, mock_dependencies_with_balance, mock_env,
     };
-    use cosmwasm_std::{coin, coins, Attribute, StdError, Storage, SubMsg};
+    use cosmwasm_std::{coin, coins, Attribute, Storage, SubMsg};
 
     /// Gets the value of the first attribute with the given key
     fn first_attr(data: impl AsRef<[Attribute]>, search_key: &str) -> Option<String> {

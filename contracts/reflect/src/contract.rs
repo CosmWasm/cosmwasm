@@ -177,7 +177,7 @@ mod tests {
     use cosmwasm_std::testing::{message_info, mock_env, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
         coin, coins, from_json, BalanceResponse, BankMsg, BankQuery, Binary, Event, StakingMsg,
-        StdError, SubMsgResponse, SubMsgResult,
+        SubMsgResponse, SubMsgResult,
     };
 
     #[test]
@@ -261,7 +261,10 @@ mod tests {
 
         let msg = ExecuteMsg::ReflectMsg { msgs: payload };
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-        assert_eq!(err, ReflectError::MessagesEmpty);
+        assert_eq!(
+            err.to_string(),
+            "Messages empty. Must reflect at least one message"
+        );
     }
 
     #[test]
@@ -338,11 +341,8 @@ mod tests {
 
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
-            err,
-            ReflectError::NotCurrentOwner {
-                expected: creator.to_string(),
-                actual: random.to_string(),
-            }
+            err.to_string(),
+            "Permission denied: the sender is not the current owner"
         );
     }
 
@@ -362,7 +362,10 @@ mod tests {
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         match err {
             ReflectError::Std(err) => {
-                assert!(err.to_string().contains("Error decoding bech32"))
+                assert!(
+                    err.to_string().contains("kind: Other, error: parse failed"),
+                    "{err}"
+                )
             }
             e => panic!("Unexpected error: {e:?}"),
         }

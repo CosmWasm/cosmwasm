@@ -27,7 +27,7 @@ pub fn may_load_account(storage: &dyn Storage, id: &str) -> StdResult<Option<Add
 }
 
 pub fn load_account(storage: &dyn Storage, id: &str) -> StdResult<Addr> {
-    may_load_account(storage, id)?.ok_or_else(|| StdError::not_found(format!("account {id}")))
+    may_load_account(storage, id)?.ok_or_else(|| StdError::msg(format!("account {id}")))
 }
 
 pub fn save_account(storage: &mut dyn Storage, id: &str, account: &Addr) -> StdResult<()> {
@@ -60,7 +60,7 @@ pub fn range_accounts(
 pub fn load_item<T: DeserializeOwned>(storage: &dyn Storage, key: &[u8]) -> StdResult<T> {
     storage
         .get(&to_length_prefixed(key))
-        .ok_or_else(|| StdError::not_found(type_name::<T>()))
+        .ok_or_else(|| StdError::msg(type_name::<T>()))
         .and_then(from_json)
 }
 

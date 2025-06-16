@@ -53,7 +53,7 @@ pub fn migrate(
     let data = deps
         .storage
         .get(CONFIG_KEY)
-        .ok_or_else(|| StdError::not_found("State"))?;
+        .ok_or_else(|| StdError::msg("State"))?;
     let mut config: State = from_json(data)?;
     config.verifier = deps.api.addr_validate(&msg.verifier)?;
     deps.storage.set(CONFIG_KEY, &to_json_vec(&config)?);
@@ -102,7 +102,7 @@ fn do_release(
     let data = deps
         .storage
         .get(CONFIG_KEY)
-        .ok_or_else(|| StdError::not_found("State"))?;
+        .ok_or_else(|| StdError::msg("State"))?;
     let state: State = from_json(data)?;
 
     if info.sender == state.verifier {
@@ -265,7 +265,7 @@ fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
-        .ok_or_else(|| StdError::not_found("State"))?;
+        .ok_or_else(|| StdError::msg("State"))?;
     let state: State = from_json(data)?;
     Ok(VerifierResponse {
         verifier: state.verifier.into(),
@@ -582,7 +582,7 @@ mod tests {
                 denom: "earth".to_string(),
             },
         );
-        assert_eq!(execute_res.unwrap_err(), HackError::Unauthorized {});
+        assert_eq!(execute_res.unwrap_err().to_string(), "Unauthorized");
 
         // state should not change
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
