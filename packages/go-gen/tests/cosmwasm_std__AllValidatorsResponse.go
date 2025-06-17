@@ -1,9 +1,9 @@
 // AllValidatorsResponse is the expected response to AllValidatorsQuery
 type AllValidatorsResponse struct {
-	Validators Array[Validator] `json:"validators"`
+	Validators Array[ValidatorMetadata] `json:"validators"`
 }
 
-type Validator struct {
+type ValidatorMetadata struct {
 	Address string `json:"address"`
 	// decimal string, eg "0.02"
 	Commission string `json:"commission"`
