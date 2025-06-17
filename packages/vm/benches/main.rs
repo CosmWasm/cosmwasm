@@ -6,7 +6,7 @@ use std::time::{Duration, SystemTime};
 use std::{fs, thread};
 use tempfile::TempDir;
 
-use cosmwasm_std::{coins, Checksum, Empty};
+use cosmwasm_std::{coins, Checksum};
 use cosmwasm_vm::testing::{
     mock_backend, mock_env, mock_info, mock_instance_options, MockApi, MockQuerier, MockStorage,
 };
@@ -71,13 +71,9 @@ fn bench_instance(c: &mut Criterion) {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let contract_result = call_instantiate::<_, _, _, Empty>(
-                &mut instance,
-                &mock_env(),
-                &info,
-                msg.as_bytes(),
-            )
-            .unwrap();
+            let contract_result =
+                call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
+                    .unwrap();
             assert!(contract_result.into_result().is_ok());
         });
     });
@@ -95,15 +91,14 @@ fn bench_instance(c: &mut Criterion) {
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
         let contract_result =
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
-                .unwrap();
+            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes()).unwrap();
         assert!(contract_result.into_result().is_ok());
 
         b.iter(|| {
             let info = mock_info(&verifier, &coins(15, "earth"));
             let msg = br#"{"release":{"denom":"earth"}}"#;
             let contract_result =
-                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+                call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
         });
     });
@@ -118,7 +113,7 @@ fn bench_instance(c: &mut Criterion) {
 
         let info = mock_info("creator", &coins(1000, "earth"));
         let contract_result =
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, b"{}").unwrap();
+            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, b"{}").unwrap();
         assert!(contract_result.into_result().is_ok());
 
         let mut gas_used = 0;
@@ -127,7 +122,7 @@ fn bench_instance(c: &mut Criterion) {
             let info = mock_info("hasher", &[]);
             let msg = br#"{"argon2":{"mem_cost":256,"time_cost":3}}"#;
             let contract_result =
-                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+                call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
             gas_used = gas_before - instance.get_gas_left();
         });
@@ -145,7 +140,7 @@ fn bench_instance(c: &mut Criterion) {
 
         let info = mock_info("creator", &coins(1000, "earth"));
         let contract_result =
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, b"{}").unwrap();
+            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, b"{}").unwrap();
         assert!(contract_result.into_result().is_ok());
 
         let mut gas_used = 0;
@@ -165,8 +160,7 @@ fn bench_instance(c: &mut Criterion) {
                 let info = mock_info("hasher", &[]);
                 let msg = br#"{"cpu_loop":{}}"#;
 
-                let vm_result =
-                    call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
+                let vm_result = call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg);
 
                 assert!(matches!(vm_result, Err(VmError::GasDepletion { .. })));
                 gas_used = gas_before - instance.get_gas_left();
@@ -446,7 +440,7 @@ fn bench_combined(c: &mut Criterion) {
             let info = mock_info("guest", &[]);
             let msg = br#"{"noop":{}}"#;
             let contract_result =
-                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+                call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap();
             contract_result.into_result().unwrap();
         });
     });
@@ -473,7 +467,7 @@ fn bench_combined(c: &mut Criterion) {
             let info = mock_info("guest", &[]);
             let msg = br#"{"noop":{}}"#;
             let contract_result =
-                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+                call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap();
             contract_result.into_result().unwrap();
         });
     });
@@ -498,7 +492,7 @@ fn bench_combined(c: &mut Criterion) {
             let info = mock_info("guest", &[]);
             let msg = br#"{"noop":{}}"#;
             let contract_result =
-                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+                call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap();
             contract_result.into_result().unwrap();
         });
     });

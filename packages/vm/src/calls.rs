@@ -1,9 +1,8 @@
-use serde::de::DeserializeOwned;
 use wasmer::Value;
 
 use cosmwasm_std::{
-    ContractResult, CustomMsg, Env, IbcBasicResponse, IbcDestinationCallbackMsg,
-    IbcSourceCallbackMsg, MessageInfo, MigrateInfo, QueryResponse, Reply, Response,
+    ContractResult, Env, IbcBasicResponse, IbcDestinationCallbackMsg, IbcSourceCallbackMsg,
+    MessageInfo, MigrateInfo, QueryResponse, Reply, Response,
 };
 
 #[cfg(any(feature = "stargate", feature = "ibc2"))]
@@ -118,118 +117,110 @@ mod deserialization_limits {
     pub const RESULT_IBC2_PACKET_SEND: usize = 256 * KI;
 }
 
-pub fn call_instantiate<A, S, Q, U>(
+pub fn call_instantiate<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     info: &MessageInfo,
     msg: &[u8],
-) -> VmResult<ContractResult<Response<U>>>
+) -> VmResult<ContractResult<Response>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let info = to_vec(info)?;
     let data = call_instantiate_raw(instance, &env, &info, msg)?;
-    let result: ContractResult<Response<U>> =
+    let result: ContractResult<Response> =
         from_slice(&data, deserialization_limits::RESULT_INSTANTIATE)?;
     Ok(result)
 }
 
-pub fn call_execute<A, S, Q, U>(
+pub fn call_execute<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     info: &MessageInfo,
     msg: &[u8],
-) -> VmResult<ContractResult<Response<U>>>
+) -> VmResult<ContractResult<Response>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let info = to_vec(info)?;
     let data = call_execute_raw(instance, &env, &info, msg)?;
-    let result: ContractResult<Response<U>> =
+    let result: ContractResult<Response> =
         from_slice(&data, deserialization_limits::RESULT_EXECUTE)?;
     Ok(result)
 }
 
-pub fn call_migrate<A, S, Q, U>(
+pub fn call_migrate<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<ContractResult<Response<U>>>
+) -> VmResult<ContractResult<Response>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let data = call_migrate_raw(instance, &env, msg)?;
-    let result: ContractResult<Response<U>> =
+    let result: ContractResult<Response> =
         from_slice(&data, deserialization_limits::RESULT_MIGRATE)?;
     Ok(result)
 }
 
-pub fn call_migrate_with_info<A, S, Q, U>(
+pub fn call_migrate_with_info<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &[u8],
     migrate_info: &MigrateInfo,
-) -> VmResult<ContractResult<Response<U>>>
+) -> VmResult<ContractResult<Response>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let migrate_info = to_vec(migrate_info)?;
     let data = call_migrate_with_info_raw(instance, &env, msg, &migrate_info)?;
-    let result: ContractResult<Response<U>> =
+    let result: ContractResult<Response> =
         from_slice(&data, deserialization_limits::RESULT_MIGRATE)?;
     Ok(result)
 }
 
-pub fn call_sudo<A, S, Q, U>(
+pub fn call_sudo<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<ContractResult<Response<U>>>
+) -> VmResult<ContractResult<Response>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let data = call_sudo_raw(instance, &env, msg)?;
-    let result: ContractResult<Response<U>> =
-        from_slice(&data, deserialization_limits::RESULT_SUDO)?;
+    let result: ContractResult<Response> = from_slice(&data, deserialization_limits::RESULT_SUDO)?;
     Ok(result)
 }
 
-pub fn call_reply<A, S, Q, U>(
+pub fn call_reply<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &Reply,
-) -> VmResult<ContractResult<Response<U>>>
+) -> VmResult<ContractResult<Response>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
     let data = call_reply_raw(instance, &env, &msg)?;
-    let result: ContractResult<Response<U>> =
-        from_slice(&data, deserialization_limits::RESULT_REPLY)?;
+    let result: ContractResult<Response> = from_slice(&data, deserialization_limits::RESULT_REPLY)?;
     Ok(result)
 }
 
@@ -276,16 +267,15 @@ where
 }
 
 #[cfg(feature = "stargate")]
-pub fn call_ibc_channel_connect<A, S, Q, U>(
+pub fn call_ibc_channel_connect<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcChannelConnectMsg,
-) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+) -> VmResult<ContractResult<IbcBasicResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -295,16 +285,15 @@ where
 }
 
 #[cfg(feature = "stargate")]
-pub fn call_ibc_channel_close<A, S, Q, U>(
+pub fn call_ibc_channel_close<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcChannelCloseMsg,
-) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+) -> VmResult<ContractResult<IbcBasicResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -314,16 +303,15 @@ where
 }
 
 #[cfg(feature = "stargate")]
-pub fn call_ibc_packet_receive<A, S, Q, U>(
+pub fn call_ibc_packet_receive<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcPacketReceiveMsg,
-) -> VmResult<ContractResult<IbcReceiveResponse<U>>>
+) -> VmResult<ContractResult<IbcReceiveResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -333,16 +321,15 @@ where
 }
 
 #[cfg(feature = "stargate")]
-pub fn call_ibc_packet_ack<A, S, Q, U>(
+pub fn call_ibc_packet_ack<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcPacketAckMsg,
-) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+) -> VmResult<ContractResult<IbcBasicResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -352,16 +339,15 @@ where
 }
 
 #[cfg(feature = "stargate")]
-pub fn call_ibc_packet_timeout<A, S, Q, U>(
+pub fn call_ibc_packet_timeout<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcPacketTimeoutMsg,
-) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+) -> VmResult<ContractResult<IbcBasicResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -370,16 +356,15 @@ where
     Ok(result)
 }
 
-pub fn call_ibc_source_callback<A, S, Q, U>(
+pub fn call_ibc_source_callback<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcSourceCallbackMsg,
-) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+) -> VmResult<ContractResult<IbcBasicResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -388,16 +373,15 @@ where
     Ok(result)
 }
 
-pub fn call_ibc_destination_callback<A, S, Q, U>(
+pub fn call_ibc_destination_callback<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcDestinationCallbackMsg,
-) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+) -> VmResult<ContractResult<IbcBasicResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -684,16 +668,15 @@ where
 }
 
 #[cfg(feature = "ibc2")]
-pub fn call_ibc2_packet_ack<A, S, Q, U>(
+pub fn call_ibc2_packet_ack<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &Ibc2PacketAckMsg,
-) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+) -> VmResult<ContractResult<IbcBasicResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -743,16 +726,15 @@ where
 }
 
 #[cfg(feature = "ibc2")]
-pub fn call_ibc2_packet_timeout<A, S, Q, U>(
+pub fn call_ibc2_packet_timeout<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &Ibc2PacketTimeoutMsg,
-) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+) -> VmResult<ContractResult<IbcBasicResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -802,16 +784,15 @@ where
 }
 
 #[cfg(feature = "ibc2")]
-pub fn call_ibc2_packet_send<A, S, Q, U>(
+pub fn call_ibc2_packet_send<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &Ibc2PacketSendMsg,
-) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+) -> VmResult<ContractResult<IbcBasicResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -886,16 +867,15 @@ where
 }
 
 #[cfg(feature = "ibc2")]
-pub fn call_ibc2_packet_receive<A, S, Q, U>(
+pub fn call_ibc2_packet_receive<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &Ibc2PacketReceiveMsg,
-) -> VmResult<ContractResult<IbcReceiveResponse<U>>>
+) -> VmResult<ContractResult<IbcReceiveResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -928,7 +908,7 @@ mod tests {
         let verifier = instance.api().addr_make("verifies");
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+        call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
     }
@@ -941,9 +921,8 @@ mod tests {
         let info = mock_info("creator", &coins(1000, "earth"));
 
         let serialized_msg = to_vec(&msg).unwrap();
-        let err =
-            call_instantiate::<_, _, _, Empty>(&mut deps, &mock_env(), &info, &serialized_msg)
-                .unwrap_err();
+        let err = call_instantiate::<_, _, _>(&mut deps, &mock_env(), &info, &serialized_msg)
+            .unwrap_err();
 
         assert!(matches!(
             err,
@@ -964,14 +943,14 @@ mod tests {
         let verifier = instance.api().addr_make("verifies");
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+        call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
         // execute
         let info = mock_info(&verifier, &coins(15, "earth"));
         let msg = br#"{"release":{"denom":"earth"}}"#;
-        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
     }
@@ -982,15 +961,14 @@ mod tests {
 
         // init
         let info = mock_info("creator", &[]);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+        call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, br#"{}"#)
             .unwrap()
             .unwrap();
 
         // execute
         let info = mock_info("looper", &[]);
         let msg = br#"{"cpu_loop":{}}"#;
-        let err =
-            call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
+        let err = call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap_err();
         assert!(matches!(err, VmError::GasDepletion { .. }));
     }
 
@@ -999,15 +977,14 @@ mod tests {
         let mut instance = mock_instance(CYBERPUNK, &[]);
 
         let info = mock_info("creator", &[]);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+        call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, br#"{}"#)
             .unwrap()
             .unwrap();
 
         // execute
         let info = mock_info("troll", &[]);
         let msg = br#"{"panic":{}}"#;
-        let err =
-            call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
+        let err = call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap_err();
         match err {
             VmError::RuntimeErr { msg, .. } => {
                 assert!(
@@ -1024,15 +1001,14 @@ mod tests {
         let mut instance = mock_instance(CYBERPUNK, &[]);
 
         let info = mock_info("creator", &[]);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+        call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, br#"{}"#)
             .unwrap()
             .unwrap();
 
         // execute
         let info = mock_info("troll", &[]);
         let msg = br#"{"unreachable":{}}"#;
-        let err =
-            call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
+        let err = call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap_err();
         match err {
             VmError::RuntimeErr { msg, .. } => {
                 assert!(msg.contains("RuntimeError: unreachable"))
@@ -1053,14 +1029,14 @@ mod tests {
         let verifier = instance.api().addr_make("verifies");
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+        call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
         // change the verifier via migrate
         let someone_else = instance.api().addr_make("someone else");
         let msg = format!(r#"{{"verifier": "{someone_else}"}}"#);
-        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), msg.as_bytes())
+        let _res = call_migrate::<_, _, _>(&mut instance, &mock_env(), msg.as_bytes())
             .unwrap()
             .unwrap();
 
@@ -1086,7 +1062,7 @@ mod tests {
         let verifier = instance.api().addr_make("verifies");
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+        call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
@@ -1097,7 +1073,7 @@ mod tests {
             sender: Addr::unchecked(someone_else.clone()),
             old_migrate_version: Some(33),
         };
-        let _res = call_migrate_with_info::<_, _, _, Empty>(
+        let _res = call_migrate_with_info::<_, _, _>(
             &mut instance,
             &mock_env(),
             msg.as_bytes(),
@@ -1125,7 +1101,7 @@ mod tests {
         let verifier = instance.api().addr_make("verifies");
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+        call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
@@ -1161,7 +1137,7 @@ mod tests {
 
         // init
         let info = mock_info("creator", &[]);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+        call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, br#"{}"#)
             .unwrap()
             .unwrap();
 
@@ -1244,7 +1220,7 @@ mod tests {
             // init
             let info = mock_info("creator", &[]);
             let msg = br#"{"reflect_code_id":77}"#;
-            call_instantiate::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
+            call_instantiate::<_, _, _>(instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
             // first we try to open with a valid handshake
@@ -1256,13 +1232,10 @@ mod tests {
             // then we connect (with counter-party version set)
             let handshake_connect =
                 mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_VERSION);
-            let res: IbcBasicResponse = call_ibc_channel_connect::<_, _, _, Empty>(
-                instance,
-                &mock_env(),
-                &handshake_connect,
-            )
-            .unwrap()
-            .unwrap();
+            let res: IbcBasicResponse =
+                call_ibc_channel_connect::<_, _, _>(instance, &mock_env(), &handshake_connect)
+                    .unwrap()
+                    .unwrap();
             assert_eq!(1, res.messages.len());
             assert_eq!(
                 res.events,
@@ -1287,7 +1260,7 @@ mod tests {
                     data: None,
                 }),
             };
-            call_reply::<_, _, _, Empty>(instance, &mock_env(), &response).unwrap();
+            call_reply::<_, _, _>(instance, &mock_env(), &response).unwrap();
         }
 
         const CHANNEL_ID: &str = "channel-123";
@@ -1306,7 +1279,7 @@ mod tests {
             setup(&mut instance, CHANNEL_ID, &account);
             let handshake_close =
                 mock_ibc_channel_close_init(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
-            call_ibc_channel_close::<_, _, _, Empty>(&mut instance, &mock_env(), &handshake_close)
+            call_ibc_channel_close::<_, _, _>(&mut instance, &mock_env(), &handshake_close)
                 .unwrap()
                 .unwrap();
         }
@@ -1317,7 +1290,7 @@ mod tests {
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let ack = IbcAcknowledgement::new(br#"{}"#);
             let msg = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#, ack).unwrap();
-            call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_packet_ack::<_, _, _>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
         }
@@ -1327,7 +1300,7 @@ mod tests {
             let mut instance = mock_instance(IBC_REFLECT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let msg = mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#).unwrap();
-            call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_packet_timeout::<_, _, _>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
         }
@@ -1338,7 +1311,7 @@ mod tests {
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let who_am_i = br#"{"who_am_i":{}}"#;
             let msg = mock_ibc_packet_recv(CHANNEL_ID, who_am_i).unwrap();
-            call_ibc_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_packet_receive::<_, _, _>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
         }
@@ -1350,7 +1323,7 @@ mod tests {
             // init
             let creator = instance.api().addr_make("creator");
             let info = mock_info(&creator, &[]);
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, br#"{}"#)
                 .unwrap()
                 .unwrap();
 
@@ -1369,7 +1342,7 @@ mod tests {
                 ack.original_packet,
                 ack.relayer,
             ));
-            call_ibc_source_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_source_callback::<_, _, _>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
             // query the CallbackStats
@@ -1388,7 +1361,7 @@ mod tests {
                 timeout.packet,
                 timeout.relayer,
             ));
-            call_ibc_source_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_source_callback::<_, _, _>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
             // query the CallbackStats
@@ -1424,7 +1397,7 @@ mod tests {
             let mut instance = mock_instance(IBC2, &[]);
             let info = mock_info("creator", &[]);
             let instantiate_msg = br#"{}"#;
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, instantiate_msg)
+            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, instantiate_msg)
                 .unwrap()
                 .unwrap();
 
@@ -1433,7 +1406,7 @@ mod tests {
                 send_async_ack_for_prev_msg: false,
             };
             let ibc2_ack = mock_ibc2_packet_ack(&ibc2_msg).unwrap();
-            call_ibc2_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_ack)
+            call_ibc2_packet_ack::<_, _, _>(&mut instance, &mock_env(), &ibc2_ack)
                 .unwrap()
                 .unwrap();
         }
@@ -1444,7 +1417,7 @@ mod tests {
             let mut instance = mock_instance(IBC2, &[]);
             let info = mock_info("creator", &[]);
             let instantiate_msg = br#"{}"#;
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, instantiate_msg)
+            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, instantiate_msg)
                 .unwrap()
                 .unwrap();
 
@@ -1453,7 +1426,7 @@ mod tests {
                 send_async_ack_for_prev_msg: false,
             };
             let ibc2_timeout = mock_ibc2_packet_recv(&ibc2_msg).unwrap();
-            call_ibc2_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_timeout)
+            call_ibc2_packet_receive::<_, _, _>(&mut instance, &mock_env(), &ibc2_timeout)
                 .unwrap()
                 .unwrap();
         }
@@ -1464,13 +1437,13 @@ mod tests {
             let mut instance = mock_instance(IBC2, &[]);
             let info = mock_info("creator", &[]);
             let instantiate_msg = br#"{}"#;
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, instantiate_msg)
+            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, instantiate_msg)
                 .unwrap()
                 .unwrap();
 
             let ibc2_msg = br#"SomeRandomMsg"#;
             let ibc2_msg = mock_ibc2_packet_timeout(ibc2_msg).unwrap();
-            call_ibc2_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_msg)
+            call_ibc2_packet_timeout::<_, _, _>(&mut instance, &mock_env(), &ibc2_msg)
                 .unwrap()
                 .unwrap();
         }
@@ -1481,7 +1454,7 @@ mod tests {
             let mut instance = mock_instance(IBC2, &[]);
             let info = mock_info("creator", &[]);
             let instantiate_msg = br#"{}"#;
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, instantiate_msg)
+            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, instantiate_msg)
                 .unwrap()
                 .unwrap();
 
@@ -1490,7 +1463,7 @@ mod tests {
                 send_async_ack_for_prev_msg: false,
             };
             let ibc2_sent = mock_ibc2_packet_send(&ibc2_msg).unwrap();
-            call_ibc2_packet_send::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_sent)
+            call_ibc2_packet_send::<_, _, _>(&mut instance, &mock_env(), &ibc2_sent)
                 .unwrap()
                 .unwrap();
         }

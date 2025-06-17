@@ -374,7 +374,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
 
     /// This allows to convert any `QuerierWrapper` into a `QuerierWrapper` generic
     /// over `Empty` custom query type.
-    pub fn into_empty(self) -> QuerierWrapper<'a, Empty> {
+    pub fn into_empty(self) -> QuerierWrapper<'a> {
         QuerierWrapper {
             querier: self.querier,
             custom_query_type: PhantomData,

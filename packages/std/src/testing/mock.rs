@@ -62,7 +62,7 @@ pub const MOCK_CONTRACT_ADDR: &str =
 ///
 /// See also [`mock_dependencies_with_balance`] and [`mock_dependencies_with_balances`]
 /// if you want to start with some initial balances.
-pub fn mock_dependencies() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
+pub fn mock_dependencies() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
     OwnedDeps {
         storage: MockStorage::default(),
         api: MockApi::default(),
@@ -76,7 +76,7 @@ pub fn mock_dependencies() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty
 /// It sets the given balance for the contract itself, nothing else.
 pub fn mock_dependencies_with_balance(
     contract_balance: &[Coin],
-) -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
+) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
     mock_dependencies_with_balances(&[(MOCK_CONTRACT_ADDR, contract_balance)])
 }
 

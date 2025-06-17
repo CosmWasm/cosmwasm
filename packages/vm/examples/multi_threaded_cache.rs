@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::thread;
 use tempfile::TempDir;
 
-use cosmwasm_std::{coins, Empty};
+use cosmwasm_std::coins;
 use cosmwasm_vm::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
 use cosmwasm_vm::{
     call_execute, call_instantiate, capabilities_from_csv, Cache, CacheOptions, InstanceOptions,
@@ -59,19 +59,15 @@ pub fn main() {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let contract_result = call_instantiate::<_, _, _, Empty>(
-                &mut instance,
-                &mock_env(),
-                &info,
-                msg.as_bytes(),
-            )
-            .unwrap();
+            let contract_result =
+                call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
+                    .unwrap();
             assert!(contract_result.into_result().is_ok());
 
             let info = mock_info(&verifier, &coins(15, "earth"));
             let msg = br#"{"release":{"denom":"earth"}}"#;
             let contract_result =
-                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+                call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
         }));
     }

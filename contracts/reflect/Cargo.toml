@@ -32,6 +32,7 @@ cosmwasm-std = { path = "../../packages/std", default-features = false, features
     "stargate",
     "std",
 ] }
+dyn_partial_eq = { version = "0.1.2", default-features = false }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.26"

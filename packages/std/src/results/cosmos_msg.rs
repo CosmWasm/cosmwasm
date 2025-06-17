@@ -2,18 +2,22 @@
 
 use core::fmt;
 use derive_more::Debug;
+use dyn_partial_eq::{dyn_partial_eq, DynPartialEq};
+use erased_serde::serialize_trait_object;
 use schemars::JsonSchema;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use std::rc::Rc;
 
 use crate::coin::Coin;
 #[cfg(feature = "stargate")]
 use crate::ibc::IbcMsg;
 #[cfg(feature = "ibc2")]
 use crate::ibc2::Ibc2Msg;
-use crate::prelude::*;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 use crate::Decimal;
 use crate::StdResult;
+use crate::{prelude::*, StdError};
 use crate::{to_json_binary, Binary};
 
 use super::Empty;
@@ -48,19 +52,100 @@ use super::Empty;
 ///
 /// impl CustomQuery for MyMsg {}
 /// ```
-pub trait CustomMsg: Serialize + Clone + fmt::Debug + PartialEq {}
+#[dyn_partial_eq]
+pub trait CustomMsg: erased_serde::Serialize + fmt::Debug {}
+
+serialize_trait_object!(CustomMsg);
+
+// TODO: use `maybe-owned` crate?
+pub enum MaybeOwned<'a, T> {
+    Owned(T),
+    Borrowed(&'a T),
+}
+
+impl<T> core::ops::Deref for MaybeOwned<'_, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            MaybeOwned::Owned(ref val) => val,
+            MaybeOwned::Borrowed(val) => val,
+        }
+    }
+}
+
+/// A wrapper type for CustomMsg to allow deserialization of any custom message, without knowing its type.
+#[derive(Serialize, Clone, Debug, DynPartialEq, JsonSchema)]
+pub struct CustomMsgContainer(#[schemars(with = "serde_json::Value")] pub Rc<dyn CustomMsg>);
+
+impl CustomMsgContainer {
+    pub fn inner_msg(&self) -> &dyn CustomMsg {
+        self.0.as_ref()
+    }
+
+    /// Try to deserialize this custom message as a specific type.
+    pub fn deserialize<T: CustomMsg + DeserializeOwned + 'static>(
+        &self,
+    ) -> StdResult<MaybeOwned<'_, T>> {
+        let inner_any = self.inner_msg().as_any();
+        if let Some(already_cast) = inner_any.downcast_ref::<T>() {
+            // if the underlying message type is already correct, return it directly
+            return Ok(MaybeOwned::Borrowed(already_cast));
+        } else if let Some(unknown) = inner_any.downcast_ref::<UnknownCustomMsg>() {
+            // if the type is UnknownCustomMsg (which is the case for custom messages that were deserialized from JSON),
+            // we try to deserialize the inner JSON into the desired type
+            return serde_json::from_value(unknown.0.clone())
+                .map(|val| MaybeOwned::Owned(val))
+                .map_err(|e| StdError::generic_err(e.to_string()));
+        }
+        Err(StdError::generic_err(format!(
+            "Could not deserialize custom message as {}",
+            std::any::type_name::<T>()
+        )))
+    }
+}
+
+impl PartialEq for CustomMsgContainer {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.box_eq(other.0.as_any())
+    }
+}
+
+impl<C: CustomMsg + 'static> From<C> for CustomMsgContainer {
+    fn from(msg: C) -> Self {
+        CustomMsgContainer(Rc::new(msg))
+    }
+}
 
 impl CustomMsg for Empty {}
 
+impl<'de> Deserialize<'de> for CustomMsgContainer {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        // Always deserialize into an UnknownCustomMsg because we do not know the type of the custom message.
+        let concrete: UnknownCustomMsg = Deserialize::deserialize(deserializer)?;
+        Ok(Self(Rc::new(concrete)))
+    }
+}
+
+/// Helper type that allows us to deserialize any custom message without knowing its type.
+/// We need that because we need to deserialize [`CosmosMsg`] in `cosmwasm-vm`
+#[derive(Serialize, Deserialize, Clone, Debug, DynPartialEq, PartialEq, Eq, JsonSchema)]
+struct UnknownCustomMsg(serde_json::Value);
+
+impl CustomMsg for UnknownCustomMsg {}
+
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 // See https://github.com/serde-rs/serde/issues/1296 why we cannot add De-Serialize trait bounds to T
-pub enum CosmosMsg<T = Empty> {
+pub enum CosmosMsg {
     Bank(BankMsg),
     // by default we use RawMsg, but a contract can override that
     // to call into more app-specific code (whatever they define)
-    Custom(T),
+    Custom(CustomMsgContainer),
     #[cfg(feature = "staking")]
     Staking(StakingMsg),
     #[cfg(feature = "staking")]
@@ -90,33 +175,41 @@ pub enum CosmosMsg<T = Empty> {
     Ibc2(Ibc2Msg),
 }
 
-impl<T> CosmosMsg<T> {
-    /// Convert this [`CosmosMsg<T>`] to a [`CosmosMsg<U>`] with a different custom message type.
-    /// This allows easier interactions between code written for a specific chain and
-    /// code written for multiple chains.
-    /// If this is the [`CosmosMsg::Custom`] variant, the function returns `None`.
-    pub fn change_custom<U>(self) -> Option<CosmosMsg<U>> {
-        Some(match self {
-            CosmosMsg::Bank(msg) => CosmosMsg::Bank(msg),
-            CosmosMsg::Custom(_) => return None,
+// TODO: make this easier to maintain
+impl PartialEq for CosmosMsg {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Bank(l0), Self::Bank(r0)) => l0 == r0,
+            (Self::Custom(l0), Self::Custom(r0)) => l0.box_eq(r0.as_any()),
             #[cfg(feature = "staking")]
-            CosmosMsg::Staking(msg) => CosmosMsg::Staking(msg),
+            (Self::Staking(l0), Self::Staking(r0)) => l0 == r0,
             #[cfg(feature = "staking")]
-            CosmosMsg::Distribution(msg) => CosmosMsg::Distribution(msg),
+            (Self::Distribution(l0), Self::Distribution(r0)) => l0 == r0,
             #[cfg(feature = "stargate")]
-            CosmosMsg::Stargate { type_url, value } => CosmosMsg::Stargate { type_url, value },
+            (
+                Self::Stargate {
+                    type_url: l_type_url,
+                    value: l_value,
+                },
+                Self::Stargate {
+                    type_url: r_type_url,
+                    value: r_value,
+                },
+            ) => l_type_url == r_type_url && l_value == r_value,
             #[cfg(feature = "cosmwasm_2_0")]
-            CosmosMsg::Any(msg) => CosmosMsg::Any(msg),
+            (Self::Any(l0), Self::Any(r0)) => l0 == r0,
             #[cfg(feature = "stargate")]
-            CosmosMsg::Ibc(msg) => CosmosMsg::Ibc(msg),
-            CosmosMsg::Wasm(msg) => CosmosMsg::Wasm(msg),
+            (Self::Ibc(l0), Self::Ibc(r0)) => l0 == r0,
+            (Self::Wasm(l0), Self::Wasm(r0)) => l0 == r0,
             #[cfg(feature = "stargate")]
-            CosmosMsg::Gov(msg) => CosmosMsg::Gov(msg),
+            (Self::Gov(l0), Self::Gov(r0)) => l0 == r0,
             #[cfg(feature = "ibc2")]
-            CosmosMsg::Ibc2(msg) => CosmosMsg::Ibc2(msg),
-        })
+            (Self::Ibc2(l0), Self::Ibc2(r0)) => l0 == r0,
+            _ => false,
+        }
     }
 }
+impl Eq for CosmosMsg {}
 
 /// The message types of the bank module.
 ///
@@ -443,21 +536,21 @@ pub fn wasm_execute(
     })
 }
 
-impl<T> From<BankMsg> for CosmosMsg<T> {
+impl From<BankMsg> for CosmosMsg {
     fn from(msg: BankMsg) -> Self {
         CosmosMsg::Bank(msg)
     }
 }
 
 #[cfg(feature = "staking")]
-impl<T> From<StakingMsg> for CosmosMsg<T> {
+impl From<StakingMsg> for CosmosMsg {
     fn from(msg: StakingMsg) -> Self {
         CosmosMsg::Staking(msg)
     }
 }
 
 #[cfg(feature = "staking")]
-impl<T> From<DistributionMsg> for CosmosMsg<T> {
+impl From<DistributionMsg> for CosmosMsg {
     fn from(msg: DistributionMsg) -> Self {
         CosmosMsg::Distribution(msg)
     }
@@ -466,34 +559,34 @@ impl<T> From<DistributionMsg> for CosmosMsg<T> {
 // By implementing `From<MyType> for cosmwasm_std::AnyMsg`,
 // you automatically get a MyType -> CosmosMsg conversion.
 #[cfg(feature = "cosmwasm_2_0")]
-impl<S: Into<AnyMsg>, T> From<S> for CosmosMsg<T> {
+impl<S: Into<AnyMsg>> From<S> for CosmosMsg {
     fn from(source: S) -> Self {
-        CosmosMsg::<T>::Any(source.into())
+        CosmosMsg::Any(source.into())
     }
 }
 
-impl<T> From<WasmMsg> for CosmosMsg<T> {
+impl From<WasmMsg> for CosmosMsg {
     fn from(msg: WasmMsg) -> Self {
         CosmosMsg::Wasm(msg)
     }
 }
 
 #[cfg(feature = "stargate")]
-impl<T> From<IbcMsg> for CosmosMsg<T> {
+impl From<IbcMsg> for CosmosMsg {
     fn from(msg: IbcMsg) -> Self {
         CosmosMsg::Ibc(msg)
     }
 }
 
 #[cfg(feature = "stargate")]
-impl<T> From<GovMsg> for CosmosMsg<T> {
+impl From<GovMsg> for CosmosMsg {
     fn from(msg: GovMsg) -> Self {
         CosmosMsg::Gov(msg)
     }
 }
 
 #[cfg(feature = "ibc2")]
-impl<T> From<Ibc2Msg> for CosmosMsg<T> {
+impl From<Ibc2Msg> for CosmosMsg {
     fn from(msg: Ibc2Msg) -> Self {
         CosmosMsg::Ibc2(msg)
     }
@@ -503,7 +596,6 @@ impl<T> From<Ibc2Msg> for CosmosMsg<T> {
 mod tests {
     use super::*;
     use crate::{coin, coins};
-    use fmt::Debug;
 
     #[test]
     fn from_bank_msg_works() {
@@ -735,32 +827,5 @@ mod tests {
                 r#"{"vote_weighted":{"proposal_id":25,"options":[{"option":"yes","weight":"0.25"},{"option":"no","weight":"0.25"},{"option":"abstain","weight":"0.5"}]}}"#,
             );
         }
-    }
-
-    #[test]
-    fn change_custom_works() {
-        #[derive(Debug, PartialEq, Eq, Clone)]
-        struct Custom {
-            _a: i32,
-        }
-        let send = BankMsg::Send {
-            to_address: "you".to_string(),
-            amount: coins(1015, "earth"),
-        };
-        // Custom to Empty
-        let msg: CosmosMsg<Custom> = send.clone().into();
-        let msg2: CosmosMsg<Empty> = msg.change_custom().unwrap();
-        assert_eq!(msg2, CosmosMsg::Bank(send.clone()));
-        let custom = CosmosMsg::Custom(Custom { _a: 5 });
-        let converted = custom.change_custom::<Empty>();
-        assert_eq!(converted, None);
-
-        // Empty to Custom
-        let msg: CosmosMsg<Empty> = send.clone().into();
-        let msg2: CosmosMsg<Custom> = msg.change_custom().unwrap();
-        assert_eq!(msg2, CosmosMsg::Bank(send));
-        let empty = CosmosMsg::Custom(Empty {});
-        let converted = empty.change_custom::<Custom>();
-        assert_eq!(converted, None);
     }
 }
