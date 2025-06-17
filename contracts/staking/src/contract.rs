@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     entry_point, to_json_binary, BankMsg, Coin, Decimal, Decimal256, Deps, DepsMut,
     DistributionMsg, Env, MessageInfo, QuerierWrapper, QueryResponse, Response, StakingMsg,
-    StdError, StdResult, Uint128, Uint256, WasmMsg,
+    StdError, StdResult, Uint128, Uint256, WasmMsg, StdErrorKind
 };
 
 use crate::errors::{StakingError, Unauthorized};
@@ -340,9 +340,8 @@ pub fn _bond_all_tokens(
     match updated {
         Ok(_) => {}
         // if it is below the minimum, we do a no-op (do not revert other state from withdrawal)
-        Err(..) => return Ok(Response::default()),
-        // TODO: actually add an enum case later to fix this logic
-        //Err(e) => return Err(e.into()),
+        Err(e) if e.kind() == StdErrorKind::Overflow => return Ok(Response::default()),
+        Err(e) => return Err(e.into()),
     }
 
     // and bond them to the validator
