@@ -265,7 +265,7 @@ fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
-        .ok_or_else(|| StdError::msg("State"))?;
+        .ok_or_else(|| StdError::msg("State not found"))?;
     let state: State = from_json(data)?;
     Ok(VerifierResponse {
         verifier: state.verifier.into(),
