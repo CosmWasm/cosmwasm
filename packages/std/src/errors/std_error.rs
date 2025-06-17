@@ -116,7 +116,7 @@ where
         // specialization at home:
         let kind = if inner.is::<str::Utf8Error>() || inner.is::<string::FromUtf8Error>() {
             ErrorKind::Parsing
-        } else if inner.is::<OverflowError>() {
+        } else if inner.is::<ConversionOverflowError>() || inner.is::<OverflowError>() {
             ErrorKind::Overflow
         } else if inner.is::<serde_json::Error>()
             || inner.is::<rmp_serde::encode::Error>()
