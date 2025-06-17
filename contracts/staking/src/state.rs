@@ -42,7 +42,7 @@ pub fn load_map<T: DeserializeOwned>(
     prefix: &[u8],
     key: &CanonicalAddr,
 ) -> StdResult<T> {
-    may_load_map(storage, prefix, key)?.ok_or_else(|| StdError::msg(format!("map value for {key}")))
+    may_load_map(storage, prefix, key)?.ok_or_else(|| StdError::msg(format!("map value for {key} not found")))
 }
 
 /// Investment info is fixed at initialization, and is used to control the function of the contract
