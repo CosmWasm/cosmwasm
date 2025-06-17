@@ -71,7 +71,7 @@ pub fn range_accounts(
 pub fn load_config(storage: &dyn Storage) -> StdResult<Config> {
     storage
         .get(&to_length_prefixed(KEY_CONFIG))
-        .ok_or_else(|| StdError::msg("config"))
+        .ok_or_else(|| StdError::msg("config not found"))
         .and_then(from_json)
 }
 
