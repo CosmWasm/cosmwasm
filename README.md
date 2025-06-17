@@ -139,7 +139,7 @@ points, and no access to the outside world by default. To make them useful, we
 need to add a few elements.
 
 If you haven't worked with WebAssembly before, please read an overview on
-[how to create imports and exports](./EntryPoints.md) in general.
+[how to create imports and exports](docs/idl.md) in general.
 
 ### Exports
 
