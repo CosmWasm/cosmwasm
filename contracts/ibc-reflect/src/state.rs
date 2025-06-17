@@ -60,7 +60,7 @@ pub fn range_accounts(
 pub fn load_item<T: DeserializeOwned>(storage: &dyn Storage, key: &[u8]) -> StdResult<T> {
     storage
         .get(&to_length_prefixed(key))
-        .ok_or_else(|| StdError::msg(type_name::<T>()))
+        .ok_or_else(|| StdError::msg(format!("{} not found", type_name::<T>())))
         .and_then(from_json)
 }
 
