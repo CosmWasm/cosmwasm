@@ -221,7 +221,7 @@ fn cosmos_signature_verify_errors() {
     let res = query(&mut deps, mock_env(), verify_msg);
     assert_eq!(
         res.unwrap_err(),
-        "Verification error: Invalid public key format"
+        "kind: Cryptography, error: Invalid public key format"
     )
 }
 
@@ -283,7 +283,7 @@ fn secp256r1_signature_verify_errors() {
     let res = query(&mut deps, mock_env(), verify_msg);
     assert_eq!(
         res.unwrap_err(),
-        "Verification error: Invalid public key format"
+        "kind: Cryptography, error: Invalid public key format"
     )
 }
 
@@ -354,7 +354,7 @@ fn ethereum_signature_verify_fails_for_corrupted_signature() {
     };
     let result = query(&mut deps, mock_env(), verify_msg);
     let msg = result.unwrap_err();
-    assert_eq!(msg, "Recover pubkey error: Unknown error: 10");
+    assert_eq!(msg, "kind: Cryptography, error: Unknown error: 10");
 }
 
 #[test]
@@ -466,7 +466,7 @@ fn tendermint_signature_verify_errors() {
     let res = query(&mut deps, mock_env(), verify_msg);
     assert_eq!(
         res.unwrap_err(),
-        "Verification error: Invalid public key format"
+        "kind: Cryptography, error: Invalid public key format"
     )
 }
 
@@ -625,7 +625,7 @@ fn tendermint_signatures_batch_verify_errors() {
     let res = query(&mut deps, mock_env(), verify_msg);
     assert_eq!(
         res.unwrap_err(),
-        "Verification error: Invalid public key format"
+        "kind: Cryptography, error: Invalid public key format"
     )
 }
 
