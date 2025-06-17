@@ -232,7 +232,7 @@ fn handle_dispatch_packet() {
         from_slice(&res.acknowledgement.unwrap(), DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(
         ack.unwrap_err(),
-        "invalid packet: kind: Other, error: account channel-123"
+        "invalid packet: kind: Other, error: account channel-123 not found"
     );
 
     // register the channel

@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     entry_point, to_json_binary, BankMsg, Coin, Decimal, Decimal256, Deps, DepsMut,
     DistributionMsg, Env, MessageInfo, QuerierWrapper, QueryResponse, Response, StakingMsg,
-    StdError, StdResult, Uint128, Uint256, WasmMsg, StdErrorKind
+    StdError, StdErrorKind, StdResult, Uint128, Uint256, WasmMsg,
 };
 
 use crate::errors::{StakingError, Unauthorized};
