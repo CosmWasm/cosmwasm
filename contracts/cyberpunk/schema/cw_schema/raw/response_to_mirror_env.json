@@ -10,11 +10,11 @@
           "value": 1
         },
         "contract": {
-          "value": 10
+          "value": 9
         },
         "transaction": {
           "description": "Information on the transaction this message was executed in.\nThe field is unset when the `MsgExecuteContract`/`MsgInstantiateContract`/`MsgMigrateContract`\nis not executed as part of a transaction.",
-          "value": 9
+          "value": 8
         }
       }
     },
@@ -55,8 +55,9 @@
       "type": "struct",
       "properties": {
         "hash": {
+          "defaulting": true,
           "description": "Hash of the transaction.\n\nIf the blockchain's CosmWasm version is below 3.0, this field\nwill default to being empty.",
-          "value": 8
+          "value": 7
         },
         "index": {
           "description": "The position of this transaction in the block. The first\ntransaction has index 0.\n\nThis allows you to get a unique transaction identifier in this chain\nusing the pair (`env.block.height`, `env.transaction.index`).\n",
@@ -76,11 +77,6 @@
       "type": "binary"
     },
     {
-      "name": "core::option::Option<cosmwasm_std::binary::Binary>",
-      "type": "optional",
-      "inner": 7
-    },
-    {
       "name": "core::option::Option<cosmwasm_std::types::TransactionInfo>",
       "type": "optional",
       "inner": 5
@@ -90,7 +86,7 @@
       "type": "struct",
       "properties": {
         "address": {
-          "value": 11
+          "value": 10
         }
       }
     },

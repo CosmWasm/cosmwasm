@@ -10,8 +10,9 @@
           "type": "named",
           "properties": {
             "callback_type": {
+              "defaulting": true,
               "description": "Who should receive callbacks for the message",
-              "value": 4
+              "value": 3
             },
             "channel_id": {
               "description": "The channel to send the packet through",
@@ -56,11 +57,6 @@
           "type": "unit"
         }
       }
-    },
-    {
-      "name": "core::option::Option<ibc_callbacks::msg::CallbackType>",
-      "type": "optional",
-      "inner": 3
     }
   ]
 }

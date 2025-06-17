@@ -336,17 +336,14 @@ where
             .map(|lit_str| format_ident!("{}", lit_str.value()))
             .unwrap_or_else(|| converter(field.ident.as_ref().unwrap()));
         let description = normalize_option(extract_documentation(&field.attrs)?);
-        let field_ty = if field_options.default || field_options.skip_serializing_if.is_some() {
-            let ty = &field.ty;
-            syn::parse_quote!(::core::option::Option<#ty>)
-        } else {
-            field.ty.clone()
-        };
+        let field_ty = &field.ty;
+        let defaulting = field_options.default;
 
         let expanded = quote! {
             (
                 stringify!(#name).into(),
                 #crate_path::StructProperty {
+                    defaulting: #defaulting,
                     description: #description,
                     value: <#field_ty as #crate_path::Schemaifier>::visit_schema(visitor),
                 }

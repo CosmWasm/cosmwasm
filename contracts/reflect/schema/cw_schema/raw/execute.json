@@ -26,7 +26,7 @@
           "type": "named",
           "properties": {
             "msgs": {
-              "value": 32
+              "value": 31
             }
           }
         }
@@ -610,7 +610,7 @@
       "properties": {
         "gas_limit": {
           "description": "Gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).\n\nSetting this to `None` means unlimited. Then the submessage execution can consume all gas of the\ncurrent execution context.",
-          "value": 30
+          "value": 29
         },
         "id": {
           "description": "An arbitrary ID chosen by the contract.\nThis is typically used to match `Reply`s in the `reply` entry point to the submessage.",
@@ -620,18 +620,14 @@
           "value": 1
         },
         "payload": {
+          "defaulting": true,
           "description": "Some arbitrary data that the contract can set in an application specific way.\nThis is just passed into the `reply` entry point and is not stored to state.\nAny encoding can be used. If `id` is used to identify a particular action,\nthe encoding can also be different for each of those actions since you can match `id`\nfirst and then start processing the `payload`.\n\nThe environment restricts the length of this field in order to avoid abuse. The limit\nis environment specific and can change over time. The initial default is 128 KiB.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field will be ignored.",
-          "value": 29
+          "value": 8
         },
         "reply_on": {
-          "value": 31
+          "value": 30
         }
       }
-    },
-    {
-      "name": "core::option::Option<cosmwasm_std::binary::Binary>",
-      "type": "optional",
-      "inner": 8
     },
     {
       "name": "core::option::Option<u64>",

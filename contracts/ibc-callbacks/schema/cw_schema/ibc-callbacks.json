@@ -26,8 +26,9 @@
             "type": "named",
             "properties": {
               "callback_type": {
+                "defaulting": true,
                 "description": "Who should receive callbacks for the message",
-                "value": 4
+                "value": 3
               },
               "channel_id": {
                 "description": "The channel to send the packet through",
@@ -72,11 +73,6 @@
             "type": "unit"
           }
         }
-      },
-      {
-        "name": "core::option::Option<ibc_callbacks::msg::CallbackType>",
-        "type": "optional",
-        "inner": 3
       }
     ]
   },
@@ -113,7 +109,7 @@
               "value": 14
             },
             "ibc_destination_callbacks": {
-              "value": 24
+              "value": 23
             },
             "ibc_timeout_callbacks": {
               "value": 16
@@ -278,8 +274,9 @@
               "value": 4
             },
             "transfer": {
+              "defaulting": true,
               "description": "When the underlying packet is a successful transfer message,\nthis field contains information about the transfer. Otherwise it is empty.\n\nThis is always empty on chains using CosmWasm < 3.0",
-              "value": 23
+              "value": 22
             }
           }
         },
@@ -329,11 +326,6 @@
           "name": "core::option::Option<cosmwasm_std::ibc::callbacks::IbcTransferCallback>",
           "type": "optional",
           "inner": 18
-        },
-        {
-          "name": "core::option::Option<core::option::Option<cosmwasm_std::ibc::callbacks::IbcTransferCallback>>",
-          "type": "optional",
-          "inner": 22
         },
         {
           "name": "alloc::vec::Vec<cosmwasm_std::ibc::callbacks::IbcDestinationCallbackMsg>",

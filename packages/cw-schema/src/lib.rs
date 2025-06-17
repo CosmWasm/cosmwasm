@@ -26,6 +26,8 @@ mod default_impls;
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct StructProperty {
+    #[serde(default, skip_serializing_if = "core::ops::Not::not")]
+    pub defaulting: bool,
     pub description: Option<Cow<'static, str>>,
     pub value: DefinitionReference,
 }
