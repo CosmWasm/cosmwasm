@@ -53,7 +53,7 @@ pub fn migrate(
     let data = deps
         .storage
         .get(CONFIG_KEY)
-        .ok_or_else(|| StdError::msg("State"))?;
+        .ok_or_else(|| StdError::msg("State not found"))?;
     let mut config: State = from_json(data)?;
     config.verifier = deps.api.addr_validate(&msg.verifier)?;
     deps.storage.set(CONFIG_KEY, &to_json_vec(&config)?);
