@@ -69,6 +69,20 @@ impl AsRef<dyn Error + Send + Sync> for StdError {
 }
 
 impl StdError {
+    /// Creates a new `StdError` from any other error.
+    /// This allows you to create your own [`From`] implementations for `StdError`.
+    #[track_caller]
+    pub fn new<E>(inner: E) -> Self
+    where
+        E: Error + Send + Sync + 'static,
+    {
+        Self(Box::new(InnerError {
+            backtrace: BT::capture(),
+            kind: ErrorKind::Other,
+            inner: Box::new(inner),
+        }))
+    }
+
     pub fn msg<D>(msg: D) -> Self
     where
         D: fmt::Display,
