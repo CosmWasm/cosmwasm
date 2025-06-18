@@ -3232,7 +3232,7 @@ mod tests {
 
         // invalid: not properly defined signed decimal value
         assert_eq!(
-            "Error parsing decimal '1.e': kind: Other, error: invalid digit found in string at line 1 column 5",
+            "Error parsing decimal '1.e': kind: Parsing, error: invalid digit found in string at line 1 column 5",
             serde_json::from_str::<SignedDecimal256>(r#""1.e""#)
                 .err()
                 .unwrap()

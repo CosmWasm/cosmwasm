@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use crate::HashFunction;
+use crate::StdErrorKind;
 use crate::{Addr, CanonicalAddr, Timestamp};
 use alloc::collections::BTreeMap;
 #[cfg(feature = "cosmwasm_1_3")]
@@ -131,16 +132,16 @@ impl Api for MockApi {
             .as_bytes()
             .eq_ignore_ascii_case(self.bech32_prefix.as_bytes())
         {
-            return Err(StdError::msg("Wrong bech32 prefix"));
+            return Err(StdError::msg("Wrong bech32 prefix").with_kind(StdErrorKind::Parsing));
         }
 
         let bytes: Vec<u8> = hrp_str.byte_iter().collect();
-        validate_length(&bytes)?;
+        validate_length(&bytes).map_err(|e| e.with_kind(StdErrorKind::Parsing))?;
         Ok(bytes.into())
     }
 
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
-        validate_length(canonical.as_ref())?;
+        validate_length(canonical.as_ref()).map_err(|e| e.with_kind(StdErrorKind::Encoding))?;
 
         let prefix = Hrp::parse(self.bech32_prefix)?;
         Ok(encode::<Bech32>(prefix, canonical.as_slice()).map(Addr::unchecked)?)

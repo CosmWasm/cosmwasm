@@ -363,7 +363,8 @@ mod tests {
         match err {
             ReflectError::Std(err) => {
                 assert!(
-                    err.to_string().contains("kind: Other, error: parse failed"),
+                    err.to_string()
+                        .contains("kind: Parsing, error: parse failed"),
                     "{err}"
                 )
             }

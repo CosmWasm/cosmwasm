@@ -50,6 +50,7 @@ impl<S> ContractResult<S> {
         Result::<S, String>::from(self)
     }
 
+    #[track_caller]
     pub fn unwrap(self) -> S {
         self.into_result().unwrap()
     }

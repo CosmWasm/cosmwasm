@@ -16,7 +16,9 @@ use crate::traits::{Api, Querier, QuerierResult, Storage};
 use crate::{Addr, CanonicalAddr};
 #[cfg(feature = "cosmwasm_2_1")]
 use crate::{AggregationError, HashFunction, PairingEqualityError};
-use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
+use crate::{
+    RecoverPubkeyError, StdError, StdErrorKind, StdResult, SystemError, VerificationError,
+};
 
 /// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
 const CANONICAL_ADDRESS_BUFFER_LENGTH: usize = 64;
@@ -328,7 +330,9 @@ impl Api for ExternalApi {
             // See MAX_LENGTH_HUMAN_ADDRESS in the VM.
             // In this case, the VM will refuse to read the input from the contract.
             // Stop here to allow handling the error in the contract.
-            return Err(StdError::msg("input too long for addr_validate"));
+            return Err(
+                StdError::msg("input too long for addr_validate").with_kind(StdErrorKind::Parsing)
+            );
         }
         let source = Region::from_slice(input_bytes);
         let source_ptr = source.as_ptr() as u32;
@@ -337,10 +341,10 @@ impl Api for ExternalApi {
         if result != 0 {
             let error =
                 unsafe { consume_string_region_written_by_vm(result as *mut Region<Owned>) };
-            return Err(StdError::msg(format_args!(
-                "addr_validate errored: {}",
-                error
-            )));
+            return Err(
+                StdError::msg(format_args!("addr_validate errored: {}", error))
+                    .with_kind(StdErrorKind::Parsing),
+            );
         }
 
         Ok(Addr::unchecked(input))
@@ -352,7 +356,8 @@ impl Api for ExternalApi {
             // See MAX_LENGTH_HUMAN_ADDRESS in the VM.
             // In this case, the VM will refuse to read the input from the contract.
             // Stop here to allow handling the error in the contract.
-            return Err(StdError::msg("input too long for addr_canonicalize"));
+            return Err(StdError::msg("input too long for addr_canonicalize")
+                .with_kind(StdErrorKind::Parsing));
         }
         let send = Region::from_slice(input_bytes);
         let send_ptr = send.as_ptr() as u32;
@@ -362,10 +367,10 @@ impl Api for ExternalApi {
         if result != 0 {
             let error =
                 unsafe { consume_string_region_written_by_vm(result as *mut Region<Owned>) };
-            return Err(StdError::msg(format_args!(
-                "addr_canonicalize errored: {}",
-                error
-            )));
+            return Err(
+                StdError::msg(format_args!("addr_canonicalize errored: {}", error))
+                    .with_kind(StdErrorKind::Parsing),
+            );
         }
 
         Ok(CanonicalAddr::from(canon.into_vec()))
@@ -380,10 +385,10 @@ impl Api for ExternalApi {
         if result != 0 {
             let error =
                 unsafe { consume_string_region_written_by_vm(result as *mut Region<Owned>) };
-            return Err(StdError::msg(format_args!(
-                "addr_humanize errored: {}",
-                error
-            )));
+            return Err(
+                StdError::msg(format_args!("addr_humanize errored: {}", error))
+                    .with_kind(StdErrorKind::Encoding),
+            );
         }
 
         let address = unsafe { String::from_utf8_unchecked(human.into_vec()) };

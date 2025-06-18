@@ -5,13 +5,7 @@ use thiserror::Error;
 pub enum ContractError {
     #[error("{0}")]
     /// this is needed so we can use `bucket.load(...)?` and have it auto-converted to the custom error
-    Std(StdError),
+    Std(#[from] StdError),
     #[error("{0}")]
     Instantiate2Address(#[from] Instantiate2AddressError),
-}
-
-impl From<StdError> for ContractError {
-    fn from(err: StdError) -> Self {
-        Self::Std(err)
-    }
 }

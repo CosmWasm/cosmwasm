@@ -5,6 +5,10 @@ use std::{error::Error, str, string};
 use super::BT;
 
 use crate::errors::{RecoverPubkeyError, VerificationError};
+use crate::{
+    Decimal256RangeExceeded, DecimalRangeExceeded, Instantiate2AddressError,
+    SignedDecimal256RangeExceeded, SignedDecimalRangeExceeded,
+};
 
 mod sealed {
     pub trait Sealed {}
@@ -39,6 +43,12 @@ impl<T> StdResultExt<T> for Result<T, super::StdError> {
 /// - Add creator function in std_error_helpers.rs
 #[derive(Debug)]
 pub struct StdError(Box<InnerError>);
+
+impl Error for StdError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&*self.0.inner)
+    }
+}
 
 #[derive(Debug)]
 struct InnerError {
@@ -97,46 +107,60 @@ impl fmt::Display for StdError {
     }
 }
 
-// Impossible to implement because of blanket `From` impls :(
-/*impl Error for StdError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        self.0.inner.source()
-    }
-}*/
+/// Implements `From` for conversions from many error types to `StdError`.
+macro_rules! impl_from {
+    () => {};
+    ($input:ty => $kind:ident) => {
+        impl From<$input> for StdError {
+            fn from(value: $input) -> Self {
+                Self(Box::new(InnerError {
+                    backtrace: BT::capture(),
+                    kind: ErrorKind::$kind,
+                    inner: Box::new(value),
+                }))
+            }
+        }
+    };
+    ($input:ty => $kind:ident, $($rest:tt)*) => {
+        impl_from!($input => $kind);
+        impl_from!($($rest)*);
+    };
+}
 
-impl<E> From<E> for StdError
-where
-    E: Error + Send + Sync + 'static,
-{
-    fn from(value: E) -> Self {
-        let inner: Box<dyn Error + Send + Sync> = Box::new(value);
+impl_from! {
+    str::Utf8Error => Parsing,
+    string::FromUtf8Error => Parsing,
+    core::num::ParseIntError => Parsing,
+    CoinFromStrError => Parsing,
+    CoinsError => Other,
+    ConversionOverflowError => Overflow,
+    OverflowError => Overflow,
+    serde_json::Error => Serialization,
+    rmp_serde::encode::Error => Serialization,
+    rmp_serde::decode::Error => Serialization,
+    RecoverPubkeyError => Cryptography,
+    VerificationError => Cryptography,
+    hex::FromHexError => Encoding,
+    base64::DecodeError => Encoding,
+    DivideByZeroError => Other,
+    CheckedFromRatioError => Other,
+    CheckedMultiplyFractionError => Other,
+    CheckedMultiplyRatioError => Other,
+    DivisionError => Other,
+    RoundUpOverflowError => Overflow,
+    RoundDownOverflowError => Overflow,
+    DecimalRangeExceeded => Overflow,
+    Decimal256RangeExceeded => Overflow,
+    SignedDecimalRangeExceeded => Overflow,
+    SignedDecimal256RangeExceeded => Overflow,
+    Instantiate2AddressError => Other,
+}
 
-        // "mom, can we have specialization?"
-        // "we have specialization at home"
-        // specialization at home:
-        let kind = if inner.is::<str::Utf8Error>() || inner.is::<string::FromUtf8Error>() {
-            ErrorKind::Parsing
-        } else if inner.is::<ConversionOverflowError>() || inner.is::<OverflowError>() {
-            ErrorKind::Overflow
-        } else if inner.is::<serde_json::Error>()
-            || inner.is::<rmp_serde::encode::Error>()
-            || inner.is::<rmp_serde::decode::Error>()
-        {
-            ErrorKind::Serialization
-        } else if inner.is::<RecoverPubkeyError>() || inner.is::<VerificationError>() {
-            ErrorKind::Cryptography
-        } else if inner.is::<hex::FromHexError>() || inner.is::<base64::DecodeError>() {
-            ErrorKind::Encoding
-        } else {
-            ErrorKind::Other
-        };
-
-        Self(Box::new(InnerError {
-            backtrace: BT::capture(),
-            kind,
-            inner,
-        }))
-    }
+#[cfg(not(target_arch = "wasm32"))]
+impl_from! {
+    bech32::EncodeError => Encoding,
+    bech32::primitives::hrp::Error => Parsing,
+    bech32::primitives::decode::CheckedHrpstringError => Parsing,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]

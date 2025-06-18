@@ -1,5 +1,5 @@
 use assert_cmd::prelude::*;
-use cosmwasm_std::{to_json_string, to_json_vec, StdResult};
+use cosmwasm_std::{to_json_string, to_json_vec};
 use cosmwasm_vm::WasmLimits;
 use predicates::prelude::*;
 use std::{io::Write, process::Command};
@@ -116,7 +116,7 @@ fn wasm_limits_string_check() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn wasm_limits_file_check() -> StdResult<()> {
+fn wasm_limits_file_check() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("cosmwasm-check")?;
 
     let mut limits = WasmLimits::default();

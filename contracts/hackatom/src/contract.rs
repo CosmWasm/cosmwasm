@@ -204,7 +204,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
 
     let empty = "";
     match api.addr_canonicalize(empty).unwrap_err().kind() {
-        StdErrorKind::Other => {}
+        StdErrorKind::Parsing => {}
         err => {
             return Err(StdError::msg(format_args!(
                 "Unexpected error in do_user_errors_in_api_calls: {err:?}"
@@ -215,7 +215,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
 
     let invalid = "bn9hhssomeltvhzgvuqkwjkpwxoj";
     match api.addr_canonicalize(invalid).unwrap_err().kind() {
-        StdErrorKind::Other => {}
+        StdErrorKind::Parsing => {}
         err => {
             return Err(StdError::msg(format_args!(
                 "Unexpected error in do_user_errors_in_api_calls: {err:?}"
@@ -226,7 +226,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
 
     let too_long = "cosmwasm1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqehqqkz";
     match api.addr_canonicalize(too_long).unwrap_err().kind() {
-        StdErrorKind::Other => {}
+        StdErrorKind::Parsing => {}
         err => {
             return Err(StdError::msg(format_args!(
                 "Unexpected error in do_user_errors_in_api_calls: {err:?}"
@@ -238,7 +238,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     // Humanize
     let empty: CanonicalAddr = vec![].into();
     match api.addr_humanize(&empty).unwrap_err().kind() {
-        StdErrorKind::Other => {}
+        StdErrorKind::Encoding => {}
         err => {
             return Err(StdError::msg(format_args!(
                 "Unexpected error in do_user_errors_in_api_calls: {err:?}"
