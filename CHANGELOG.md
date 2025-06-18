@@ -98,6 +98,9 @@ and this project adheres to
   compiled with Rust 1.82 or newer to be stored. ([#2473])
 - cosmwasm-std: Removed IBC fees ([#2479])
 - cosmwasm-schema: Remove unused result types from trait definition (#[2495])
+- cosmwasm-std: Split up `Validator` type into `Validator` and
+  `ValidatorMetadata` to allow adding more fields to `ValidatorResponse` in the
+  future. ([#2501])
 
 ## Fixed
 
@@ -146,6 +149,7 @@ and this project adheres to
 [#2480]: https://github.com/CosmWasm/cosmwasm/pull/2480
 [#2484]: https://github.com/CosmWasm/cosmwasm/pull/2484
 [#2495]: https://github.com/CosmWasm/cosmwasm/pull/2495
+[#2501]: https://github.com/CosmWasm/cosmwasm/pull/2501
 
 ## [2.2.0] - 2024-12-17
 

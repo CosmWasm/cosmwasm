@@ -1204,7 +1204,7 @@ impl StakingQuerier {
             }
             StakingQuery::AllValidators {} => {
                 let res = AllValidatorsResponse {
-                    validators: self.validators.clone(),
+                    validators: self.validators.iter().cloned().map(Into::into).collect(),
                 };
                 to_json_binary(&res).into()
             }
@@ -2508,7 +2508,7 @@ mod tests {
             .unwrap()
             .unwrap();
         let vals: AllValidatorsResponse = from_json(raw).unwrap();
-        assert_eq!(vals.validators, vec![val1, val2]);
+        assert_eq!(vals.validators, vec![val1.into(), val2.into()]);
     }
 
     #[cfg(feature = "staking")]

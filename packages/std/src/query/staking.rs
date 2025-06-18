@@ -166,12 +166,12 @@ impl FullDelegation {
 )]
 #[non_exhaustive]
 pub struct AllValidatorsResponse {
-    pub validators: Vec<Validator>,
+    pub validators: Vec<ValidatorMetadata>,
 }
 
 impl QueryResponseType for AllValidatorsResponse {}
 
-impl_hidden_constructor!(AllValidatorsResponse, validators: Vec<Validator>);
+impl_hidden_constructor!(AllValidatorsResponse, validators: Vec<ValidatorMetadata>);
 
 /// The data format returned from StakingRequest::Validator query
 #[derive(
@@ -191,7 +191,7 @@ impl_hidden_constructor!(ValidatorResponse, validator: Option<Validator>);
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
 )]
 #[non_exhaustive]
-pub struct Validator {
+pub struct ValidatorMetadata {
     /// The operator address of the validator (e.g. cosmosvaloper1...).
     /// See https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/proto/cosmos/staking/v1beta1/staking.proto#L95-L96
     /// for more information.
@@ -206,12 +206,29 @@ pub struct Validator {
 }
 
 impl_hidden_constructor!(
-    Validator,
+    ValidatorMetadata,
     address: String,
     commission: Decimal,
     max_commission: Decimal,
     max_change_rate: Decimal
 );
+
+/// Instances are created in the querier.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
+pub struct Validator {
+    /// The operator address of the validator (e.g. cosmosvaloper1...).
+    /// See https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/proto/cosmos/staking/v1beta1/staking.proto#L95-L96
+    /// for more information.
+    ///
+    /// This uses `String` instead of `Addr` since the bech32 address prefix is different from
+    /// the ones that regular user accounts use.
+    pub address: String,
+    pub commission: Decimal,
+    pub max_commission: Decimal,
+    /// The maximum daily increase of the commission
+    pub max_change_rate: Decimal,
+}
 
 impl Validator {
     /// Creates a new validator.
@@ -229,6 +246,27 @@ impl Validator {
             commission,
             max_commission,
             max_change_rate,
+        }
+    }
+}
+
+impl_hidden_constructor!(
+    Validator,
+    address: String,
+    commission: Decimal,
+    max_commission: Decimal,
+    max_change_rate: Decimal
+);
+
+// Validator should contain all data that ValidatorMetadata has + maybe some additional data
+// that is expensive to query, so we can convert ValidatorMetadata to Validator easily.
+impl From<Validator> for ValidatorMetadata {
+    fn from(validator: Validator) -> Self {
+        ValidatorMetadata {
+            address: validator.address,
+            commission: validator.commission,
+            max_commission: validator.max_commission,
+            max_change_rate: validator.max_change_rate,
         }
     }
 }
