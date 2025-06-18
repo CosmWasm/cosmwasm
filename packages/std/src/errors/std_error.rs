@@ -1,6 +1,6 @@
 use alloc::string::ToString;
 use core::fmt;
-use std::{error::Error, str, string};
+use std::{error::Error, ops::Deref, str, string};
 
 use super::BT;
 
@@ -54,6 +54,14 @@ const _: () = {
 
 impl AsRef<dyn Error + Send + Sync> for StdError {
     fn as_ref(&self) -> &(dyn Error + Send + Sync + 'static) {
+        &*self.0.inner
+    }
+}
+
+impl Deref for StdError {
+    type Target = dyn Error + Send + Sync;
+
+    fn deref(&self) -> &Self::Target {
         &*self.0.inner
     }
 }
@@ -293,6 +301,12 @@ mod tests {
     use super::*;
     use core::str;
     use std::string;
+
+    #[derive(Debug, thiserror::Error)]
+    enum AssertThiserrorWorks {
+        #[error(transparent)]
+        Std(#[from] StdError),
+    }
 
     #[test]
     fn implements_debug() {
