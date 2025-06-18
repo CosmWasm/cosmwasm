@@ -37,7 +37,7 @@ pub fn remove_reply(storage: &mut dyn Storage, id: u64) {
 pub fn load_config(storage: &dyn Storage) -> StdResult<State> {
     storage
         .get(&to_length_prefixed(CONFIG_KEY))
-        .ok_or_else(|| StdError::msg("config"))
+        .ok_or_else(|| StdError::msg("config not found"))
         .and_then(from_json)
 }
 
