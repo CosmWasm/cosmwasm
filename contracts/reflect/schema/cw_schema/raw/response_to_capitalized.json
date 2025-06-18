@@ -1,0 +1,19 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "reflect_msg_CapitalizedResponse",
+      "type": "struct",
+      "properties": {
+        "text": {
+          "value": 1
+        }
+      }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    }
+  ]
+}

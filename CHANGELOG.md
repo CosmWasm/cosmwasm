@@ -37,6 +37,9 @@ and this project adheres to
   ranges of different contracts. ([#2471])
 - cosmwasm-std: Add `transfer` field to `IbcDestinationCallbackMsg`, providing
   an easier way to handle an IBC transfer in a destination callback. ([#2484])
+- cw-schema/cw-schema-derive: Add new easily compressible schema and associated
+  proc-macro ([#2495])
+- cosmwasm-schema: Generate new cw-schemas alongside JSON schemas ([#2495])
 
 ## Changed
 
@@ -94,6 +97,7 @@ and this project adheres to
 - cosmwasm-vm: Enable partial reference-type support, enabling contracts
   compiled with Rust 1.82 or newer to be stored. ([#2473])
 - cosmwasm-std: Removed IBC fees ([#2479])
+- cosmwasm-schema: Remove unused result types from trait definition (#[2495])
 - cosmwasm-std: Split up `Validator` type into `Validator` and
   `ValidatorMetadata` to allow adding more fields to `ValidatorResponse` in the
   future. ([#2501])
@@ -144,6 +148,7 @@ and this project adheres to
 [#2479]: https://github.com/CosmWasm/cosmwasm/pull/2479
 [#2480]: https://github.com/CosmWasm/cosmwasm/pull/2480
 [#2484]: https://github.com/CosmWasm/cosmwasm/pull/2484
+[#2495]: https://github.com/CosmWasm/cosmwasm/pull/2495
 [#2501]: https://github.com/CosmWasm/cosmwasm/pull/2501
 
 ## [2.2.0] - 2024-12-17

@@ -1,0 +1,32 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "ibc_reflect_send_msg_QueryMsg",
+      "type": "enum",
+      "cases": {
+        "account": {
+          "type": "named",
+          "properties": {
+            "channel_id": {
+              "value": 1
+            }
+          }
+        },
+        "admin": {
+          "type": "named",
+          "properties": {}
+        },
+        "list_accounts": {
+          "type": "named",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    }
+  ]
+}
