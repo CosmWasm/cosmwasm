@@ -214,7 +214,9 @@ impl_hidden_constructor!(
 );
 
 /// Instances are created in the querier.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[non_exhaustive]
 pub struct Validator {
     /// The operator address of the validator (e.g. cosmosvaloper1...).
