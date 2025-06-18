@@ -446,6 +446,9 @@ expression: schema
             "null"
           ]
         },
+        "defaulting": {
+          "type": "boolean"
+        },
         "value": {
           "type": "integer",
           "format": "uint",
