@@ -650,35 +650,47 @@ mod tests {
         ])
     }
 
-    fn make_testing_options() -> CacheOptions {
-        CacheOptions {
-            base_dir: TempDir::new().unwrap().into_path(),
-            available_capabilities: default_capabilities(),
-            memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
-            instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
-        }
+    fn make_testing_options() -> (CacheOptions, TempDir) {
+        let temp_dir = TempDir::new().unwrap();
+        (
+            CacheOptions {
+                base_dir: temp_dir.path().into(),
+                available_capabilities: default_capabilities(),
+                memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
+                instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
+            },
+            temp_dir,
+        )
     }
 
-    fn make_stargate_testing_options() -> CacheOptions {
+    fn make_stargate_testing_options() -> (CacheOptions, TempDir) {
+        let temp_dir = TempDir::new().unwrap();
         let mut capabilities = default_capabilities();
         capabilities.insert("stargate".into());
-        CacheOptions {
-            base_dir: TempDir::new().unwrap().into_path(),
-            available_capabilities: capabilities,
-            memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
-            instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
-        }
+        (
+            CacheOptions {
+                base_dir: temp_dir.path().into(),
+                available_capabilities: capabilities,
+                memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
+                instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
+            },
+            temp_dir,
+        )
     }
 
-    fn make_ibc2_testing_options() -> CacheOptions {
+    fn make_ibc2_testing_options() -> (CacheOptions, TempDir) {
+        let temp_dir = TempDir::new().unwrap();
         let mut capabilities = default_capabilities();
         capabilities.insert("ibc2".into());
-        CacheOptions {
-            base_dir: TempDir::new().unwrap().into_path(),
-            available_capabilities: capabilities,
-            memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
-            instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
-        }
+        (
+            CacheOptions {
+                base_dir: temp_dir.path().into(),
+                available_capabilities: capabilities,
+                memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
+                instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
+            },
+            temp_dir,
+        )
     }
 
     /// Takes an instance and executes it
@@ -709,13 +721,12 @@ mod tests {
 
     #[test]
     fn new_base_dir_will_be_created() {
-        let my_base_dir = TempDir::new()
-            .unwrap()
-            .into_path()
-            .join("non-existent-sub-dir");
+        let temp_dir = TempDir::new().unwrap();
+        let my_base_dir = temp_dir.path().join("non-existent-sub-dir");
+        let (base_opts, _temp_dir) = make_testing_options();
         let options = CacheOptions {
             base_dir: my_base_dir.clone(),
-            ..make_testing_options()
+            ..base_opts
         };
         assert!(!my_base_dir.is_dir());
         let _cache = unsafe { Cache::<MockApi, MockStorage, MockQuerier>::new(options).unwrap() };
@@ -724,15 +735,17 @@ mod tests {
 
     #[test]
     fn store_code_checked_works() {
+        let (testing_opts, _temp_dir) = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
         cache.store_code(HACKATOM, true, true).unwrap();
     }
 
     #[test]
     fn store_code_without_persist_works() {
+        let (testing_opts, _temp_dir) = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, false).unwrap();
 
         assert!(
@@ -744,8 +757,9 @@ mod tests {
     #[test]
     // This property is required when the same bytecode is uploaded multiple times
     fn store_code_allows_saving_multiple_times() {
+        let (testing_opts, _temp_dir) = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
         cache.store_code(HACKATOM, true, true).unwrap();
         cache.store_code(HACKATOM, true, true).unwrap();
     }
@@ -754,8 +768,9 @@ mod tests {
     fn store_code_checked_rejects_invalid_contract() {
         let wasm = wat::parse_str(INVALID_CONTRACT_WAT).unwrap();
 
+        let (testing_opts, _temp_dir) = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
         let save_result = cache.store_code(&wasm, true, true);
         match save_result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
@@ -770,7 +785,8 @@ mod tests {
         // Who knows if and when the uploaded contract will be executed. Don't pollute
         // memory cache before the init call.
 
-        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let (testing_opts, _temp_dir) = make_testing_options();
+        let cache = unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         let backend = mock_backend(&[]);
@@ -785,8 +801,9 @@ mod tests {
 
     #[test]
     fn store_code_unchecked_works() {
+        let (testing_opts, _temp_dir) = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
         cache.store_code(HACKATOM, false, true).unwrap();
     }
 
@@ -794,15 +811,17 @@ mod tests {
     fn store_code_unchecked_accepts_invalid_contract() {
         let wasm = wat::parse_str(INVALID_CONTRACT_WAT).unwrap();
 
+        let (testing_opts, _temp_dir) = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
         cache.store_code(&wasm, false, true).unwrap();
     }
 
     #[test]
     fn load_wasm_works() {
+        let (testing_opts, _temp_dir) = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         let restored = cache.load_wasm(&checksum).unwrap();
@@ -842,8 +861,9 @@ mod tests {
 
     #[test]
     fn load_wasm_errors_for_non_existent_id() {
+        let (testing_opts, _temp_dir) = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = Checksum::from([
             5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
             5, 5, 5,
@@ -890,8 +910,9 @@ mod tests {
 
     #[test]
     fn remove_wasm_works() {
+        let (testing_opts, _temp_dir) = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
 
         // Store
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
@@ -921,7 +942,8 @@ mod tests {
 
     #[test]
     fn get_instance_finds_cached_module() {
-        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let (testing_opts, _temp_dir) = make_testing_options();
+        let cache = unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
         let backend = mock_backend(&[]);
         let _instance = cache
@@ -935,7 +957,8 @@ mod tests {
 
     #[test]
     fn get_instance_finds_cached_modules_and_stores_to_memory() {
-        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let (testing_opts, _temp_dir) = make_testing_options();
+        let cache = unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
@@ -998,7 +1021,7 @@ mod tests {
 
     #[test]
     fn get_instance_recompiles_module() {
-        let options = make_testing_options();
+        let (options, _temp_dir) = make_testing_options();
         let cache = unsafe { Cache::new(options.clone()).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
@@ -1028,7 +1051,8 @@ mod tests {
 
     #[test]
     fn call_instantiate_on_cached_contract() {
-        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let (testing_opts, _temp_dir) = make_testing_options();
+        let cache = unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // from file system
@@ -1114,7 +1138,8 @@ mod tests {
 
     #[test]
     fn call_execute_on_cached_contract() {
-        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let (testing_opts, _temp_dir) = make_testing_options();
+        let cache = unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // from file system
@@ -1224,7 +1249,7 @@ mod tests {
 
     #[test]
     fn call_execute_on_recompiled_contract() {
-        let options = make_testing_options();
+        let (options, _temp_dir) = make_testing_options();
         let cache = unsafe { Cache::new(options.clone()).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
@@ -1245,7 +1270,8 @@ mod tests {
 
     #[test]
     fn use_multiple_cached_instances_of_same_contract() {
-        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let (testing_opts, _temp_dir) = make_testing_options();
+        let cache = unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // these differentiate the two instances of the same contract
@@ -1305,7 +1331,8 @@ mod tests {
 
     #[test]
     fn resets_gas_when_reusing_instance() {
-        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let (testing_opts, _temp_dir) = make_testing_options();
+        let cache = unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         let backend1 = mock_backend(&[]);
@@ -1344,7 +1371,8 @@ mod tests {
 
     #[test]
     fn recovers_from_out_of_gas() {
-        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let (testing_opts, _temp_dir) = make_testing_options();
+        let cache = unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         let backend1 = mock_backend(&[]);
@@ -1458,8 +1486,10 @@ mod tests {
     #[test]
     fn analyze_works() {
         use Entrypoint as E;
+
+        let (testing_opts, _temp_dir) = make_stargate_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_stargate_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
 
         let checksum1 = cache.store_code(HACKATOM, true, true).unwrap();
         let report1 = cache.analyze(&checksum1).unwrap();
@@ -1545,8 +1575,9 @@ mod tests {
             }
         );
 
+        let (testing_opts, _temp_dir) = make_ibc2_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_ibc2_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
         let checksum5 = cache.store_code(IBC2, true, true).unwrap();
         let report5 = cache.analyze(&checksum5).unwrap();
         let ibc2_contract_entrypoints = BTreeSet::from([
@@ -1573,7 +1604,8 @@ mod tests {
 
     #[test]
     fn pinned_metrics_works() {
-        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let (testing_opts, _temp_dir) = make_testing_options();
+        let cache = unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         cache.pin(&checksum).unwrap();
@@ -1615,7 +1647,8 @@ mod tests {
 
     #[test]
     fn pin_unpin_works() {
-        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let (testing_opts, _temp_dir) = make_testing_options();
+        let cache = unsafe { Cache::new(testing_opts).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // check not pinned
@@ -1678,7 +1711,7 @@ mod tests {
 
     #[test]
     fn pin_recompiles_module() {
-        let options = make_testing_options();
+        let (options, _temp_dir) = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
@@ -1750,8 +1783,9 @@ mod tests {
         )
         .unwrap();
 
+        let (testing_opts, _temp_dir) = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(make_testing_options()).unwrap() };
+            unsafe { Cache::new(testing_opts).unwrap() };
 
         // making sure this doesn't panic
         let err = cache.store_code(&wasm, true, true).unwrap_err();
