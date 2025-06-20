@@ -104,8 +104,9 @@ fn contracts() -> Vec<Contract> {
 fn app(runtime: u64) {
     let start_time = SystemTime::now();
 
+    let temp_dir = TempDir::new().unwrap();
     let options = CacheOptions::new(
-        TempDir::new().unwrap().into_path(),
+        temp_dir.path(),
         capabilities_from_csv("iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1"),
         MEMORY_CACHE_SIZE,
         DEFAULT_MEMORY_LIMIT,
