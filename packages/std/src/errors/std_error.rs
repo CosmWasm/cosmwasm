@@ -4,7 +4,11 @@ use std::{error::Error, ops::Deref, str, string};
 
 use super::BT;
 
-use crate::errors::{RecoverPubkeyError, VerificationError};
+use crate::{
+    errors::{RecoverPubkeyError, VerificationError},
+    Decimal256RangeExceeded, DecimalRangeExceeded, SignedDecimal256RangeExceeded,
+    SignedDecimalRangeExceeded,
+};
 
 mod sealed {
     pub trait Sealed {}
@@ -122,9 +126,21 @@ where
         // "mom, can we have specialization?"
         // "we have specialization at home"
         // specialization at home:
-        let kind = if inner.is::<str::Utf8Error>() || inner.is::<string::FromUtf8Error>() {
+        let kind = if inner.is::<str::Utf8Error>()
+            || inner.is::<string::FromUtf8Error>()
+            || inner.is::<core::num::ParseIntError>()
+            || inner.is::<CoinFromStrError>()
+        {
             ErrorKind::Parsing
-        } else if inner.is::<ConversionOverflowError>() || inner.is::<OverflowError>() {
+        } else if inner.is::<ConversionOverflowError>()
+            || inner.is::<OverflowError>()
+            || inner.is::<RoundUpOverflowError>()
+            || inner.is::<RoundDownOverflowError>()
+            || inner.is::<DecimalRangeExceeded>()
+            || inner.is::<Decimal256RangeExceeded>()
+            || inner.is::<SignedDecimalRangeExceeded>()
+            || inner.is::<SignedDecimal256RangeExceeded>()
+        {
             ErrorKind::Overflow
         } else if inner.is::<serde_json::Error>()
             || inner.is::<rmp_serde::encode::Error>()
