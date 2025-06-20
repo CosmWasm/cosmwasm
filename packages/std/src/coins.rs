@@ -380,7 +380,7 @@ mod tests {
         assert_eq!(Coins::default().to_string(), "");
         assert_eq!(
             Coins::from_str(invalid).unwrap_err().to_string(),
-            "kind: Other, error: Missing amount or non-digit characters in amount"
+            "kind: Parsing, error: Missing amount or non-digit characters in amount"
         );
     }
 
