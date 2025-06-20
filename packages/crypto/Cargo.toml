@@ -16,7 +16,7 @@ ark-bls12-381 = "0.5.0"
 ark-ec = { version = "0.5.0", features = ["parallel"] }
 ark-ff = { version = "0.5.0", features = ["asm", "parallel"] }
 ark-serialize = "0.5.0"
-cosmwasm-core = { version = "3.0.0-rc.0", path = "../core" }
+cosmwasm-core = { version = "3.0.0-rc.1", path = "../core" }
 digest = "0.10"
 ed25519-zebra = { version = "4.0.3", default-features = false }
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
