@@ -70,6 +70,7 @@ workflows:
       - package_check
       - package_schema
       - package_schema_derive
+      - package_cw_schema
       - package_std
       - package_vm
       - package_vm_derive
@@ -418,6 +419,33 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_schema_derive-rust:1.81-{{ checksum "Cargo.lock" }}
+
+  package_cw_schema:
+    docker:
+      - image: rust:1.81
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_cw_schema-rust:1.81-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/cw-schema
+          command: cargo build --locked
+      - run:
+          name: Run tests
+          working_directory: ~/project/packages/cw-schema
+          command: cargo test --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_cw_schema-rust:1.81-{{ checksum "Cargo.lock" }}
 
   package_std:
     docker:
