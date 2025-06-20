@@ -72,5 +72,5 @@ And [Importing](./Importing.md) contains information about pulling in other
 contracts or crates that have been published.
 
 Please replace this README file with information about your specific project.
-You can keep the `Developing.md` and `Publishing.md` files as useful referenced,
+You can keep the `Developing.md` and `Publishing.md` files as useful references,
 but please set some proper description in the README.

@@ -1,0 +1,62 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "ibc_callbacks_msg_ExecuteMsg",
+      "type": "enum",
+      "cases": {
+        "transfer": {
+          "type": "named",
+          "properties": {
+            "callback_type": {
+              "defaulting": true,
+              "description": "Who should receive callbacks for the message",
+              "value": 3
+            },
+            "channel_id": {
+              "description": "The channel to send the packet through",
+              "value": 1
+            },
+            "timeout_seconds": {
+              "description": "The amount of seconds from now the transfer should timeout at",
+              "value": 2
+            },
+            "to_address": {
+              "description": "Address on the destination chain",
+              "value": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "ibc_callbacks_msg_CallbackType",
+      "type": "enum",
+      "cases": {
+        "both": {
+          "description": "Both the source contract and the destination address should receive callbacks",
+          "type": "unit"
+        },
+        "dst": {
+          "description": "Only the destination address should receive callbacks",
+          "type": "unit"
+        },
+        "src": {
+          "description": "Only this contract on the source chain should receive callbacks",
+          "type": "unit"
+        }
+      }
+    }
+  ]
+}

@@ -14,7 +14,8 @@ use crate::query::SupplyResponse;
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
-    DelegationResponse, FullDelegation, StakingQuery, Validator, ValidatorResponse,
+    DelegationResponse, FullDelegation, StakingQuery, Validator, ValidatorMetadata,
+    ValidatorResponse,
 };
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{
@@ -589,7 +590,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn query_all_validators(&self) -> StdResult<Vec<Validator>> {
+    pub fn query_all_validators(&self) -> StdResult<Vec<ValidatorMetadata>> {
         let request = StakingQuery::AllValidators {}.into();
         let res: AllValidatorsResponse = self.query(&request)?;
         Ok(res.validators)

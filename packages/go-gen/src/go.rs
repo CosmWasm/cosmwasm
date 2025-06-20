@@ -1,7 +1,7 @@
 use std::fmt::{self, Display, Write};
 
+use heck::ToPascalCase;
 use indenter::indented;
-use inflector::Inflector;
 
 use crate::utils::replace_acronyms;
 

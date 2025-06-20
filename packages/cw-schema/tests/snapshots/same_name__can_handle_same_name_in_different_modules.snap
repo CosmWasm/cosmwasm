@@ -1,0 +1,50 @@
+---
+source: packages/cw-schema/tests/same_name.rs
+expression: schema
+---
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "same_name_Combined",
+      "type": "struct",
+      "properties": {
+        "module1": {
+          "value": 1
+        },
+        "module2": {
+          "value": 3
+        }
+      }
+    },
+    {
+      "name": "same_name_module1_Test",
+      "type": "struct",
+      "properties": {
+        "foo": {
+          "value": 2
+        }
+      }
+    },
+    {
+      "name": "usize",
+      "type": "integer",
+      "precision": 64,
+      "signed": false
+    },
+    {
+      "name": "same_name_module2_Test",
+      "type": "struct",
+      "properties": {
+        "bar": {
+          "value": 4
+        }
+      }
+    },
+    {
+      "name": "f32",
+      "type": "float"
+    }
+  ]
+}

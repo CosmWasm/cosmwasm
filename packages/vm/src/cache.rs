@@ -347,7 +347,7 @@ where
 
     /// Pins a Module that was previously stored via [`Cache::store_code`].
     ///
-    /// The module is lookup first in the file system cache. If not found,
+    /// The module is looked up first in the file system cache. If not found,
     /// the code is loaded from the file system, compiled, and stored into the
     /// pinned cache.
     ///
