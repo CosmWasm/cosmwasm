@@ -1,7 +1,7 @@
 use cosmwasm_std::{Instantiate2AddressError, StdError};
 use thiserror::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum ContractError {
     #[error("{0}")]
     /// this is needed so we can use `bucket.load(...)?` and have it auto-converted to the custom error

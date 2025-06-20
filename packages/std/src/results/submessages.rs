@@ -326,7 +326,9 @@ pub struct MsgResponse {
 #[allow(deprecated)]
 mod tests {
     use super::*;
-    use crate::{coins, from_json, to_json_vec, Attribute, BankMsg, StdError, StdResult};
+    use crate::{
+        coins, errors::ErrorKind, from_json, to_json_vec, Attribute, BankMsg, StdError, StdResult,
+    };
 
     #[test]
     fn sub_msg_new_works() {
@@ -467,13 +469,13 @@ mod tests {
 
         // fails for additional attributes
         let parse: StdResult<SubMsgResult> = from_json(br#"{"unrelated":321,"error":"broken"}"#);
-        match parse.unwrap_err() {
-            StdError::ParseErr { .. } => {}
+        match parse.unwrap_err().kind() {
+            ErrorKind::Serialization => {}
             err => panic!("Unexpected error: {err:?}"),
         }
         let parse: StdResult<SubMsgResult> = from_json(br#"{"error":"broken","unrelated":321}"#);
-        match parse.unwrap_err() {
-            StdError::ParseErr { .. } => {}
+        match parse.unwrap_err().kind() {
+            ErrorKind::Serialization => {}
             err => panic!("Unexpected error: {err:?}"),
         }
     }
@@ -558,11 +560,11 @@ mod tests {
             })
         );
 
-        let original: Result<SubMsgResponse, StdError> = Err(StdError::generic_err("broken"));
+        let original: Result<SubMsgResponse, StdError> = Err(StdError::msg("broken"));
         let converted: SubMsgResult = original.into();
         assert_eq!(
             converted,
-            SubMsgResult::Err("Generic error: broken".to_string())
+            SubMsgResult::Err("kind: Other, error: broken".to_string())
         );
     }
 

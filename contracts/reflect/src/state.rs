@@ -18,7 +18,7 @@ pub struct State {
 pub fn load_reply(storage: &dyn Storage, id: u64) -> StdResult<Reply> {
     storage
         .get(&namespace_with_key(&[RESULT_PREFIX], &id.to_be_bytes()))
-        .ok_or_else(|| StdError::not_found(format!("reply {id}")))
+        .ok_or_else(|| StdError::msg(format!("reply {id} not found")))
         .and_then(from_json)
 }
 
@@ -37,7 +37,7 @@ pub fn remove_reply(storage: &mut dyn Storage, id: u64) {
 pub fn load_config(storage: &dyn Storage) -> StdResult<State> {
     storage
         .get(&to_length_prefixed(CONFIG_KEY))
-        .ok_or_else(|| StdError::not_found("config"))
+        .ok_or_else(|| StdError::msg("config not found"))
         .and_then(from_json)
 }
 

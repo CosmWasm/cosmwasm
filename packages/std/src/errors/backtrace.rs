@@ -54,24 +54,6 @@ impl Display for Stub {
     }
 }
 
-/// This macro implements `From` for a given error type to a given error type where
-/// the target error has a `backtrace` field.
-/// This is meant as a replacement for `thiserror`'s `#[from]` attribute, which does not
-/// work with our custom backtrace wrapper.
-macro_rules! impl_from_err {
-    ($from:ty, $to:ty, $map:path) => {
-        impl From<$from> for $to {
-            fn from(err: $from) -> Self {
-                $map {
-                    source: err,
-                    backtrace: $crate::errors::backtrace::BT::capture(),
-                }
-            }
-        }
-    };
-}
-pub(crate) use impl_from_err;
-
 #[cfg(test)]
 mod tests {
     use super::*;

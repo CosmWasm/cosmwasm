@@ -52,7 +52,7 @@ fn initialization_with_missing_validator() {
     let msg = res.unwrap_err();
     assert_eq!(
         msg,
-        "Generic error: my-validator is not in the current validator set"
+        "kind: Other, error: my-validator is not in the current validator set"
     );
 }
 

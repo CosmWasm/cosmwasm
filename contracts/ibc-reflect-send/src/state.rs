@@ -38,7 +38,7 @@ pub fn may_load_account(storage: &dyn Storage, id: &str) -> StdResult<Option<Acc
 }
 
 pub fn load_account(storage: &dyn Storage, id: &str) -> StdResult<AccountData> {
-    may_load_account(storage, id)?.ok_or_else(|| StdError::not_found(format!("account {id}")))
+    may_load_account(storage, id)?.ok_or_else(|| StdError::msg(format!("account {id} not found")))
 }
 
 pub fn save_account(storage: &mut dyn Storage, id: &str, account: &AccountData) -> StdResult<()> {
@@ -71,7 +71,7 @@ pub fn range_accounts(
 pub fn load_config(storage: &dyn Storage) -> StdResult<Config> {
     storage
         .get(&to_length_prefixed(KEY_CONFIG))
-        .ok_or_else(|| StdError::not_found("config"))
+        .ok_or_else(|| StdError::msg("config not found"))
         .and_then(from_json)
 }
 

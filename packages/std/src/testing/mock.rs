@@ -118,23 +118,20 @@ impl Api for MockApi {
         let canonical = self.addr_canonicalize(input)?;
         let normalized = self.addr_humanize(&canonical)?;
         if input != normalized.as_str() {
-            return Err(StdError::generic_err(
-                "Invalid input: address not normalized",
-            ));
+            return Err(StdError::msg("Invalid input: address not normalized"));
         }
         Ok(Addr::unchecked(input))
     }
 
     fn addr_canonicalize(&self, input: &str) -> StdResult<CanonicalAddr> {
-        let hrp_str = CheckedHrpstring::new::<Bech32>(input)
-            .map_err(|_| StdError::generic_err("Error decoding bech32"))?;
+        let hrp_str = CheckedHrpstring::new::<Bech32>(input)?;
 
         if !hrp_str
             .hrp()
             .as_bytes()
             .eq_ignore_ascii_case(self.bech32_prefix.as_bytes())
         {
-            return Err(StdError::generic_err("Wrong bech32 prefix"));
+            return Err(StdError::msg("Wrong bech32 prefix"));
         }
 
         let bytes: Vec<u8> = hrp_str.byte_iter().collect();
@@ -145,11 +142,8 @@ impl Api for MockApi {
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
         validate_length(canonical.as_ref())?;
 
-        let prefix = Hrp::parse(self.bech32_prefix)
-            .map_err(|_| StdError::generic_err("Invalid bech32 prefix"))?;
-        encode::<Bech32>(prefix, canonical.as_slice())
-            .map(Addr::unchecked)
-            .map_err(|_| StdError::generic_err("Bech32 encoding error"))
+        let prefix = Hrp::parse(self.bech32_prefix)?;
+        Ok(encode::<Bech32>(prefix, canonical.as_slice()).map(Addr::unchecked)?)
     }
 
     fn bls12_381_aggregate_g1(&self, g1s: &[u8]) -> Result<[u8; 48], VerificationError> {
@@ -333,7 +327,7 @@ impl MockApi {
 fn validate_length(bytes: &[u8]) -> StdResult<()> {
     match bytes.len() {
         1..=255 => Ok(()),
-        _ => Err(StdError::generic_err("Invalid canonical address length")),
+        _ => Err(StdError::msg("Invalid canonical address length")),
     }
 }
 
@@ -1652,10 +1646,11 @@ mod tests {
     fn addr_humanize_input_length() {
         let api = MockApi::default();
         let input = CanonicalAddr::from(vec![]);
-        assert_eq!(
-            api.addr_humanize(&input).unwrap_err(),
-            StdError::generic_err("Invalid canonical address length")
-        );
+        assert!(api
+            .addr_humanize(&input)
+            .unwrap_err()
+            .to_string()
+            .ends_with("Invalid canonical address length"));
     }
 
     #[test]
@@ -2921,7 +2916,10 @@ mod tests {
         });
         match result {
             SystemResult::Ok(ContractResult::Err(err)) => {
-                assert_eq!(err, "Error parsing into type cosmwasm_std::testing::mock::tests::wasm_querier_works::{{closure}}::MyMsg: expected value at line 1 column 1")
+                assert_eq!(
+                    err,
+                    "kind: Serialization, error: expected value at line 1 column 1"
+                )
             }
             res => panic!("Unexpected result: {res:?}"),
         }

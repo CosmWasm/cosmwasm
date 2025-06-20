@@ -35,7 +35,7 @@ fn instantiate_fails() {
     let msg = res.unwrap_err();
     assert_eq!(
         msg,
-        "Generic error: You can only use this contract for migrations"
+        "kind: Other, error: You can only use this contract for migrations"
     );
 }
 

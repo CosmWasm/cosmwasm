@@ -1,7 +1,7 @@
 use alloc::{string::String, vec::Vec};
 use base64::{engine::GeneralPurpose, Engine};
 
-use crate::{StdError, StdResult};
+use crate::StdResult;
 
 /// Base64 encoding engine used in conversion to/from base64.
 ///
@@ -18,7 +18,7 @@ pub fn from_base64<I>(input: I) -> StdResult<Vec<u8>>
 where
     I: AsRef<[u8]>,
 {
-    B64_ENGINE.decode(input).map_err(StdError::invalid_base64)
+    Ok(B64_ENGINE.decode(input)?)
 }
 
 /// Encode a bag of bytes into the Base64 format
@@ -34,7 +34,7 @@ pub fn from_hex<I>(input: I) -> StdResult<Vec<u8>>
 where
     I: AsRef<[u8]>,
 {
-    hex::decode(input).map_err(StdError::invalid_hex)
+    Ok(hex::decode(input)?)
 }
 
 /// Encode a bag of bytes into the hex format

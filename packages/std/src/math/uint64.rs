@@ -6,8 +6,8 @@ use core::ops::{
 };
 
 use crate::errors::{
-    CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
-    OverflowOperation, StdError,
+    CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, ErrorKind,
+    OverflowError, OverflowOperation, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
@@ -345,7 +345,9 @@ impl TryFrom<&str> for Uint64 {
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         match val.parse::<u64>() {
             Ok(u) => Ok(Uint64(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u64: {e}"))),
+            Err(e) => {
+                Err(StdError::msg(format_args!("Parsing u64: {e}")).with_kind(ErrorKind::Parsing))
+            }
         }
     }
 }

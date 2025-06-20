@@ -5,6 +5,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
+use crate::errors::ErrorKind;
 use crate::prelude::*;
 use crate::{StdError, StdResult};
 
@@ -26,7 +27,8 @@ impl Checksum {
     /// Errors if the string contains non-hex characters or does not contain 32 bytes.
     pub fn from_hex(input: &str) -> StdResult<Self> {
         let mut binary = [0u8; 32];
-        hex::decode_to_slice(input, &mut binary).map_err(StdError::invalid_hex)?;
+        hex::decode_to_slice(input, &mut binary)
+            .map_err(|err| StdError::from(err).with_kind(ErrorKind::Parsing))?;
 
         Ok(Self(binary))
     }

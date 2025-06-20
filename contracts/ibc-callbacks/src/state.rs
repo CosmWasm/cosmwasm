@@ -29,7 +29,7 @@ pub fn save_stats(storage: &mut dyn Storage, counts: &CallbackStats) -> StdResul
 fn load_item<T: DeserializeOwned>(storage: &dyn Storage, key: &[u8]) -> StdResult<T> {
     storage
         .get(&to_length_prefixed(key))
-        .ok_or_else(|| StdError::not_found(type_name::<T>()))
+        .ok_or_else(|| StdError::msg(format_args!("{} not found", type_name::<T>())))
         .and_then(from_json)
 }
 

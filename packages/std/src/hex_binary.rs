@@ -64,7 +64,10 @@ impl HexBinary {
     /// ```
     pub fn to_array<const LENGTH: usize>(&self) -> StdResult<[u8; LENGTH]> {
         if self.len() != LENGTH {
-            return Err(StdError::invalid_data_size(LENGTH, self.len()));
+            return Err(StdError::msg(format_args!(
+                "invalid length. expected {LENGTH}, got {}",
+                self.len()
+            )));
         }
 
         let mut out: [u8; LENGTH] = [0; LENGTH];
@@ -285,7 +288,7 @@ impl de::Visitor<'_> for BytesVisitor {
 mod tests {
     use super::*;
 
-    use crate::{assert_hash_works, StdError};
+    use crate::{assert_hash_works, errors::ErrorKind};
 
     #[test]
     fn from_hex_works() {
@@ -304,42 +307,36 @@ mod tests {
         assert_eq!(data.as_slice(), b"randomiZ");
 
         // odd
-        match HexBinary::from_hex("123").unwrap_err() {
-            StdError::InvalidHex { msg, .. } => {
-                assert_eq!(msg, "Odd number of digits")
-            }
-            _ => panic!("Unexpected error type"),
-        }
+        assert!(HexBinary::from_hex("123")
+            .unwrap_err()
+            .to_string()
+            .ends_with("Odd number of digits"));
         // non-hex
-        match HexBinary::from_hex("efgh").unwrap_err() {
-            StdError::InvalidHex { msg, .. } => {
-                assert_eq!(msg, "Invalid character 'g' at position 2")
-            }
-            _ => panic!("Unexpected error type"),
-        }
+        assert!(HexBinary::from_hex("efgh")
+            .unwrap_err()
+            .to_string()
+            .ends_with("Invalid character 'g' at position 2"));
         // 0x prefixed
-        match HexBinary::from_hex("0xaa").unwrap_err() {
-            StdError::InvalidHex { msg, .. } => {
-                assert_eq!(msg, "Invalid character 'x' at position 1")
-            }
-            _ => panic!("Unexpected error type"),
-        }
+        assert!(HexBinary::from_hex("0xaa")
+            .unwrap_err()
+            .to_string()
+            .ends_with("Invalid character 'x' at position 1"));
         // spaces
         assert!(matches!(
-            HexBinary::from_hex("aa ").unwrap_err(),
-            StdError::InvalidHex { .. }
+            HexBinary::from_hex("aa ").unwrap_err().kind(),
+            ErrorKind::Encoding,
         ));
         assert!(matches!(
-            HexBinary::from_hex(" aa").unwrap_err(),
-            StdError::InvalidHex { .. }
+            HexBinary::from_hex(" aa").unwrap_err().kind(),
+            ErrorKind::Encoding,
         ));
         assert!(matches!(
-            HexBinary::from_hex("a a").unwrap_err(),
-            StdError::InvalidHex { .. }
+            HexBinary::from_hex("a a").unwrap_err().kind(),
+            ErrorKind::Encoding,
         ));
         assert!(matches!(
-            HexBinary::from_hex(" aa ").unwrap_err(),
-            StdError::InvalidHex { .. }
+            HexBinary::from_hex(" aa ").unwrap_err().kind(),
+            ErrorKind::Encoding,
         ));
     }
 
@@ -373,15 +370,9 @@ mod tests {
         // invalid size
         let binary = HexBinary::from(&[1, 2, 3]);
         let error = binary.to_array::<8>().unwrap_err();
-        match error {
-            StdError::InvalidDataSize {
-                expected, actual, ..
-            } => {
-                assert_eq!(expected, 8);
-                assert_eq!(actual, 3);
-            }
-            err => panic!("Unexpected error: {err:?}"),
-        }
+        assert!(error
+            .to_string()
+            .ends_with("invalid length. expected 8, got 3"));
 
         // long array (32 bytes)
         let binary =

@@ -65,7 +65,7 @@ fn execute_transfer(
     let coin = match &*info.funds {
         [coin] if !coin.amount.is_zero() => coin,
         _ => {
-            return Err(StdError::generic_err(
+            return Err(StdError::msg(
                 "Must send exactly one denom to trigger ics-20 transfer",
             ))
         }
@@ -142,7 +142,7 @@ pub fn ibc_destination_callback(
                 .query_balance(&transfer.receiver, &coin.denom)?;
             ensure!(
                 balance.amount >= coin.amount,
-                StdError::generic_err(format!(
+                StdError::msg(format_args!(
                     "Didn't receive expected funds. expected: {coin}, have: {balance}"
                 ))
             );

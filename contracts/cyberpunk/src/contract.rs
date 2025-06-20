@@ -56,8 +56,7 @@ fn execute_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractErr
         ad: &[],
         hash_length: 32,
     };
-    let hash = argon2::hash_encoded(password, salt, &config)
-        .map_err(|e| StdError::generic_err(format!("hash_encoded errored: {e}")))?;
+    let hash = argon2::hash_encoded(password, salt, &config).map_err(StdError::from)?;
     // let matches = argon2::verify_encoded(&hash, password).unwrap();
     // assert!(matches);
     Ok(Response::new().set_data(hash.into_bytes()))
@@ -106,13 +105,13 @@ fn execute_allocate_large_memory(pages: u32) -> Result<Response, ContractError> 
         use core::arch::wasm32;
         let old_size = wasm32::memory_grow(0, pages as usize);
         if old_size == usize::max_value() {
-            return Err(StdError::generic_err("memory.grow failed").into());
+            return Err(StdError::msg("memory.grow failed").into());
         }
         Ok(Response::new().set_data((old_size as u32).to_be_bytes()))
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    Err(StdError::generic_err("Unsupported architecture").into())
+    Err(StdError::msg("Unsupported architecture").into())
 }
 
 fn execute_panic() -> Result<Response, ContractError> {
@@ -139,7 +138,7 @@ fn execute_unreachable() -> Result<Response, ContractError> {
     core::arch::wasm32::unreachable();
 
     #[cfg(not(target_arch = "wasm32"))]
-    Err(StdError::generic_err("Unsupported architecture").into())
+    Err(StdError::msg("Unsupported architecture").into())
 }
 
 fn execute_mirror_env(env: Env) -> Result<Response, ContractError> {

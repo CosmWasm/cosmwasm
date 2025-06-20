@@ -37,7 +37,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             let data = deps
                 .storage
                 .get(STATE_KEY)
-                .ok_or_else(|| StdError::generic_err("State not found."))?;
+                .ok_or_else(|| StdError::msg("State not found."))?;
             Ok(Binary::from(data))
         }
     }
@@ -52,7 +52,7 @@ pub fn ibc2_packet_ack(
     let data = deps
         .storage
         .get(STATE_KEY)
-        .ok_or_else(|| StdError::generic_err("State not found."))?;
+        .ok_or_else(|| StdError::msg("State not found."))?;
     let state: State = from_json(data)?;
 
     deps.storage.set(
@@ -78,7 +78,7 @@ pub fn ibc2_packet_receive(
     let data = deps
         .storage
         .get(STATE_KEY)
-        .ok_or_else(|| StdError::generic_err("State not found."))?;
+        .ok_or_else(|| StdError::msg("State not found."))?;
     let state: State = from_json(data)?;
 
     deps.storage.set(
@@ -133,7 +133,7 @@ pub fn ibc2_packet_timeout(
     let data = deps
         .storage
         .get(STATE_KEY)
-        .ok_or_else(|| StdError::generic_err("State not found."))?;
+        .ok_or_else(|| StdError::msg("State not found."))?;
     let state: State = from_json(data)?;
 
     deps.storage.set(
@@ -156,7 +156,7 @@ pub fn ibc2_packet_send(
     let data = deps
         .storage
         .get(STATE_KEY)
-        .ok_or_else(|| StdError::generic_err("State not found."))?;
+        .ok_or_else(|| StdError::msg("State not found."))?;
     let state: State = from_json(data)?;
 
     deps.storage.set(

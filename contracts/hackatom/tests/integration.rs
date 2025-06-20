@@ -97,7 +97,7 @@ fn instantiate_and_query() {
     // bad query returns parse error (pass wrong type - this connection is not enforced)
     let qres = query(&mut deps, mock_env(), ExecuteMsg::Panic {});
     let msg = qres.unwrap_err();
-    assert!(msg.contains("Error parsing"));
+    assert!(msg.contains("kind: Serialization"), "{msg}");
 }
 
 #[test]
@@ -178,7 +178,7 @@ fn fails_on_bad_init() {
     let res: ContractResult<Response> =
         instantiate(&mut deps, mock_env(), info, ExecuteMsg::Panic {});
     let msg = res.unwrap_err();
-    assert!(msg.contains("Error parsing"));
+    assert!(msg.contains("kind: Serialization"), "{msg}");
 }
 
 #[test]
@@ -407,7 +407,10 @@ fn execute_allocate_large_memory() {
         execute_info,
         ExecuteMsg::AllocateLargeMemory { pages: 1600 },
     );
-    assert_eq!(result.unwrap_err(), "Generic error: memory.grow failed");
+    assert_eq!(
+        result.unwrap_err(),
+        "kind: Other, error: memory.grow failed"
+    );
     let gas_used = gas_before - deps.get_gas_left();
     // Gas consumption is relatively small
     // Note: the exact gas usage depends on the Rust version used to compile Wasm,

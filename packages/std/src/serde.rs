@@ -3,17 +3,15 @@
 // 1. To easily ensure that all calling libraries use the same version (minimize code size)
 // 2. To allow us to switch out to eg. serde-json-core more easily
 
-use core::any::type_name;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::Binary;
-use crate::{StdError, StdResult};
+use crate::{Binary, StdResult};
 
 /// Deserializes the given JSON bytes to a data structure.
 ///
 /// Errors if the input is not valid JSON or cannot be deserialized to the given type.
 pub fn from_json<T: DeserializeOwned>(value: impl AsRef<[u8]>) -> StdResult<T> {
-    serde_json::from_slice(value.as_ref()).map_err(|e| StdError::parse_err(type_name::<T>(), e))
+    Ok(serde_json::from_slice(value.as_ref())?)
 }
 
 /// Serializes the given data structure as a JSON byte vector.
@@ -21,7 +19,7 @@ pub fn to_json_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
-    serde_json::to_vec(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
+    Ok(serde_json::to_vec(data)?)
 }
 
 /// Serializes the given data structure as a JSON string.
@@ -29,7 +27,7 @@ pub fn to_json_string<T>(data: &T) -> StdResult<String>
 where
     T: Serialize + ?Sized,
 {
-    serde_json::to_string(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
+    Ok(serde_json::to_string(data)?)
 }
 
 /// Serializes the given data structure as JSON bytes.

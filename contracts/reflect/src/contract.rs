@@ -150,13 +150,13 @@ fn query_chain(
     request: &QueryRequest<SpecialQuery>,
 ) -> StdResult<ChainResponse> {
     let raw = to_json_vec(request).map_err(|serialize_err| {
-        StdError::generic_err(format!("Serializing QueryRequest: {serialize_err}"))
+        StdError::msg(format_args!("Serializing QueryRequest: {serialize_err}"))
     })?;
     match deps.querier.raw_query(&raw) {
-        SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
+        SystemResult::Err(system_err) => Err(StdError::msg(format_args!(
             "Querier system error: {system_err}"
         ))),
-        SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(format!(
+        SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::msg(format_args!(
             "Querier contract error: {contract_err}"
         ))),
         SystemResult::Ok(ContractResult::Ok(value)) => Ok(ChainResponse { data: value }),
@@ -177,7 +177,7 @@ mod tests {
     use cosmwasm_std::testing::{message_info, mock_env, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
         coin, coins, from_json, BalanceResponse, BankMsg, BankQuery, Binary, Event, StakingMsg,
-        StdError, SubMsgResponse, SubMsgResult,
+        SubMsgResponse, SubMsgResult,
     };
 
     #[test]
@@ -261,7 +261,10 @@ mod tests {
 
         let msg = ExecuteMsg::ReflectMsg { msgs: payload };
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-        assert_eq!(err, ReflectError::MessagesEmpty);
+        assert_eq!(
+            err.to_string(),
+            "Messages empty. Must reflect at least one message"
+        );
     }
 
     #[test]
@@ -338,11 +341,8 @@ mod tests {
 
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
-            err,
-            ReflectError::NotCurrentOwner {
-                expected: creator.to_string(),
-                actual: random.to_string(),
-            }
+            err.to_string(),
+            "Permission denied: the sender is not the current owner"
         );
     }
 
@@ -361,8 +361,11 @@ mod tests {
         };
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         match err {
-            ReflectError::Std(StdError::GenericErr { msg, .. }) => {
-                assert!(msg.contains("Error decoding bech32"))
+            ReflectError::Std(err) => {
+                assert!(
+                    err.to_string().contains("kind: Other, error: parse failed"),
+                    "{err}"
+                )
             }
             e => panic!("Unexpected error: {e:?}"),
         }

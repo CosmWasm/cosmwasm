@@ -26,17 +26,17 @@ pub fn ibc_channel_open(
     let channel = msg.channel();
 
     if channel.order != IbcOrder::Ordered {
-        return Err(StdError::generic_err("Only supports ordered channels"));
+        return Err(StdError::msg("Only supports ordered channels"));
     }
     if channel.version.as_str() != IBC_APP_VERSION {
-        return Err(StdError::generic_err(format!(
+        return Err(StdError::msg(format_args!(
             "Must set version to `{IBC_APP_VERSION}`"
         )));
     }
 
     if let Some(counter_version) = msg.counterparty_version() {
         if counter_version != IBC_APP_VERSION {
-            return Err(StdError::generic_err(format!(
+            return Err(StdError::msg(format_args!(
                 "Counterparty version must be `{IBC_APP_VERSION}`"
             )));
         }
@@ -165,7 +165,7 @@ fn acknowledge_who_am_i(
             }
             save_account(deps.storage, &caller, &acct)?;
         }
-        None => return Err(StdError::generic_err("no account to update")),
+        None => return Err(StdError::msg("no account to update")),
     }
 
     Ok(IbcBasicResponse::new().add_attribute("action", "acknowledge_who_am_i"))
@@ -192,7 +192,7 @@ fn acknowledge_balances(
         Some(acct) => {
             if let Some(old_addr) = acct.remote_addr {
                 if old_addr != account {
-                    return Err(StdError::generic_err(format!(
+                    return Err(StdError::msg(format_args!(
                         "remote account changed from {old_addr} to {account}"
                     )));
                 }
@@ -207,7 +207,7 @@ fn acknowledge_balances(
                 },
             )?;
         }
-        None => return Err(StdError::generic_err("no account to update")),
+        None => return Err(StdError::msg("no account to update")),
     }
 
     Ok(IbcBasicResponse::new().add_attribute("action", "acknowledge_balances"))

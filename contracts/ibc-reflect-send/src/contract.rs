@@ -50,7 +50,7 @@ pub fn handle_update_admin(
     // auth check
     let mut cfg = load_config(deps.storage)?;
     if info.sender != cfg.admin {
-        return Err(StdError::generic_err("Only admin may set new admin"));
+        return Err(StdError::msg("Only admin may set new admin"));
     }
     cfg.admin = deps.api.addr_validate(&new_admin)?;
     save_config(deps.storage, &cfg)?;
@@ -70,7 +70,7 @@ pub fn handle_send_msgs(
     // auth check
     let cfg = load_config(deps.storage)?;
     if info.sender != cfg.admin {
-        return Err(StdError::generic_err("Only admin may send messages"));
+        return Err(StdError::msg("Only admin may send messages"));
     }
     // ensure the channel exists (not found if not registered)
     load_account(deps.storage, &channel_id)?;
@@ -98,7 +98,7 @@ pub fn handle_check_remote_balance(
     // auth check
     let cfg = load_config(deps.storage)?;
     if info.sender != cfg.admin {
-        return Err(StdError::generic_err("Only admin may send messages"));
+        return Err(StdError::msg("Only admin may send messages"));
     }
     // ensure the channel exists (not found if not registered)
     load_account(deps.storage, &channel_id)?;
@@ -130,14 +130,14 @@ pub fn handle_send_funds(
     let amount = match info.funds.pop() {
         Some(coin) => coin,
         None => {
-            return Err(StdError::generic_err(
+            return Err(StdError::msg(
                 "you must send the coins you wish to ibc transfer",
             ))
         }
     };
     // if there are any more coins, reject the message
     if !info.funds.is_empty() {
-        return Err(StdError::generic_err("you can only ibc transfer one coin"));
+        return Err(StdError::msg("you can only ibc transfer one coin"));
     }
 
     // load remote account
@@ -145,7 +145,7 @@ pub fn handle_send_funds(
     let remote_addr = match data.remote_addr {
         Some(addr) => addr,
         None => {
-            return Err(StdError::generic_err(
+            return Err(StdError::msg(
                 "We don't have the remote address for this channel",
             ))
         }

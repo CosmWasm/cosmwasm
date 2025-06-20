@@ -210,7 +210,7 @@ pub fn query_verify_ethereum_text(
     // Decompose signature
     let (v, rs) = match signature.split_last() {
         Some(pair) => pair,
-        None => return Err(StdError::generic_err("Signature must not be empty")),
+        None => return Err(StdError::msg("Signature must not be empty")),
     };
     let recovery = get_recovery_param(*v)?;
 
@@ -326,7 +326,7 @@ mod tests {
     use cosmwasm_std::testing::{
         message_info, mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{from_json, OwnedDeps, RecoverPubkeyError, VerificationError};
+    use cosmwasm_std::{from_json, OwnedDeps, StdErrorKind};
     use hex_literal::hex;
 
     const CREATOR: &str = "creator";
@@ -426,11 +426,8 @@ mod tests {
         let res = query(deps.as_ref(), mock_env(), verify_msg);
         assert!(res.is_err());
         assert!(matches!(
-            res.unwrap_err(),
-            StdError::VerificationErr {
-                source: VerificationError::InvalidPubkeyFormat,
-                ..
-            }
+            res.unwrap_err().kind(),
+            StdErrorKind::Cryptography,
         ))
     }
 
@@ -500,11 +497,8 @@ mod tests {
             signer_address: signer_address.into(),
         };
         let result = query(deps.as_ref(), mock_env(), verify_msg);
-        match result.unwrap_err() {
-            StdError::RecoverPubkeyErr {
-                source: RecoverPubkeyError::UnknownErr { .. },
-                ..
-            } => {}
+        match result.unwrap_err().kind() {
+            StdErrorKind::Cryptography => {}
             err => panic!("Unexpected error: {err:?}"),
         }
     }
@@ -715,11 +709,8 @@ mod tests {
         let res = query(deps.as_ref(), mock_env(), verify_msg);
         assert!(res.is_err());
         assert!(matches!(
-            res.unwrap_err(),
-            StdError::VerificationErr {
-                source: VerificationError::InvalidPubkeyFormat,
-                ..
-            }
+            res.unwrap_err().kind(),
+            StdErrorKind::Cryptography
         ))
     }
 
@@ -781,11 +772,8 @@ mod tests {
         let res = query(deps.as_ref(), mock_env(), verify_msg);
         assert!(res.is_err());
         assert!(matches!(
-            res.unwrap_err(),
-            StdError::VerificationErr {
-                source: VerificationError::InvalidPubkeyFormat,
-                ..
-            }
+            res.unwrap_err().kind(),
+            StdErrorKind::Cryptography,
         ))
     }
 

@@ -9,7 +9,7 @@ use anyhow::Context;
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 
-use cosmwasm_std::from_json;
+use cosmwasm_std::{from_json, StdResultExt};
 use cosmwasm_vm::internals::{check_wasm, compile, make_compiling_engine, LogOutput, Logger};
 use cosmwasm_vm::{capabilities_from_csv, WasmLimits};
 
@@ -119,11 +119,18 @@ If this is not provided, the default values are used.")
 fn read_wasm_limits(input: &str) -> anyhow::Result<WasmLimits> {
     // try to parse JSON, if that fails, try to open as File and parse that
     from_json::<WasmLimits>(input)
+        .unwrap_std_error()
+        .map_err(anyhow::Error::from_boxed)
         .context("error parsing wasm limits")
         .or_else(|_| {
             std::fs::read_to_string(input)
                 .context("error reading wasm limits file")
-                .and_then(|s| from_json(s).context("error parsing wasm limits file"))
+                .and_then(|s| {
+                    from_json(s)
+                        .unwrap_std_error()
+                        .map_err(anyhow::Error::from_boxed)
+                        .context("error parsing wasm limits file")
+                })
         })
 }
 
