@@ -101,6 +101,8 @@ and this project adheres to
 - cosmwasm-std: Split up `Validator` type into `Validator` and
   `ValidatorMetadata` to allow adding more fields to `ValidatorResponse` in the
   future. ([#2501])
+- cosmwasm-std: Redesigned `StdError` to be more flexible and less immutable
+  ([#2500])
 
 ## Fixed
 
@@ -149,6 +151,7 @@ and this project adheres to
 [#2480]: https://github.com/CosmWasm/cosmwasm/pull/2480
 [#2484]: https://github.com/CosmWasm/cosmwasm/pull/2484
 [#2495]: https://github.com/CosmWasm/cosmwasm/pull/2495
+[#2500]: https://github.com/CosmWasm/cosmwasm/pull/2500
 [#2501]: https://github.com/CosmWasm/cosmwasm/pull/2501
 
 ## [2.2.0] - 2024-12-17
