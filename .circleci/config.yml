@@ -468,7 +468,7 @@ jobs:
           version: 1.23.4
       - run:
           name: Install pydantic
-          run: pip install pydantic
+          command: pip install pydantic
       - run:
           name: Build
           working_directory: ~/project/packages/cw-schema-codegen
