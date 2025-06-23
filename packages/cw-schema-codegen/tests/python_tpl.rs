@@ -92,14 +92,14 @@ fn simple_enum() {
 }
 
 macro_rules! validator {
-    ($typ:ty, $example:expr) => {{
+    ($ty:ty, $example:expr) => {{
         (
-            stringify!($typ),
-            cw_schema::schema_of::<$typ>(),
+            stringify!($ty),
+            cw_schema::schema_of::<$ty>(),
             serde_json::to_string(&$example).unwrap(),
             {
                 let a: Box<dyn FnOnce(&str)> = Box::new(|output| {
-                    let result = serde_json::from_str::<$typ>(output).unwrap();
+                    let result = serde_json::from_str::<$ty>(output).unwrap();
                     assert_eq!(result, $example);
                 });
                 a
