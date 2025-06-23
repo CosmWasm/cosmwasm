@@ -94,7 +94,7 @@ fn simple_enum() {
 macro_rules! validator {
     ($ty:ty, $example:expr) => {{
         (
-            stringify!($ty),
+            ::std::any::type_name::<$ty>().replace("::", "_"),
             cw_schema::schema_of::<$ty>(),
             serde_json::to_string(&$example).unwrap(),
             {
