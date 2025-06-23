@@ -1,6 +1,6 @@
 module cosmwasm.com/cosmwasm-codegen/e2e
 
-go 1.23.4
+go 1.23
 
 require github.com/cosmos/cosmos-sdk v0.50.11
 
