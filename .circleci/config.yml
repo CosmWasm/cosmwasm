@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   go: circleci/go@3.0.2
+  node: circleci/node@7.1.0
   python: circleci/python@3.0.0
   rust: circleci/rust@1.7.0
   win: circleci/windows@5.1
@@ -466,6 +467,7 @@ jobs:
             - cargocache-v2-package_cw_schema_codegen-rust:1.86-{{ checksum "Cargo.lock" }}
       - go/install:
           version: 1.23.4
+      - node/install
       - run:
           name: Install pydantic
           command: pip install pydantic
@@ -1295,7 +1297,7 @@ jobs:
           command: |
             apk update
             # needed for grcov and compiling tests
-            apk add --no-cache mold clang curl llvm19-dev clang19-static lcov
+            apk add --no-cache mold clang curl llvm19-dev clang19-static lcov python3
       - run:
           name: Install cargo-llvm-cov and cargo-nextest
           command: |
@@ -1315,6 +1317,12 @@ jobs:
           command: |
             curl -L --proto '=https' --tlsv1.2 -OsSf https://cli.codecov.io/v10.1.1/alpine/codecov
             chmod +x codecov
+      - go/install:
+          version: 1.23.4
+      - node/install
+      - run:
+          name: Install pydantic
+          command: pip install pydantic
       - run:
           name: Run tests with coverage
           command: |
