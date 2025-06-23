@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.0.0] - 2025-06-23
+
 ## Added
 
 - cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
@@ -1298,7 +1300,8 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v3.0.0
 [2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.5...v2.2.0
 [2.1.5]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...v2.1.4
