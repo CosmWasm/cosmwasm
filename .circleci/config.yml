@@ -3,6 +3,7 @@ version: 2.1
 orbs:
   go: circleci/go@3.0.2
   python: circleci/python@3.0.0
+  rust: circleci/rust@1.7.0
   win: circleci/windows@5.1
 
 commands:
@@ -451,12 +452,12 @@ jobs:
           key: cargocache-v2-package_cw_schema-rust:1.82-{{ checksum "Cargo.lock" }}
 
   package_cw_schema_codegen:
-    docker:
-      - image: rust:1.82
     executor:
       name: python/default
     steps:
       - checkout
+      - rust/install:
+          version: "1.82"
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
@@ -465,11 +466,9 @@ jobs:
             - cargocache-v2-package_cw_schema_codegen-rust:1.82-{{ checksum "Cargo.lock" }}
       - go/install:
           version: 1.23.4
-      - python/install-packages:
-          pkg-manager: pip
-      - python/install-packages:
-          args: pydantic
-          pkg-manager: pip
+      - run:
+          name: Install pydantic
+          run: pip install pydantic
       - run:
           name: Build
           working_directory: ~/project/packages/cw-schema-codegen
