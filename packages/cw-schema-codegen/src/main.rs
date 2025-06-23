@@ -63,7 +63,7 @@ where
         bail!("Only schema version 1 is supported")
     };
 
-    schema.definitions.iter().try_for_each(|node| {
+    schema.definitions.iter().rev().try_for_each(|node| {
         debug!("Processing node: {node:?}");
 
         match language {

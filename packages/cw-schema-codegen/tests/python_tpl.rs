@@ -160,6 +160,7 @@ fn assert_validity() {
         let schema_output = schema
             .definitions
             .iter()
+            .rev()
             .map(|node| {
                 let mut buf = Vec::new();
                 cw_schema_codegen::python::process_node(&mut buf, &schema, node).unwrap();
