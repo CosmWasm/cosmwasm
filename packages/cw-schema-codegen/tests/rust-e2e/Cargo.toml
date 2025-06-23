@@ -1,0 +1,8 @@
+[package]
+name = "rust-e2e"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cosmwasm-schema = { version = "3.0.0", path = "../../../schema" }
+serde_json = "1.0.137"

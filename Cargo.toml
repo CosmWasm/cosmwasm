@@ -1,6 +1,9 @@
 [workspace]
 members = ["packages/*"]
-exclude = ["contracts"]
+exclude = [
+    "contracts",
+    "packages/cw-schema-codegen/tests/rust-e2e",
+]
 
 # Resolver has to be set explicitly in workspaces
 # due to https://github.com/rust-lang/cargo/issues/9956

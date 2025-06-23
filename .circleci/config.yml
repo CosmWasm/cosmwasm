@@ -71,6 +71,7 @@ workflows:
       - package_schema
       - package_schema_derive
       - package_cw_schema
+      - package_cw_schema_codegen
       - package_std
       - package_vm
       - package_vm_derive
@@ -446,6 +447,33 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_cw_schema-rust:1.82-{{ checksum "Cargo.lock" }}
+
+  package_cw_schema_codegen:
+    docker:
+      - image: rust:1.82
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_cw_schema_codegen-rust:1.82-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/cw-schema-codegen
+          command: cargo build --locked
+      - run:
+          name: Run tests
+          working_directory: ~/project/packages/cw-schema-codegen
+          command: cargo test --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_cw_schema_codegen-rust:1.82-{{ checksum "Cargo.lock" }}
 
   package_std:
     docker:
@@ -1293,7 +1321,9 @@ jobs:
               "schema-derive:cosmwasm-schema-derive" \
               "std:cosmwasm-std" \
               "vm:cosmwasm-vm" \
-              "vm-derive:cosmwasm-vm-derive"
+              "vm-derive:cosmwasm-vm-derive" \
+              "cw-schema:cw-schema" \
+              "cw-schema-codegen:cw-schema-codegen"
 
             # Process each package-flag pair
             for entry in "$@"; do
