@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   go: circleci/go@3.0.2
+  python: circleci/python@3.0.0
   win: circleci/windows@5.1
 
 commands:
@@ -453,8 +454,7 @@ jobs:
     docker:
       - image: rust:1.82
     executor:
-      name: go/default
-      tag: 1.23.4
+      name: python/default
     steps:
       - checkout
       - run:
@@ -463,7 +463,13 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-package_cw_schema_codegen-rust:1.82-{{ checksum "Cargo.lock" }}
-      - go/install
+      - go/install:
+          version: 1.23.4
+      - python/install-packages:
+          pkg-manager: pip
+      - python/install-packages:
+          args: pydantic
+          pkg-manager: pip
       - run:
           name: Build
           working_directory: ~/project/packages/cw-schema-codegen
