@@ -457,13 +457,13 @@ jobs:
     steps:
       - checkout
       - rust/install:
-          version: "1.82"
+          version: "1.86"
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_cw_schema_codegen-rust:1.82-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_cw_schema_codegen-rust:1.86-{{ checksum "Cargo.lock" }}
       - go/install:
           version: 1.23.4
       - run:
@@ -483,7 +483,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_cw_schema_codegen-rust:1.82-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_cw_schema_codegen-rust:1.86-{{ checksum "Cargo.lock" }}
 
   package_std:
     docker:
