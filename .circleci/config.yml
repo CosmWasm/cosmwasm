@@ -1297,7 +1297,7 @@ jobs:
           command: |
             apk update
             # needed for grcov and compiling tests
-            apk add --no-cache mold clang curl llvm19-dev clang19-static lcov python3 py3-pip py3-pydantic
+            apk add --no-cache mold clang curl llvm19-dev clang19-static lcov python3 py3-pip py3-pydantic nodejs npm
             ln -sf python3 /usr/bin/python
       - run:
           name: Install cargo-llvm-cov and cargo-nextest
@@ -1320,7 +1320,6 @@ jobs:
             chmod +x codecov
       - go/install:
           version: 1.23.4
-      - node/install
       - run:
           name: Install pydantic
           command: pip install pydantic --break-system-packages
