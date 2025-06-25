@@ -5,6 +5,12 @@ import (
     _ "github.com/cosmos/cosmos-sdk/types/address"
 )
 {% endif %}
+{% if has_unit_variants %}
+import (
+	"encoding/json"
+	"fmt"
+)
+{% endif %}
 
 {% for variant in variants %}
 {% match variant.ty %}
@@ -35,3 +41,66 @@ type {{ name }} struct {
     {{ variant.name }} *{{ name }}{{ variant.name }} `json:"{{ variant.rename }},omitempty"`
 {% endfor %}
 }
+{% if has_unit_variants %}
+// UnmarshalJSON implements the json.Unmarshaler interface for {{ name }}.
+// {{ name }} contains unit variants, which are represented as strings in the JSON.
+func (v *{{ name }}) UnmarshalJSON(data []byte) error {
+	var raw struct {
+	{% for variant in variants %}
+		{{ variant.name }} *{{ name }}{{ variant.name }} `json:"{{ variant.rename }},omitempty"`
+	{% endfor %}
+	}
+
+	// try to parse directly first
+	if err := json.Unmarshal(data, &raw); err != nil {
+		// try to parse as string
+		var s string
+		if err2 := json.Unmarshal(data, &s); err2 != nil {
+			return fmt.Errorf("failed to unmarshal {{ name }}: %w, %w", err, err2)
+		}
+
+		// check if it's one of the unit variants
+		switch s {
+		{% for variant in variants %}
+		{% if variant.ty.is_unit() %}
+		case "{{ variant.rename }}":
+			raw.{{ variant.name }} = &go_HeheheA{}
+		{% endif %}
+		{% endfor %}
+		default:
+			return fmt.Errorf("failed to unmarshal {{ name }}: %w, no matching variant for string %s", err, s)
+		}
+	}
+
+	// Assign the values to the receiver
+	*(*{{ name }})(v) = {{ name }}{
+		 {% for variant in variants %}
+		    {{ variant.name }}: raw.{{ variant.name }},
+   		{% endfor %}
+	}
+
+	return nil
+}
+
+
+func (v {{ name }}) MarshalJSON() ([]byte, error) {
+	switch {
+	{% for variant in variants %}
+	{% if variant.ty.is_unit() %}
+	case v.{{ variant.name }} != nil:
+		return []byte(`"{{ variant.rename }}"`), nil
+	{% endif %}
+	{% endfor %}
+	default:
+		return json.Marshal(struct {
+			{% for variant in variants %}
+				{{ variant.name }} *{{ name }}{{ variant.name }} `json:"{{ variant.rename }},omitempty"`
+			{% endfor %}
+		}{
+			{% for variant in variants %}
+				{{ variant.name }}: v.{{ variant.name }},
+			{% endfor %}
+		})
+	}
+}
+{% endif %}

@@ -158,6 +158,9 @@ where
                         },
                     })
                     .collect(),
+                has_unit_variants: cases
+                    .iter()
+                    .any(|(_, case)| matches!(case.value, cw_schema::EnumValue::Unit)),
             };
 
             writeln!(output, "{enumm}")?;

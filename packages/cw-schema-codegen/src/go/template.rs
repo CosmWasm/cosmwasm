@@ -16,6 +16,7 @@ pub struct EnumTemplate<'a> {
     pub name: Cow<'a, str>,
     pub docs: Cow<'a, [Cow<'a, str>]>,
     pub variants: Cow<'a, [EnumVariantTemplate<'a>]>,
+    pub has_unit_variants: bool,
 }
 
 #[derive(Clone)]
@@ -33,6 +34,12 @@ pub enum TypeTemplate<'a> {
     Named {
         fields: Cow<'a, [FieldTemplate<'a>]>,
     },
+}
+
+impl TypeTemplate<'_> {
+    pub fn is_unit(&self) -> bool {
+        matches!(self, TypeTemplate::Unit)
+    }
 }
 
 #[derive(Template)]

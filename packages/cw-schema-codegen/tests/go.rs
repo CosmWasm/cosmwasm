@@ -133,7 +133,7 @@ fn e2e() {
         gen_file.write_all(b"package main\n").unwrap();
         gen_file.write_all(output.as_bytes()).unwrap();
         gen_file
-            .write_all(format!("type TestType {type_name}").as_bytes())
+            .write_all(format!("type TestType = {type_name}").as_bytes())
             .unwrap();
 
         let data = arbitrary_gen(&mut unstructured);
