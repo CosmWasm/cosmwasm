@@ -41,12 +41,13 @@ fn expand_node_name<'a>(
             format!("map[{key}]{value}").into()
         }
         cw_schema::NodeType::Struct(..) => node.name.as_ref().into(),
-        cw_schema::NodeType::Tuple { ref items } => if items.len() == 1 {
-            "interface{}"
-        } else {
-            "[]interface{}"
+        cw_schema::NodeType::Tuple { ref items } => {
+            if items.len() == 1 {
+                expand_node_name(schema, &schema.definitions[items[0]])
+            } else {
+                "[]interface{}".into()
+            }
         }
-        .into(),
         cw_schema::NodeType::Enum { .. } => node.name.as_ref().into(),
 
         cw_schema::NodeType::Decimal {

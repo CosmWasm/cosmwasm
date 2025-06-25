@@ -11,7 +11,7 @@ import (
 {% when TypeTemplate::Unit %}
 type {{ name }}{{ variant.name }} struct{}
 {% when TypeTemplate::Tuple(types) %}
-type {{ name }}{{ variant.name }} {% if types.len() > 1 %} [] {% endif %} interface{}
+type {{ name }}{{ variant.name }} {% if types.len() > 1 %}[]interface{}{% else %}{{ types[0] }}{% endif %}
 {% when TypeTemplate::Named { fields } %}
 type {{ name }}{{ variant.name }} struct {
     {% for field in fields %}
