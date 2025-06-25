@@ -22,10 +22,13 @@ const {{ name }}Schema = z.union([
 {% when TypeTemplate::Unit %}
     z.object({ "{{ variant.name }}": z.null() }).or(z.literal("{{ variant.name }}")),
 {% when TypeTemplate::Tuple with (types) %}
-    z.object({ "{{ variant.name }}": z.tuple([{{ types|join(", ") }}]) })
-    {% if types.len() == 1 %}
+    z.object({
+      "{{ variant.name }}": z.tuple([{{ types|join(", ") }}])
+      {% if types.len() == 1 %}
         .or({{ types[0] }})
-    {% endif %}
+      {% endif %}
+  })
+
     ,
 {% when TypeTemplate::Named with { fields } %}
     z.object({ "{{ variant.name }}": z.object({

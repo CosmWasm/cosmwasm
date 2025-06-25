@@ -27,10 +27,13 @@ const typescript_HeheheSchema = z.union([
      */
 
 
-    z.object({ "B": z.tuple([z.string().or(z.number())]) })
-    
+    z.object({
+      "B": z.tuple([z.string().or(z.number())])
+      
         .or(z.string().or(z.number()))
-    
+      
+  })
+
     ,
 
 
