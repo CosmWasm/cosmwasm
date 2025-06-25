@@ -19,6 +19,8 @@ pub enum SomeEnum {
         /// `b` field docs
         b: u32,
     },
+
+    Field4(u32),
 }
 
 /// This is a struct level documentation for unit struct
@@ -120,6 +122,7 @@ fn assert_validity() {
                 b: 12,
             }
         ),
+        validator!(SomeEnum, SomeEnum::Field4(42)),
         validator!(UnitStructure, UnitStructure {}),
         validator!(TupleStructure, TupleStructure(10, "aasdf".to_string(), 2)),
         validator!(

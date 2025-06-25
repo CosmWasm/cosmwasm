@@ -50,4 +50,10 @@ class python_tpl_SomeEnum(RootModel):
         Field3: __Inner
 
 
-    root: typing.Union[  Field1,  Field2,  Field3,  ]
+
+    class Field4(BaseModel):
+        """"""
+        Field4: typing.Tuple[int]
+
+
+    root: typing.Union[  Field1,  Field2,  Field3,  Field4,  ]
