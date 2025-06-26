@@ -69,6 +69,7 @@ fn type_name<T>() -> String {
 }
 
 #[test]
+#[ignore] // because it requires Go to be installed, CI will still run it
 fn e2e() {
     #[allow(clippy::type_complexity)]
     let schemas: &[(_, fn(&mut arbitrary::Unstructured<'_>) -> Combined, _)] = &[

@@ -111,6 +111,7 @@ macro_rules! validator {
 }
 
 #[test]
+#[ignore] // because it requires Python to be installed, CI will still run it
 fn assert_validity() {
     let schemas = [
         validator!(SomeEnum, SomeEnum::Field1),

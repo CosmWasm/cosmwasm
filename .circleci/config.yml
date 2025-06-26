@@ -478,7 +478,8 @@ jobs:
       - run:
           name: Run tests
           working_directory: ~/project/packages/cw-schema-codegen
-          command: cargo test --locked
+          # Use --include-ignored to also run ignored tests
+          command: cargo test --locked -- --include-ignored
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -1327,7 +1328,7 @@ jobs:
           name: Run tests with coverage
           command: |
             # Generate full coverage report
-            cargo llvm-cov nextest --all-features --lcov --output-path lcov.info
+            cargo llvm-cov nextest --all-features --run-ignored=all --lcov --output-path lcov.info
 
             # List of package directories and their flags
             # ToDo: Re-add "core:cosmwasm-core" when enabling core coverage again
