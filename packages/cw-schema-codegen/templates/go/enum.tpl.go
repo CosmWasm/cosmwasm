@@ -64,7 +64,7 @@ func (v *{{ name }}) UnmarshalJSON(data []byte) error {
 		{% for variant in variants %}
 		{% if variant.ty.is_unit() %}
 		case "{{ variant.rename }}":
-			raw.{{ variant.name }} = &go_HeheheA{}
+			raw.{{ variant.name }} = &{{ name }}{{ variant.name }}{}
 		{% endif %}
 		{% endfor %}
 		default:
