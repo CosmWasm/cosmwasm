@@ -22,7 +22,7 @@ class {{ name }}(RootModel):
         """{% for doc in variant.docs %}
         {{ doc }}
         {% endfor %}"""
-        {{ variant.name }}: {% if types.len() == 1 %}{{ types[0] }} | {% endif %}typing.Tuple[{{ types|join(", ") }}]
+        {{ variant.name }}: {% if types.len() == 1 %}typing.Union[{{ types[0] }}, typing.Tuple[{{ types[0] }}]]{% else %}typing.Tuple[{{ types|join(", ") }}]{% endif %}
 {% when TypeTemplate::Named with { fields } %}
     class {{ variant.name }}(BaseModel):
         class __Inner(BaseModel):

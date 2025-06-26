@@ -53,7 +53,7 @@ class python_tpl_SomeEnum(RootModel):
 
     class Field4(BaseModel):
         """"""
-        Field4: int | typing.Tuple[int]
+        Field4: typing.Union[int, typing.Tuple[int]]
 
 
     root: typing.Union[  Field1,  Field2,  Field3,  Field4,  ]
