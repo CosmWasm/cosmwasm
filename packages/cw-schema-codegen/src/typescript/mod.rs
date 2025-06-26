@@ -27,14 +27,14 @@ fn expand_node_name<'a>(
         }
         cw_schema::NodeType::Optional { inner } => {
             let inner = &schema.definitions[inner];
-            format!("{}.optional()", expand_node_name(schema, inner)).into()
+            format!("{}.nullable()", expand_node_name(schema, inner)).into()
         }
 
         cw_schema::NodeType::Map { key, value, .. } => {
             let key = expand_node_name(schema, &schema.definitions[key]);
             let value = expand_node_name(schema, &schema.definitions[value]);
 
-            format!("Record<{key}, {value}>").into()
+            format!("z.record({key}, {value})").into()
         }
         cw_schema::NodeType::Struct(..) => format!("{}Schema", node.name).into(),
         cw_schema::NodeType::Tuple { ref items } => {
@@ -44,7 +44,7 @@ fn expand_node_name<'a>(
                 .collect::<Vec<_>>()
                 .join(", ");
 
-            format!("[{}]", items).into()
+            format!("z.tuple([{}])", items).into()
         }
         cw_schema::NodeType::Enum { .. } => format!("{}Schema", node.name).into(),
 
