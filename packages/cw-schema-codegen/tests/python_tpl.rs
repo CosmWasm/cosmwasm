@@ -1,6 +1,13 @@
 use cw_schema::Schemaifier;
 use serde::{Deserialize, Serialize};
-use std::io::Write;
+use std::{
+    io::{Seek, Write},
+    process::Command,
+};
+
+use crate::utils::TestCase;
+
+mod utils;
 
 /// This is a struct level documentation for enum type
 #[derive(Schemaifier, Serialize, Deserialize, PartialEq, Debug)]
@@ -197,4 +204,37 @@ fn assert_validity() {
 
         validator(&String::from_utf8_lossy(&output.stdout))
     }
+}
+
+#[test]
+#[ignore] // because it requires Python to be installed, CI will still run it
+fn e2e() {
+    // temp file for the generated Python code
+    let mut file = tempfile::NamedTempFile::with_suffix(".py").unwrap();
+
+    utils::run_e2e(
+        |buf, schema, node| cw_schema_codegen::python::process_node(buf, schema, node),
+        |TestCase { code, type_name }| {
+            // clear the file and write from the start again
+            file.as_file().set_len(0).unwrap();
+            file.as_file_mut()
+                .seek(std::io::SeekFrom::Start(0))
+                .unwrap();
+
+            file.write_all(code.as_bytes()).unwrap();
+            file.write_all(
+                format!(
+                    "import sys; print({type_name}.model_validate_json(sys.stdin.read()).model_dump_json())"
+                )
+                .as_bytes(),
+            )
+            .unwrap();
+            file.flush().unwrap();
+
+            let mut cmd = Command::new("python3");
+            cmd.arg(file.path());
+
+            cmd
+        },
+    );
 }
