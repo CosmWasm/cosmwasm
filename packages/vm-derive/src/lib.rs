@@ -1,3 +1,8 @@
+//! Derive macros for cosmwasm-vm. For internal use only. No stability guarantees.
+//!
+//! CosmWasm is a smart contract platform for the Cosmos ecosystem.
+//! For more information, see: <https://docs.cosmwasm.com>
+
 mod hash_function;
 
 macro_rules! maybe {
