@@ -44,7 +44,7 @@ fn expand_node_name<'a>(
                 .collect::<Vec<_>>()
                 .join(", ");
 
-            format!("[{}]", items).into()
+            format!("typing.Tuple[{}]", items).into()
         }
         cw_schema::NodeType::Enum { .. } => node.name.as_ref().into(),
         cw_schema::NodeType::Decimal { .. } => "decimal.Decimal".into(),
