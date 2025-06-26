@@ -99,7 +99,7 @@ pub use crate::query::{
     DelegationTotalRewardsResponse, DelegatorReward, DelegatorValidatorsResponse,
     DelegatorWithdrawAddressResponse, DenomMetadataResponse, DistributionQuery, FullDelegation,
     GrpcQuery, IbcQuery, PortIdResponse, QueryRequest, RawRangeEntry, RawRangeResponse,
-    StakingQuery, SupplyResponse, Validator, ValidatorResponse, WasmQuery,
+    StakingQuery, SupplyResponse, Validator, ValidatorMetadata, ValidatorResponse, WasmQuery,
 };
 
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]

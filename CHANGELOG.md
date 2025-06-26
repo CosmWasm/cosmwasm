@@ -8,6 +8,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- cosmwasm-std: Add missing export for `ValidatorMetadata` ([#2511])
+
+[#2511]: https://github.com/CosmWasm/cosmwasm/pull/2511
+
 ## [3.0.0] - 2025-06-23
 
 ## Added
