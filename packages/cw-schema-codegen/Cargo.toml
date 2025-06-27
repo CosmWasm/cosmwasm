@@ -10,8 +10,8 @@ build = "build.rs"
 anyhow = "1.0.89"
 askama = { version = "0.12.1", default-features = false }
 clap = { version = "4.5.18", features = ["derive"] }
-cosmwasm-schema = { version = "=3.0.0", path = "../schema" }
-cw-schema = { version = "=3.0.0", path = "../cw-schema" }
+cosmwasm-schema = { version = "=3.0.1", path = "../schema" }
+cw-schema = { version = "=3.0.1", path = "../cw-schema" }
 either = "1.13.0"
 heck = "0.5.0"
 log = "0.4.22"
@@ -26,6 +26,6 @@ rand = { version = "0.8.5", features = ["min_const_gen"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = "1.0.128"
 tempfile = "3.14.0"
-cosmwasm-std = { version = "3.0.0", path = "../std", default-features = false, features = [
+cosmwasm-std = { version = "3.0.1", path = "../std", default-features = false, features = [
     "std",
 ] }
