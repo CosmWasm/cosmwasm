@@ -23,7 +23,7 @@ fn expand_node_name<'a>(
             let ty = if signed { "i" } else { "u" };
             format!("{ty}{precision}").into()
         }
-        cw_schema::NodeType::Binary => "Vec<u8>".into(),
+        cw_schema::NodeType::Binary => "String".into(), // ToDo: Use a base64 binary type
 
         cw_schema::NodeType::Boxed { inner } => {
             let inner = &schema.definitions[inner];
