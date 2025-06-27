@@ -1,70 +1,19 @@
-use arbitrary::Arbitrary;
 use core::str;
-use cw_schema::Schemaifier;
-use serde::{Deserialize, Serialize};
 use std::{fs::File, io::Write, process::Command};
 
 use crate::utils::TestCase;
 
 mod utils;
 
-#[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
-struct Owo {
-    field_1: u32,
-    field_2: String,
-}
-
-#[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
-struct Uwu(String, u32);
-
-#[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
-struct Òwó;
-
-#[derive(Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
-pub enum Empty {}
-
-#[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
-enum Hehehe {
-    A,
-    B(u32),
-    C { field: String },
-}
-
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
-#[serde(untagged)]
-enum Combined {
-    Owo(Owo),
-    Uwu(Uwu),
-    Òwó(Òwó),
-    Empty(Empty),
-    Hehehe(Hehehe),
-}
-
-macro_rules! impl_from {
-    ($ty:ident) => {
-        impl From<$ty> for Combined {
-            fn from(ty: $ty) -> Combined {
-                Combined::$ty(ty)
-            }
-        }
-    };
-}
-
-impl_from!(Owo);
-impl_from!(Uwu);
-impl_from!(Òwó);
-impl_from!(Empty);
-impl_from!(Hehehe);
-
 #[test]
 fn codegen_snap() {
     // generate the schemas for each of the above types
     let schemas = [
-        cw_schema::schema_of::<Owo>(),
-        cw_schema::schema_of::<Uwu>(),
-        cw_schema::schema_of::<Òwó>(),
-        cw_schema::schema_of::<Empty>(),
-        cw_schema::schema_of::<Hehehe>(),
+        cw_schema::schema_of::<utils::Owo>(),
+        cw_schema::schema_of::<utils::Uwu>(),
+        cw_schema::schema_of::<utils::Òwó>(),
+        cw_schema::schema_of::<utils::Empty>(),
+        cw_schema::schema_of::<utils::Hehehe>(),
     ];
 
     // run the codegen to typescript

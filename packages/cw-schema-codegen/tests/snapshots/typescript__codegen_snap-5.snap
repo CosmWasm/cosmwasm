@@ -12,7 +12,7 @@ import { z } from 'zod';
 
  */
 
-const typescript_HeheheSchema = z.union([
+const typescript_utils_HeheheSchema = z.union([
 
     /**
     
@@ -57,6 +57,6 @@ const typescript_HeheheSchema = z.union([
 
 ]);
 
-type typescript_Hehehe = z.infer<typeof typescript_HeheheSchema>;
+type typescript_utils_Hehehe = z.infer<typeof typescript_utils_HeheheSchema>;
 
-export { typescript_Hehehe, typescript_HeheheSchema };
+export { typescript_utils_Hehehe, typescript_utils_HeheheSchema };

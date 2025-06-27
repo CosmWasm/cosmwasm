@@ -12,7 +12,7 @@ import { z } from 'zod';
 
  */
 
-const typescript_OwoSchema = 
+const typescript_utils_OwoSchema = 
 
     z.object({
 
@@ -32,6 +32,6 @@ const typescript_OwoSchema =
 
 ;
 
-type typescript_Owo = z.infer<typeof typescript_OwoSchema>;
+type typescript_utils_Owo = z.infer<typeof typescript_utils_OwoSchema>;
 
-export { typescript_Owo, typescript_OwoSchema };
+export { typescript_utils_Owo, typescript_utils_OwoSchema };

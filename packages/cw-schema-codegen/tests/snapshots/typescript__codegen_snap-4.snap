@@ -12,7 +12,7 @@ import { z } from 'zod';
 
  */
 
-const typescript_EmptySchema = z.union([
+const typescript_utils_EmptySchema = z.union([
 
 
 
@@ -20,6 +20,6 @@ never;
 
 ]);
 
-type typescript_Empty = z.infer<typeof typescript_EmptySchema>;
+type typescript_utils_Empty = z.infer<typeof typescript_utils_EmptySchema>;
 
-export { typescript_Empty, typescript_EmptySchema };
+export { typescript_utils_Empty, typescript_utils_EmptySchema };

@@ -9,29 +9,29 @@ use cw_schema::Schemaifier;
 use serde::{Deserialize, Serialize};
 
 #[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
-struct Owo {
+pub struct Owo {
     field_1: u32,
     field_2: String,
 }
 
 #[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
-struct Uwu(String, u32);
+pub struct Uwu(String, u32);
 
 #[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
-struct Òwó;
+pub struct Òwó;
 
 #[derive(Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
 pub enum Empty {}
 
 #[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
-enum Hehehe {
+pub enum Hehehe {
     A,
     B(u32),
     C { field: String },
 }
 
 #[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
-struct Foo {
+pub struct Foo {
     // foo_field_0: f32, // can cause rounding errors
     // foo_field_1: f64,
     foo_field_2: bool,
@@ -48,7 +48,7 @@ struct Foo {
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(untagged)]
-enum Combined {
+pub enum Combined {
     Owo(Owo),
     Uwu(Uwu),
     Òwó(Òwó),
