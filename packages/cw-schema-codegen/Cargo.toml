@@ -3,7 +3,9 @@ name = "cw-schema-codegen"
 authors = ["Aumetra Weisman <aumetra@cryptolab.net>"]
 edition = "2021"
 version.workspace = true
-publish = false
+description = "A code generator for CosmWasm contracts to generate code for other languages from schema files."
+repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/cw-schema-codegen"
+license = "Apache-2.0"
 build = "build.rs"
 
 [dependencies]
