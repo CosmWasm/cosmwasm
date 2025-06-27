@@ -7,49 +7,65 @@
 
 
 #[cosmwasm_schema::cw_serde]
-pub enum rust_Hehehe {
+pub struct rust_utils_Foo
+
+
+{
 
 
 
 
-    #[serde(rename = "A")]
 
-
-    A
-
-
-        ,
+    foo_field_10: ::alloc::collections::BTreeMap<String, u32>,
 
 
 
 
-    #[serde(rename = "B")]
 
-
-    B
-
-        (
-            u32
-        )
-
-        ,
+    foo_field_11: (u32, String),
 
 
 
 
-    #[serde(rename = "C")]
+
+    foo_field_2: bool,
 
 
-    C
 
-        {
-        
-        
-            field: String,
-        
-        }
 
-        ,
+
+    foo_field_3: String,
+
+
+
+
+
+    foo_field_4: i32,
+
+
+
+
+
+    foo_field_5: u8,
+
+
+
+
+
+    foo_field_6: Vec<String>,
+
+
+
+
+
+    foo_field_7: ::core::option::Option<String>,
+
+
+
+
+
+    foo_field_9: ::alloc::boxed::Box<String>,
 
 }
-pub type TestType = rust_Hehehe;
+
+pub type TestType = rust_utils_Foo;

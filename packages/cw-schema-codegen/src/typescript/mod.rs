@@ -18,8 +18,8 @@ fn expand_node_name<'a>(
         cw_schema::NodeType::Double => "z.number()".into(),
         cw_schema::NodeType::Boolean => "z.boolean()".into(),
         cw_schema::NodeType::String => "z.string()".into(),
-        cw_schema::NodeType::Integer { .. } => "z.string().or(z.number())".into(), // TODO: is this correct?
-        cw_schema::NodeType::Binary => "z.instanceof(Uint8Array)".into(),
+        cw_schema::NodeType::Integer { .. } => "z.string().or(z.number())".into(),
+        cw_schema::NodeType::Binary => "z.string().base64()".into(),
 
         cw_schema::NodeType::Boxed { inner } => {
             let node = &schema.definitions[inner];
