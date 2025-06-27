@@ -97,13 +97,6 @@ fn main() -> anyhow::Result<()> {
     );
 
     ensure!(opts.file.exists(), "Schema file does not exist");
-    ensure!(
-        matches!(
-            opts.language,
-            Language::Rust | Language::Go | Language::Typescript
-        ),
-        "Only Rust, TypeScript, and Go code generation is supported at the moment"
-    );
 
     let schema = fs::read_to_string(&opts.file)?;
     let schema: cosmwasm_schema::JsonCwApi = serde_json::from_str(&schema)?;
