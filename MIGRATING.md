@@ -1338,7 +1338,8 @@ arbitrary ones.
   3. `SetWithdrawAddress { address: env.contract.address.into() }` to change it
      back for all future withdrawals
 
-  [distribution docs]: https://docs.cosmos.network/main/build/modules/distribution
+  [distribution docs]:
+    https://docs.cosmos.network/main/build/modules/distribution
 
 - The block time in `env.block.time` is now a `Timestamp` which stores
   nanosecond precision. `env.block.time_nanos` was removed. If you need the
