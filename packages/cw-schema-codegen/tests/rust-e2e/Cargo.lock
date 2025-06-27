@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "cosmwasm-schema"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "cosmwasm-schema-derive",
  "cw-schema",
@@ -16,7 +16,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -25,7 +25,7 @@ dependencies = [
 
 [[package]]
 name = "cw-schema"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "cw-schema-derive",
  "indexmap",
@@ -38,7 +38,7 @@ dependencies = [
 
 [[package]]
 name = "cw-schema-derive"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "heck",
  "itertools",

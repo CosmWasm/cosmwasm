@@ -19,7 +19,7 @@ fn expand_node_name<'a>(
         cw_schema::NodeType::Boolean => "bool".into(),
         cw_schema::NodeType::String => "str".into(),
         cw_schema::NodeType::Integer { .. } => "int".into(),
-        cw_schema::NodeType::Binary => "bytes".into(),
+        cw_schema::NodeType::Binary => "Base64Bytes".into(),
 
         cw_schema::NodeType::Boxed { inner } => {
             let node = &schema.definitions[inner];

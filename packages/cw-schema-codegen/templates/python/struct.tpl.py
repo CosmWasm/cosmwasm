@@ -2,7 +2,7 @@
 
 import typing
 import decimal
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, RootModel, Base64Bytes
 
 
 {% match ty %}
