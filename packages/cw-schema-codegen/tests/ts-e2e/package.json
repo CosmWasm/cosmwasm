@@ -1,0 +1,22 @@
+{
+  "name": "ts-e2e",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "index.ts",
+  "private": true,
+  "scripts": {
+    "test": "tsx src/index.ts"
+  },
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^22.9.3",
+    "tslib": "^2.8.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}
