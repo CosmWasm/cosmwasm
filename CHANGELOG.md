@@ -107,7 +107,7 @@ and this project adheres to
 - cosmwasm-vm: Enable partial reference-type support, enabling contracts
   compiled with Rust 1.82 or newer to be stored. ([#2473])
 - cosmwasm-std: Removed IBC fees ([#2479])
-- cosmwasm-schema: Remove unused result types from trait definition (#[2495])
+- cosmwasm-schema: Remove unused result types from trait definition ([#2495])
 - cosmwasm-std: Split up `Validator` type into `Validator` and
   `ValidatorMetadata` to allow adding more fields to `ValidatorResponse` in the
   future. ([#2501])
