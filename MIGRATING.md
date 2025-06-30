@@ -11,11 +11,10 @@ major releases of `cosmwasm`. Note that you can also view the
   ```toml
   [dependencies]
   cosmwasm-std = "3.0.1"
-  cosmwasm-storage = "3.0.1"
+  cosmwasm-schema = "3.0.1"
   # ...
 
   [dev-dependencies]
-  cosmwasm-schema = "3.0.1"
   cosmwasm-vm = "3.0.1"
   # ...
   ```
