@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/CosmWasm/cosmwasm/tree/main.svg?style=shield)](https://circleci.com/gh/CosmWasm/cosmwasm/tree/main)
 
-**WebAssembly Smart Contracts for the Cosmos SDK.**
+**WebAssembly Smart Contracts for the Cosmos SDK**
 
 ## Packages
 
@@ -143,7 +143,7 @@ If you haven't worked with WebAssembly before, please read an overview on
 
 ### Exports
 
-The required exports provided by the cosmwasm smart contract are:
+The required exports provided by the CosmWasm smart contract are:
 
 ```rust
 // signal for 1.0 compatibility
