@@ -2,8 +2,6 @@
 members = ["packages/*"]
 exclude = ["contracts"]
 
-# Resolver has to be set explicitly in workspaces
-# due to https://github.com/rust-lang/cargo/issues/9956
 resolver = "2"
 
 [workspace.package]
