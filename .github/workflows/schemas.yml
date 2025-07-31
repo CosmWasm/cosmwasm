@@ -3,7 +3,7 @@ name: schemas
 on: [ push ]
 
 jobs:
-  update:
+  check:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -16,12 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: rm -r ./schema || true # Delete old schema files.
-      - run: cargo run --bin schema # Generate new schema files.
-      - run: |
+
+      - name: Delete old schema files
+        run: rm -r ./schema || true
+
+      - name: Generate new schema files
+        run: cargo run --bin schema
+
+      - name: Check for schema changes
+        run: |
           if git diff --quiet ./schema; then
-            echo "No changes in schema"
+            echo "Schema is up-to date"
           else
-            echo "Schema directory has changes"
+            echo "Schema has changed"
             exit 1
           fi
