@@ -15,5 +15,6 @@ jobs:
         shell: bash
         working-directory: contracts/${{ matrix.service }}
     steps:
+      - uses: actions/checkout@v4
       - name: Display working directory
         run: pwd
