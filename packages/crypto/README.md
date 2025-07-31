@@ -3,8 +3,8 @@
 [![cosmwasm-crypto on crates.io](https://img.shields.io/crates/v/cosmwasm-crypto.svg)](https://crates.io/crates/cosmwasm-crypto)
 
 This crate implements cryptography-related functions, so that they can be
-available for both, the [cosmwasm-vm](`https://crates.io/crates/cosmwasm-vm`)
-and [cosmwasm-std](`https://crates.io/crates/cosmwasm-std`) crates.
+available for both, the [cosmwasm-vm](https://crates.io/crates/cosmwasm-vm)
+and [cosmwasm-std](https://crates.io/crates/cosmwasm-std) crates.
 
 ## Implementations
 
