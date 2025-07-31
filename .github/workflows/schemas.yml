@@ -16,5 +16,6 @@ jobs:
         working-directory: contracts/${{ matrix.service }}
     steps:
       - uses: actions/checkout@v4
-      - name: Display working directory
-        run: pwd
+      - uses: dtolnay/rust-toolchain@stable
+      - run: rm -r ./schema || true # Delete outdated schema files.
+      - run: cargo run --bin schema # Generate most update schema files.
