@@ -12,7 +12,7 @@ jobs:
           - crypto-verify
     defaults:
       run:
-        working-directory: ./contracts/${{ matrix.service }}
+        working-directory: contracts/${{ matrix.service }}
     steps:
       - name: Display working directory
         run: pwd
