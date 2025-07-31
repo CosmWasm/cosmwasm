@@ -18,4 +18,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: rm -r ./schema || true # Delete old schema files.
       - run: cargo run --bin schema # Generate new schema files.
-      - run: git diff --quiet ./schema # Fail on differences.
+      - run: |
+          if git diff --quiet ./schema; then
+            echo "No changes in schema"
+          else
+            echo "Schema directory has changes"
+            exit 1
+          fi
