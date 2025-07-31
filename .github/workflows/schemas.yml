@@ -16,6 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: rm -r ./schema || true # Delete current schema files.
-      - run: cargo run --bin schema # Generate most update schema files.
-      - run: git diff --quiet ./schema # Fail if there are any differences.
+      - run: rm -r ./schema || true # Delete old schema files.
+      - run: cargo run --bin schema # Generate new schema files.
+      - run: git diff --quiet ./schema # Fail on differences.
