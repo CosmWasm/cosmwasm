@@ -12,7 +12,8 @@ jobs:
           - crypto-verify
     defaults:
       run:
+        shell: bash
         working-directory: contracts/${{ matrix.service }}
     steps:
       - name: Display working directory
-        run: tree
+        run: pwd
