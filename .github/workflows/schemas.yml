@@ -12,10 +12,10 @@ jobs:
           - crypto-verify
     defaults:
       run:
-        shell: bash
         working-directory: contracts/${{ matrix.service }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: rm -r ./schema || true # Delete outdated schema files.
+      - run: rm -r ./schema || true # Delete current schema files.
       - run: cargo run --bin schema # Generate most update schema files.
+      - run: git diff --quiet ./schema # Fail if there are any differences.
