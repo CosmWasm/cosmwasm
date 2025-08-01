@@ -1,4 +1,4 @@
-name: schemas
+name: schema
 
 on: [ push ]
 
@@ -8,9 +8,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - burner
-          - crypto-verify
+        service: [
+          burner, crypto-verify, cyberpunk, empty, floaty, hackatom,
+          ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts,
+          queue, reflect, replier, staking, virus
+        ]
     defaults:
       run:
         working-directory: contracts/${{ matrix.service }}
@@ -24,11 +26,5 @@ jobs:
       - name: Generate new schema files
         run: cargo run --bin schema
 
-      - name: Check for schema changes
-        run: |
-          if git diff --quiet ./schema; then
-            echo "Schema is up-to date"
-          else
-            echo "Schema has changed"
-            exit 1
-          fi
+      - name: Fail if the new schema files are not identical to the old schema files
+        run: git diff --quiet ./schema
