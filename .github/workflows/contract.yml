@@ -41,9 +41,8 @@ jobs:
         working-directory: ./contracts/${{ matrix.dir }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly-2024-10-15
           targets: wasm32-unknown-unknown
       - run: cargo build --release --lib --locked --target wasm32-unknown-unknown
       - run: cargo test --lib --locked
