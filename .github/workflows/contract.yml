@@ -1,0 +1,33 @@
+name: contract
+
+on: [ push ]
+
+jobs:
+  check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - build: Linux
+            os: ubuntu-latest
+          - build: macOS
+            os: macOS-latest
+          - build: Windows
+            os: windows-latest
+        service: [
+          burner, crypto-verify, cyberpunk, empty, floaty, hackatom,
+          ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts,
+          queue, reflect, replier, staking, virus
+        ]
+    defaults:
+      run:
+        working-directory: ./contracts/${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.82.0
+          targets: wasm32-unknown-unknown
+      - run: cargo test --locked
+      - run: cargo build --release --lib --locked --target wasm32-unknown-unknown
