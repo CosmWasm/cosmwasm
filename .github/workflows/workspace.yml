@@ -51,3 +51,20 @@ jobs:
           targets: wasm32-unknown-unknown
       - run: cargo build -p cosmwasm-std --lib --target wasm32-unknown-unknown
       - run: cargo build -p cosmwasm-std --lib --target wasm32-unknown-unknown --features std,iterator,staking,stargate
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.82.0
+      - run: cargo test -p cosmwasm-crypto
+      - run: cargo test -p cosmwasm-derive
+      - run: cargo test -p cosmwasm-std --features std,iterator,staking,stargate,cosmwasm_1_2
+      - run: cargo test -p cosmwasm-schema
+      - run: cargo test -p cosmwasm-schema-derive
+      - run: cargo test -p cw-schema
+      - run: cargo test -p cw-schema-derive
+      - run: cargo test -p cosmwasm-vm --features iterator,stargate
+      - run: cargo test -p cosmwasm-check
