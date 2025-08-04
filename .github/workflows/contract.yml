@@ -38,6 +38,7 @@ jobs:
         dir: [ floaty ]
     defaults:
       run:
+        shell: bash
         working-directory: ./contracts/${{ matrix.dir }}
     steps:
       - uses: actions/checkout@v4
