@@ -19,3 +19,5 @@ jobs:
       - run: cargo clippy -p cosmwasm-schema-derive --all-targets -- -D warnings
       - run: cargo clippy -p cosmwasm-vm --all-targets --features iterator,stargate -- -D warnings
       - run: cargo clippy -p cosmwasm-check --all-targets -- -D warnings
+      - run: cargo clippy -p cw-schema --all-targets -- -D warnings
+      - run: cargo clippy -p cw-schema-derive --all-targets -- -D warnings
