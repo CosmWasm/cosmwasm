@@ -23,7 +23,7 @@ jobs:
       - run: cargo clippy -p cosmwasm-check --all-targets -- -D warnings
 
   build:
-    name: ${{ matrix.os }}
+    name: build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -47,7 +47,12 @@ jobs:
       - run: cargo build -p cosmwasm-check
 
   wasm:
-    runs-on: ubuntu-latest
+    name: wasm on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -58,7 +63,12 @@ jobs:
       - run: cargo build -p cosmwasm-std --lib --target wasm32-unknown-unknown --features std,iterator,staking,stargate
 
   test:
-    runs-on: ubuntu-latest
+    name: test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
