@@ -38,5 +38,5 @@ jobs:
       - run: cargo build -p cosmwasm-schema-derive
       - run: cargo build -p cw-schema
       - run: cargo build -p cw-schema-derive
-      - run: cargo build -p cosmwasm-vm
+      - run: cargo build -p cosmwasm-vm --features iterator,stargate
       - run: cargo build -p cosmwasm-check
