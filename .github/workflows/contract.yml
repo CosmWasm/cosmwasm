@@ -4,7 +4,7 @@ on: [ push ]
 
 jobs:
   stable:
-    name: Stable - ${{ matrix.dir }} - ${{ matrix.os }}
+    name: ${{ matrix.dir }} (stable) ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -29,7 +29,7 @@ jobs:
       - run: cargo test integration --locked
 
   nightly:
-    name: Nightly - ${{ matrix.dir }} - ${{ matrix.os }}
+    name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -43,6 +43,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly
         with:
+          toolchain: nightly-2024-09-01
           targets: wasm32-unknown-unknown
       - run: cargo build --release --lib --locked --target wasm32-unknown-unknown
       - run: cargo test --lib --locked
