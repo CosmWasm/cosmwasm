@@ -10,5 +10,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.82.0
+          components: clippy, rustfmt
       - run: cargo fmt -- --check
       - run: cargo clippy -p cosmwasm-crypto --all-targets -- -D warnings
