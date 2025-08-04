@@ -4,26 +4,20 @@ on: [ push ]
 
 jobs:
   stable:
-    name: ${{ matrix.build }}
+    name: Stable on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - build: Linux
-            os: ubuntu-latest
-          - build: macOS
-            os: macOS-latest
-          - build: Windows
-            os: windows-latest
-        service: [
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        dir: [
           burner, crypto-verify, cyberpunk, empty, hackatom,
           ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts,
           queue, reflect, replier, staking, virus
         ]
     defaults:
       run:
-        working-directory: ./contracts/${{ matrix.service }}
+        working-directory: ./contracts/${{ matrix.dir }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -35,24 +29,16 @@ jobs:
       - run: cargo test integration --locked
 
   nightly:
-    name: ${{ matrix.build }}
+    name: Nightly on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - build: Linux
-            os: ubuntu-latest
-          - build: macOS
-            os: macOS-latest
-          - build: Windows
-            os: windows-latest
-        service: [
-          floaty
-        ]
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        dir: [ floaty ]
     defaults:
       run:
-        working-directory: ./contracts/${{ matrix.service }}
+        working-directory: ./contracts/${{ matrix.dir }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
