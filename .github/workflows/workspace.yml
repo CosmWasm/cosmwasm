@@ -23,7 +23,12 @@ jobs:
       - run: cargo clippy -p cosmwasm-check --all-targets -- -D warnings
 
   build:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
