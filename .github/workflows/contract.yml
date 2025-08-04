@@ -3,7 +3,8 @@ name: contract
 on: [ push ]
 
 jobs:
-  check:
+  stable:
+    name: ${{ matrix.build }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -16,7 +17,7 @@ jobs:
           - build: Windows
             os: windows-latest
         service: [
-          burner, crypto-verify, cyberpunk, empty, floaty, hackatom,
+          burner, crypto-verify, cyberpunk, empty, hackatom,
           ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts,
           queue, reflect, replier, staking, virus
         ]
@@ -28,6 +29,35 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.82.0
+          targets: wasm32-unknown-unknown
+      - run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+      - run: cargo test --lib --locked
+      - run: cargo test integration --locked
+
+  nightly:
+    name: ${{ matrix.build }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - build: Linux
+            os: ubuntu-latest
+          - build: macOS
+            os: macOS-latest
+          - build: Windows
+            os: windows-latest
+        service: [
+          floaty
+        ]
+    defaults:
+      run:
+        working-directory: ./contracts/${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2024-10-15
           targets: wasm32-unknown-unknown
       - run: cargo build --release --lib --locked --target wasm32-unknown-unknown
       - run: cargo test --lib --locked
