@@ -15,7 +15,7 @@ jobs:
         ]
     defaults:
       run:
-        working-directory: contracts/${{ matrix.service }}
+        working-directory: ./contracts/${{ matrix.service }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
