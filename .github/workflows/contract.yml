@@ -29,5 +29,6 @@ jobs:
         with:
           toolchain: 1.82.0
           targets: wasm32-unknown-unknown
-      - run: cargo test --locked
       - run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+      - run: cargo test --lib --locked
+      - run: cargo test integration --locked
