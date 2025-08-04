@@ -40,3 +40,14 @@ jobs:
       - run: cargo build -p cw-schema-derive
       - run: cargo build -p cosmwasm-vm --features iterator,stargate
       - run: cargo build -p cosmwasm-check
+
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.82.0
+          targets: wasm32-unknown-unknown
+      - run: cargo build -p cosmwasm-std --lib --target wasm32-unknown-unknown
+      - run: cargo build -p cosmwasm-std --lib --target wasm32-unknown-unknown --features std,iterator,staking,stargate
