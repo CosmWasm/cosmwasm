@@ -13,3 +13,9 @@ jobs:
           components: clippy, rustfmt
       - run: cargo fmt -- --check
       - run: cargo clippy -p cosmwasm-crypto --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-derive --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-std --all-targets --features std,iterator,staking,stargate -- -D warnings
+      - run: cargo clippy -p cosmwasm-schema --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-schema-derive --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-vm --all-targets --features iterator,stargate -- -D warnings
+      - run: cargo clippy -p cosmwasm-check --all-targets -- -D warnings
