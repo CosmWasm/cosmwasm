@@ -2,6 +2,9 @@ name: contract
 
 on: [ push ]
 
+env:
+  RELEASED_COSMWASM_CHECK_VERSION: "3.0"
+
 jobs:
   stable:
     name: ${{ matrix.dir }} (stable) ${{ matrix.os }}
@@ -24,12 +27,22 @@ jobs:
         with:
           toolchain: 1.82.0
           targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+
+      - name: Check formatting
+        run: cargo fmt -- --check
 
       - name: Run unit tests
         run: cargo test --lib --locked
 
       - name: Build WASM binary
         run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+
+      - name: Install most recent released cosmwasm-check
+        run: cargo install cosmwasm-check@~$RELEASED_COSMWASM_CHECK_VERSION --locked --force
+
+      - name: Check contract using most recent released cosmwasm-check
+        run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
 
       - name: Run integration tests
         run: cargo test integration --locked
@@ -52,12 +65,22 @@ jobs:
         with:
           toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
           targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+
+      - name: Check formatting
+        run: cargo fmt -- --check
 
       - name: Run unit tests
         run: cargo test --lib --locked
 
       - name: Build WASM binary
         run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
+
+      - name: Install most recent released cosmwasm-check
+        run: cargo install cosmwasm-check@~$RELEASED_COSMWASM_CHECK_VERSION --locked --force
+
+      - name: Check contract using most recent released cosmwasm-check
+        run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
 
       - name: Run integration tests
         run: cargo test integration --locked
