@@ -3,7 +3,7 @@ name: contract
 on: [ push ]
 
 env:
-  RELEASED_COSMWASM_CHECK_VERSION: 3.0
+  COSMWASM_CHECK_VERSION: 3.0.1
 
 jobs:
   stable:
@@ -39,7 +39,7 @@ jobs:
         run: cargo build --release --lib --locked --target wasm32-unknown-unknown
 
       - name: Install most recent released cosmwasm-check
-        run: cargo install cosmwasm-check@~"$RELEASED_COSMWASM_CHECK_VERSION" --locked --force
+        run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
 
       - name: Check contract using most recent released cosmwasm-check
         run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
@@ -77,7 +77,7 @@ jobs:
         run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
 
       - name: Install most recent released cosmwasm-check
-        run: cargo install cosmwasm-check@~"$RELEASED_COSMWASM_CHECK_VERSION" --locked --force
+        run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
 
       - name: Check contract using most recent released cosmwasm-check
         run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
