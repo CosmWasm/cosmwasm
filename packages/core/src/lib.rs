@@ -1,3 +1,8 @@
+//! CosmWasm is a smart contract platform for the Cosmos ecosystem.
+//! This crate contains components of cosmwasm-std that can be used in no_std environments.
+//!
+//! For more information, see: <https://docs.cosmwasm.com>
+
 #![no_std]
 
 mod crypto;

@@ -1,3 +1,8 @@
+//! CosmWasm is a smart contract platform for the Cosmos ecosystem.
+//! This crate provides the standard library for Wasm-based smart contracts on Cosmos blockchains.
+//!
+//! For more information, see: <https://docs.cosmwasm.com>
+
 #[cfg(not(feature = "std"))]
 core::compile_error!(
     r#"Please enable `cosmwasm-std`'s `std` feature, as we might move existing functionality to that feature in the future.
