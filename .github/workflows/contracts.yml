@@ -31,6 +31,7 @@ jobs:
             echo "Checking contract: $contract_dir"
             cd "$contract_dir"
             cargo fmt -- --check
+            cargo test --lib --locked
           )
           done
 #      - name: Check formatting
