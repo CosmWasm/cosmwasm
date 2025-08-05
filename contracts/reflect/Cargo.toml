@@ -7,8 +7,6 @@ publish = false
 description = "Reflect messages to use for test cases - based on cw-mask"
 license = "Apache-2.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
 crate-type = ["cdylib", "rlib"]
 
@@ -25,18 +23,10 @@ overflow-checks = true
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = [
-    "cosmwasm_2_2",
-    "exports",
-    "staking",
-    "stargate",
-    "std",
-] }
+cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["cosmwasm_2_2", "exports", "staking", "stargate", "std"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = [
-    "stargate",
-] }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["stargate"] }
