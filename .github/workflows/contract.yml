@@ -12,12 +12,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ] #, macOS-latest, windows-latest ]
-        dir: [ burner ]
-#          burner, crypto-verify, cyberpunk, empty, hackatom,
-#          ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts,
-#          queue, reflect, replier, staking, virus
-#        ]
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        dir: [
+          burner, crypto-verify, cyberpunk, empty, hackatom,
+          ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts,
+          queue, reflect, replier, staking, virus
+        ]
     defaults:
       run:
         shell: bash
@@ -30,14 +30,29 @@ jobs:
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
+      - name: Cache build artifacts
+        uses: Swatinem/rust-cache@v2
+
       - name: Check formatting
         run: cargo fmt -- --check
+
+      - name: Run linter
+        run: cargo clippy --all-targets --tests -- -D warnings
 
       - name: Run unit tests
         run: cargo test --lib --locked
 
       - name: Build WASM binary
         run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+
+      - name: Run integration tests
+        run: cargo test integration --locked
+
+      - name: Build and run schema generator
+        run: cargo run --bin schema --locked
+
+      - name: Ensure schemas are up-to-date
+        run: git diff --quiet ./schema
 
       - name: Install recently released cosmwasm-check
         run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
@@ -51,22 +66,13 @@ jobs:
       - name: Check contract using most recent version of cosmwasm-check
         run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
 
-      - name: Run integration tests
-        run: cargo test integration --locked
-
-      - name: Build and run schema generator
-        run: cargo run --bin schema --locked
-
-      - name: Ensure schemas are up-to-date
-        run: git diff --quiet ./schema
-
   nightly:
     name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ] #, macOS-latest, windows-latest ]
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
         dir: [ floaty ]
     defaults:
       run:
@@ -80,14 +86,29 @@ jobs:
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
+      - name: Cache build artifacts
+        uses: Swatinem/rust-cache@v2
+
       - name: Check formatting
         run: cargo fmt -- --check
+
+      - name: Run linter
+        run: cargo clippy --all-targets --tests -- -D warnings
 
       - name: Run unit tests
         run: cargo test --lib --locked
 
       - name: Build WASM binary
         run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
+
+      - name: Run integration tests
+        run: cargo test integration --locked
+
+      - name: Build and run schema generator
+        run: cargo run --bin schema --locked
+
+      - name: Ensure schemas are up-to-date
+        run: git diff --quiet ./schema
 
       - name: Install recently released cosmwasm-check
         run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
@@ -100,12 +121,3 @@ jobs:
 
       - name: Check contract using most recent version of cosmwasm-check
         run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
-
-      - name: Run integration tests
-        run: cargo test integration --locked
-
-      - name: Build and run schema generator
-        run: cargo run --bin schema --locked
-
-      - name: Ensure schemas are up-to-date
-        run: git diff --quiet ./schema
