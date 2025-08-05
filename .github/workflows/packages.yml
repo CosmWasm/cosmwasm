@@ -1,4 +1,4 @@
-name: workspace
+name: packages
 
 on: [ push ]
 
