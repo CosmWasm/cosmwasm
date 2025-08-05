@@ -10,11 +10,9 @@ license = "Apache-2.0"
 [dependencies]
 cw-schema-derive = { version = "=3.0.1", path = "../cw-schema-derive" }
 indexmap = { version = "2.3.0", default-features = false }
-schemars = { version = "1.0.0-alpha.2", optional = true }
+schemars = { version = "1.0.4", optional = true }
 serde = { version = "1.0.204", features = ["derive"] }
-serde_with = { version = "3.9.0", default-features = false, features = [
-    "macros",
-] }
+serde_with = { version = "3.9.0", default-features = false, features = ["macros"] }
 siphasher = { version = "1.0.1", default-features = false }
 typeid = "1.0.3"
 
