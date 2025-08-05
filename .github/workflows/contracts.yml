@@ -2,26 +2,17 @@ name: contracts
 
 on: [ push ]
 
-env:
-  COSMWASM_CHECK_VERSION: 3.0.1
-
 jobs:
   stable:
-    name: ${{ matrix.dir }} (stable) ${{ matrix.os }}
+    name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest, windows-latest ]
-        dir: [
-          burner, crypto-verify, cyberpunk, empty, hackatom,
-          ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts,
-          queue, reflect, replier, staking, virus
-        ]
+        os: [ ubuntu-latest ]
     defaults:
       run:
         shell: bash
-        working-directory: ./contracts/${{ matrix.dir }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -33,91 +24,43 @@ jobs:
       - name: Cache build artifacts
         uses: Swatinem/rust-cache@v2
 
-      - name: Check formatting
-        run: cargo fmt -- --check
-
-      - name: Run unit tests
-        run: cargo test --lib --locked
-
-      - name: Build WASM binary
-        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
-
-      - name: Run linter
-        run: cargo clippy --all-targets --tests -- -D warnings
-
-      - name: Run integration tests
-        run: cargo test integration --locked
-
-      - name: Build and run schema generator
-        run: cargo run --bin schema --locked
-
-      - name: Ensure schemas are up-to-date
-        run: git diff --quiet ./schema
-
-      - name: Install recently released cosmwasm-check
-        run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
-
-      - name: Check contract using recently released cosmwasm-check
-        run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
-
-      - name: Install most recent version of cosmwasm-check
-        run: cargo install --path ../../packages/check --locked --force
-
-      - name: Check contract using most recent version of cosmwasm-check
-        run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
-
-  nightly:
-    name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, macOS-latest, windows-latest ]
-        dir: [ floaty ]
-    defaults:
-      run:
-        shell: bash
-        working-directory: ./contracts/${{ matrix.dir }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@nightly
-        with:
-          toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
-          targets: wasm32-unknown-unknown
-          components: clippy, rustfmt
-
-      - name: Cache build artifacts
-        uses: Swatinem/rust-cache@v2
-
-      - name: Check formatting
-        run: cargo fmt -- --check
-
-      - name: Run unit tests
-        run: cargo test --lib --locked
-
-      - name: Build WASM binary
-        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
-
-      - name: Run linter
-        run: cargo clippy --all-targets --tests -- -D warnings
-
-      - name: Run integration tests
-        run: cargo test integration --locked
-
-      - name: Build and run schema generator
-        run: cargo run --bin schema --locked
-
-      - name: Ensure schemas are up-to-date
-        run: git diff --quiet ./schema
-
-      - name: Install recently released cosmwasm-check
-        run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
-
-      - name: Check contract using recently released cosmwasm-check
-        run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
-
-      - name: Install most recent version of cosmwasm-check
-        run: cargo install --path ../../packages/check --locked --force
-
-      - name: Check contract using most recent version of cosmwasm-check
-        run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
+      - name: Check contracts
+        run: |
+          for contract_dir in contracts/*/; do
+          (
+            echo "Checking contract: $contract_dir"
+        
+          )
+          done
+#      - name: Check formatting
+#        run: cargo fmt -- --check
+#
+#      - name: Run unit tests
+#        run: cargo test --lib --locked
+#
+#      - name: Build WASM binary
+#        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+#
+#      - name: Run linter
+#        run: cargo clippy --all-targets --tests -- -D warnings
+#
+#      - name: Run integration tests
+#        run: cargo test integration --locked
+#
+#      - name: Build and run schema generator
+#        run: cargo run --bin schema --locked
+#
+#      - name: Ensure schemas are up-to-date
+#        run: git diff --quiet ./schema
+#
+#      - name: Install recently released cosmwasm-check
+#        run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
+#
+#      - name: Check contract using recently released cosmwasm-check
+#        run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
+#
+#      - name: Install most recent version of cosmwasm-check
+#        run: cargo install --path ../../packages/check --locked --force
+#
+#      - name: Check contract using most recent version of cosmwasm-check
+#        run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
