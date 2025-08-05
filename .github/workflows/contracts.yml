@@ -1,0 +1,28 @@
+name: contracts
+
+on: [ push ]
+
+jobs:
+  stable:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./contracts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.82.0
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Run unit tests
+        run: cargo test -p burner --lib --locked
