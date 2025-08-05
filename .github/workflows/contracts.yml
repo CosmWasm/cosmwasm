@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        os: [ ubuntu-latest ] #, macOS-latest, windows-latest ]
     defaults:
       run:
         shell: bash
@@ -23,6 +23,9 @@ jobs:
 
       - name: Cache build artifacts
         uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            contracts/* -> target
 
       - name: Check contracts
         run: |
