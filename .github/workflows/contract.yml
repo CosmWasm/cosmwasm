@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        os: [ ubuntu-latest macOS-latest, windows-latest ]
         dir: [
           burner, crypto-verify, cyberpunk, empty, hackatom,
           ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts,
@@ -20,6 +20,7 @@ jobs:
         ]
     defaults:
       run:
+        shell: bash
         working-directory: ./contracts/${{ matrix.dir }}
     steps:
       - uses: actions/checkout@v4
@@ -38,11 +39,17 @@ jobs:
       - name: Build WASM binary
         run: cargo build --release --lib --locked --target wasm32-unknown-unknown
 
-      - name: Install most recent released cosmwasm-check
+      - name: Install recently released cosmwasm-check
         run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
 
-      - name: Check contract using most recent released cosmwasm-check
-        run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
+      - name: Check contract using recently released cosmwasm-check
+        run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
+
+      - name: Install most recent version of cosmwasm-check
+        run: cargo install --path ../../packages/check --locked --force
+
+      - name: Check contract using most recent version of cosmwasm-check
+        run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
 
       - name: Run integration tests
         run: cargo test integration --locked
@@ -76,11 +83,17 @@ jobs:
       - name: Build WASM binary
         run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
 
-      - name: Install most recent released cosmwasm-check
+      - name: Install recently released cosmwasm-check
         run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
 
-      - name: Check contract using most recent released cosmwasm-check
-        run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
+      - name: Check contract using recently released cosmwasm-check
+        run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
+
+      - name: Install most recent version of cosmwasm-check
+        run: cargo install --path ../../packages/check --locked --force
+
+      - name: Check contract using most recent version of cosmwasm-check
+        run: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
 
       - name: Run integration tests
         run: cargo test integration --locked
