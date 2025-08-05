@@ -21,12 +21,6 @@ jobs:
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
-      - name: Cache build artifacts
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            contracts/* -> target
-
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
 
@@ -37,12 +31,12 @@ jobs:
         run: |
           for contract_dir in contracts/*/; do
           (
-            echo "Checking contract: $contract_dir"
             cd "$contract_dir"
             cargo fmt -- --check
             cargo test --lib --locked
           )
           done
+
 #      - name: Check formatting
 #        run: cargo fmt -- --check
 #
