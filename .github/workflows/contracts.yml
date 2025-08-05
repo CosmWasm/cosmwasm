@@ -30,6 +30,9 @@ jobs:
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
+      - name: Cache build artifacts
+        uses: Swatinem/rust-cache@v2
+
       - name: Check formatting
         run: cargo fmt -- --check
 
@@ -82,6 +85,9 @@ jobs:
           toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
+
+      - name: Cache build artifacts
+        uses: Swatinem/rust-cache@v2
 
       - name: Check formatting
         run: cargo fmt -- --check

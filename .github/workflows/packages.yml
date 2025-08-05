@@ -11,6 +11,10 @@ jobs:
         with:
           toolchain: 1.82.0
           components: clippy, rustfmt
+
+      - name: Cache build artifacts
+        uses: Swatinem/rust-cache@v2
+
       - run: cargo fmt -- --check
       - run: cargo clippy -p cosmwasm-crypto --all-targets -- -D warnings
       - run: cargo clippy -p cosmwasm-derive --all-targets -- -D warnings
@@ -34,6 +38,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.82.0
+
+      - name: Cache build artifacts
+        uses: Swatinem/rust-cache@v2
+
       - run: cargo build -p cosmwasm-crypto
       - run: cargo build -p cosmwasm-derive
       - run: cargo build -p cosmwasm-std
@@ -59,6 +67,10 @@ jobs:
         with:
           toolchain: 1.82.0
           targets: wasm32-unknown-unknown
+
+      - name: Cache build artifacts
+        uses: Swatinem/rust-cache@v2
+
       - run: cargo build -p cosmwasm-std --lib --target wasm32-unknown-unknown
       - run: cargo build -p cosmwasm-std --lib --target wasm32-unknown-unknown --features std,iterator,staking,stargate
 
@@ -74,6 +86,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.82.0
+
+      - name: Cache build artifacts
+        uses: Swatinem/rust-cache@v2
+
       - run: cargo test -p cosmwasm-crypto
       - run: cargo test -p cosmwasm-derive
       - run: cargo test -p cosmwasm-std --features std,iterator,staking,stargate,cosmwasm_1_2
