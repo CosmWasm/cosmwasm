@@ -25,4 +25,19 @@ jobs:
         run: cargo fmt -- --check
 
       - name: Run unit tests
-        run: cargo test -p burner --lib --locked
+        run: | 
+          cargo test -p burner --lib --locked
+          cargo test -p crypto-verify --lib --locked
+          cargo test -p cyberpunk --lib --locked
+          cargo test -p empty --lib --locked
+          cargo test -p hackatom --lib --locked
+          cargo test -p ibc2 --lib --locked
+          cargo test -p ibc-callbacks --lib --locked
+          cargo test -p ibc-reflect --lib --locked
+          cargo test -p ibc-reflect-send --lib --locked
+          cargo test -p nested-contracts --lib --locked
+          cargo test -p queue --lib --locked
+          cargo test -p reflect --lib --locked
+          cargo test -p replier --lib --locked
+          cargo test -p staking --lib --locked
+          cargo test -p virus --lib --locked
