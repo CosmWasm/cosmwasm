@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
     defaults:
       run:
         shell: bash
@@ -29,7 +29,8 @@ jobs:
           for contract_dir in contracts/*/; do
           (
             echo "Checking contract: $contract_dir"
-        
+            cd "$contract_dir"
+            cargo fmt -- --check
           )
           done
 #      - name: Check formatting
