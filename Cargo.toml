@@ -1,6 +1,9 @@
 [workspace]
 members = ["packages/*"]
-exclude = ["contracts"]
+exclude = [
+    "contracts",
+    "packages/cw-schema-codegen/tests/rust-e2e",
+]
 
 resolver = "2"
 

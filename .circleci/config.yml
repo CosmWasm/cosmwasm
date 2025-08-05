@@ -1,6 +1,10 @@
 version: 2.1
 
 orbs:
+  go: circleci/go@3.0.2
+  node: circleci/node@7.1.0
+  python: circleci/python@3.0.0
+  rust: circleci/rust@1.7.0
   win: circleci/windows@5.1
 
 commands:
@@ -71,6 +75,7 @@ workflows:
       - package_schema
       - package_schema_derive
       - package_cw_schema
+      - package_cw_schema_codegen
       - package_std
       - package_vm
       - package_vm_derive
@@ -446,6 +451,42 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_cw_schema-rust:1.82-{{ checksum "Cargo.lock" }}
+
+  package_cw_schema_codegen:
+    executor:
+      name: python/default
+    steps:
+      - checkout
+      - rust/install:
+          version: "1.86"
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_cw_schema_codegen-rust:1.86-{{ checksum "Cargo.lock" }}
+      - go/install:
+          version: 1.23.4
+      - node/install
+      - run:
+          name: Install pydantic
+          command: pip install pydantic
+      - run:
+          name: Build
+          working_directory: ~/project/packages/cw-schema-codegen
+          command: cargo build --locked
+      - run:
+          name: Run tests
+          working_directory: ~/project/packages/cw-schema-codegen
+          # Use --include-ignored to also run ignored tests
+          command: cargo test --locked -- --include-ignored
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_cw_schema_codegen-rust:1.86-{{ checksum "Cargo.lock" }}
 
   package_std:
     docker:
@@ -1248,7 +1289,7 @@ jobs:
 
   coverage:
     docker:
-      - image: rust:1.84.1-alpine3.21
+      - image: rust:1.86-alpine3.21
     resource_class: medium+
     steps:
       - checkout
@@ -1257,7 +1298,8 @@ jobs:
           command: |
             apk update
             # needed for grcov and compiling tests
-            apk add --no-cache mold clang curl llvm19-dev clang19-static lcov
+            apk add --no-cache mold clang curl llvm19-dev clang19-static lcov python3 py3-pip py3-pydantic nodejs npm
+            ln -sf python3 /usr/bin/python
       - run:
           name: Install cargo-llvm-cov and cargo-nextest
           command: |
@@ -1277,11 +1319,16 @@ jobs:
           command: |
             curl -L --proto '=https' --tlsv1.2 -OsSf https://cli.codecov.io/v10.1.1/alpine/codecov
             chmod +x codecov
+      - go/install:
+          version: 1.23.4
+      - run:
+          name: Install pydantic
+          command: pip install pydantic --break-system-packages
       - run:
           name: Run tests with coverage
           command: |
             # Generate full coverage report
-            cargo llvm-cov nextest --all-features --lcov --output-path lcov.info
+            cargo llvm-cov nextest --all-features --run-ignored=all --lcov --output-path lcov.info
 
             # List of package directories and their flags
             # ToDo: Re-add "core:cosmwasm-core" when enabling core coverage again
@@ -1293,7 +1340,9 @@ jobs:
               "schema-derive:cosmwasm-schema-derive" \
               "std:cosmwasm-std" \
               "vm:cosmwasm-vm" \
-              "vm-derive:cosmwasm-vm-derive"
+              "vm-derive:cosmwasm-vm-derive" \
+              "cw-schema:cw-schema" \
+              "cw-schema-codegen:cw-schema-codegen"
 
             # Process each package-flag pair
             for entry in "$@"; do

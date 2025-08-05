@@ -40,3 +40,10 @@ flags:
   cosmwasm-vm-derive:
     paths:
       - packages/vm-derive/
+
+  cw-schema:
+    paths:
+      - packages/cw-schema
+  cw-schema-codegen:
+    paths:
+      - packages/cw-schema-codegen
