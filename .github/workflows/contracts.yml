@@ -27,7 +27,13 @@ jobs:
           workspaces: |
             contracts/* -> target
 
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
       - name: Check contracts
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          RUSTC_WRAPPER: "sccache"
         run: |
           for contract_dir in contracts/*/; do
           (
