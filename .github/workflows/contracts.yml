@@ -19,6 +19,5 @@ jobs:
           toolchain: 1.82.0
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
-
-      - name: Run checks for contracts that require stable channel
-        run: ./gh-checks/check-contracts-stable.sh
+      - name: Verify contracts using Rust stable channel
+        run: ./gh-checks/verify-contracts-stable.sh

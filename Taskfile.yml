@@ -44,11 +44,11 @@ tasks:
       # Build WASM binary
       - cmd: cargo {{.TOOLCHAIN}} build --release --lib --locked --target wasm32-unknown-unknown
       # Run linter
-      - cmd: cargo clippy --all-targets --tests -- -D warnings
+      - cmd: cargo {{.TOOLCHAIN}} clippy --all-targets --tests -- -D warnings
       # Run integration tests
-      - cmd: cargo test --test integration --locked
+      - cmd: cargo {{.TOOLCHAIN}} test --test integration --locked
       # Build and run schema generator
-      - cmd: cargo run --bin schema --locked
+      - cmd: cargo {{.TOOLCHAIN}} run --bin schema --locked
       # Ensure schemas are up-to-date
       - cmd: git diff --quiet ./schema
       # Check contract using recently released cosmwasm-check
@@ -67,11 +67,34 @@ tasks:
       # Build WASM binary
       - cmd: cargo {{.TOOLCHAIN}} build --release --lib --locked --target wasm32-unknown-unknown
       # Run linter
-      - cmd: cargo clippy --all-targets --tests -- -D warnings
+      - cmd: cargo {{.TOOLCHAIN}} clippy --all-targets --tests -- -D warnings
       # Run integration tests
-      - cmd: cargo test --test integration --locked
+      - cmd: cargo {{.TOOLCHAIN}} test --test integration --locked
       # Build and run schema generator
-      - cmd: cargo run --bin schema --locked
+      - cmd: cargo {{.TOOLCHAIN}} run --bin schema --locked
+      # Ensure schemas are up-to-date
+      - cmd: git diff --quiet ./schema
+      # Check contract using recently released cosmwasm-check
+      - cmd: cosmwasm-check-released ./target/wasm32-unknown-unknown/release/*.wasm
+      # Check contract using most recent version of cosmwasm-check
+      - cmd: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
+
+  check-cyberpunk:
+    desc: Performs checks for cyberpunk contract
+    dir: ./contracts/cyberpunk
+    cmds:
+      # Check formatting
+      - cmd: cargo {{.TOOLCHAIN}} fmt -- --check
+      # Run unit tests
+      - cmd: cargo {{.TOOLCHAIN}} test --lib --locked
+      # Build WASM binary
+      - cmd: cargo {{.TOOLCHAIN}} build --release --lib --locked --target wasm32-unknown-unknown
+      # Run linter
+      - cmd: cargo {{.TOOLCHAIN}} clippy --all-targets --tests -- -D warnings
+      # Run integration tests
+      - cmd: cargo {{.TOOLCHAIN}} test --test integration --locked
+      # Build and run schema generator
+      - cmd: cargo {{.TOOLCHAIN}} run --bin schema --locked
       # Ensure schemas are up-to-date
       - cmd: git diff --quiet ./schema
       # Check contract using recently released cosmwasm-check
@@ -84,9 +107,23 @@ tasks:
     cmds:
       - cmd: cargo clean
       - task: clean-burner
+      - task: clean-crypto-verify
+      - task: clean-cyberpunk
 
   clean-burner:
     desc: Removes all compiled artifacts for burner contract
     dir: ./contracts/burner
+    cmds:
+      - cmd: cargo clean
+
+  clean-crypto-verify:
+    desc: Removes all compiled artifacts for crypto-verify contract
+    dir: ./contracts/crypto-verify
+    cmds:
+      - cmd: cargo clean
+
+  clean-cyberpunk:
+    desc: Removes all compiled artifacts for cyberpunk contract
+    dir: ./contracts/cyberpunk
     cmds:
       - cmd: cargo clean

@@ -636,7 +636,7 @@ version = "3.0.1"
 dependencies = [
  "cw-schema-derive",
  "indexmap",
- "schemars 1.0.0-alpha.21",
+ "schemars 1.0.4",
  "serde",
  "serde_with",
  "siphasher",
@@ -2080,13 +2080,13 @@ dependencies = [
 
 [[package]]
 name = "schemars"
-version = "1.0.0-alpha.21"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2038a099f2fc8a48cdc0a8a50e106d5563690aab7bbf055be1c343a50887dad2"
+checksum = "82d20c4491bc164fa2f6c5d44565947a52ad80b9505d8e36f8d54c27c739fcd0"
 dependencies = [
  "dyn-clone",
  "ref-cast",
- "schemars_derive 1.0.0-alpha.21",
+ "schemars_derive 1.0.4",
  "serde",
  "serde_json",
 ]
@@ -2105,9 +2105,9 @@ dependencies = [
 
 [[package]]
 name = "schemars_derive"
-version = "1.0.0-alpha.21"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50cbf115b853c2a7748af35f5270fd508da77c351b81dc36178e06cc17a14f17"
+checksum = "33d020396d1d138dc19f1165df7545479dcd58d93810dc5d646a16e55abefa80"
 dependencies = [
  "proc-macro2",
  "quote",
