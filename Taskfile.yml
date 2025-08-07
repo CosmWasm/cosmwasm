@@ -1,0 +1,26 @@
+version: '3'
+
+silent: true
+
+tasks:
+
+  all:
+    desc: Runs all checks
+    summary: |
+      Runs all viable checks for cosmwasm.
+      Execute this task before pushing any changes.
+      This task takes a significant amount of time to complete.
+    cmds:
+      - task: clean
+
+  check-burner:
+    desc: Performs checks for burner contract
+    dir: ./contracts/burner
+    cmds:
+      - cmd: cargo fmt -- --check # check formatting
+      - cmd: cargo test --lib #--locked # run unit tests
+
+  clean:
+    desc: Removes all compiled artifacts
+    cmds:
+      - cmd: cargo clean
