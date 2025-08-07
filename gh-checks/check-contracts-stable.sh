@@ -12,7 +12,7 @@ done
 
 for dir in "${contracts[@]}"; do
   (
-    echo -e "CHANGING WORKING DIRECTORY TO: \e[1;32m$dir\e[0m"
+    echo -e "\e[1;34mCHANGING WORKING DIRECTORY TO\e[0m: \e[1;32m$dir\e[0m"
     cd "$dir" || exit 1
 
     echo -e "\e[1;34mCHECKING FORMATTING\e[0m"
