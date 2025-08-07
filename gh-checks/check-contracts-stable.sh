@@ -12,28 +12,28 @@ done
 
 for dir in "${contracts[@]}"; do
   (
-    echo -e "Changing working directory to \033[1;32m$dir\033[0m"
+    echo -e "CHANGING WORKING DIRECTORY TO: \e[1;32m$dir\e[0m"
     cd "$dir" || exit 1
 
-    echo "Checking formatting"
+    echo -e "\e[1;34mCHECKING FORMATTING\e[0m"
     cargo fmt -- --check
 
-    echo "Running unit tests"
-    cargo test --lib --locked --quiet
+    echo -e "\e[1;34mRUNNING UNIT TESTS\e[0m"
+    cargo test --lib --locked
 
-    echo  "Building WASM binary"
+    echo  -e "\e[1;34mBUILDING WASM BINARY\e[0m"
     cargo build --release --lib --locked --target wasm32-unknown-unknown
 
-    echo "Running linter"
+    echo -e "\e[1;34mRUNNING LINTER\e[0m"
     cargo clippy --all-targets --tests -- -D warnings
 
-    echo "Running integration tests"
-    cargo test --test integration --locked --quiet
+    echo -e "\e[1;34mRUNNING INTEGRATION TESTS\e[0m"
+    cargo test --test integration --locked
 
-    echo "Running schema generator"
+    echo -e "\e[1;34mRUNNING SCHEMA GENERATOR\e[0m"
     cargo run --bin schema --locked
 
-    echo "Ensuring schemas are up-to-date"
+    echo -e "\e[1;34mENSURING SCHEMAS ARE UP-TO-DATE\e[0m"
     git diff --quiet ./schema
   )
 done
