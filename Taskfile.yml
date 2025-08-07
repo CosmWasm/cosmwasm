@@ -2,6 +2,9 @@ version: '3'
 
 silent: true
 
+vars:
+  TOOLCHAIN: +1.81.0-x86_64-unknown-linux-gnu
+
 tasks:
 
   all:
@@ -17,10 +20,29 @@ tasks:
     desc: Performs checks for burner contract
     dir: ./contracts/burner
     cmds:
-      - cmd: cargo fmt -- --check # check formatting
-      - cmd: cargo test --lib #--locked # run unit tests
+      # Check formatting
+      - cmd: cargo {{.TOOLCHAIN}} fmt -- --check
+      # Run unit tests
+      - cmd: cargo {{.TOOLCHAIN}} test --lib --locked
+      # Build WASM binary
+      - cmd: cargo {{.TOOLCHAIN}} build --release --lib --locked --target wasm32-unknown-unknown
+      # Run linter
+      - cmd: cargo clippy --all-targets --tests -- -D warnings
+      # Run integration tests
+      - cmd: cargo test integration --locked
+      # Build and run schema generator
+      - cmd: cargo run --bin schema --locked
+      # Ensure schemas are up-to-date
+      - cmd: git diff --quiet ./schema
 
   clean:
     desc: Removes all compiled artifacts
+    cmds:
+      - cmd: cargo clean
+      - task: clean-burner
+
+  clean-burner:
+    desc: Removes all compiled artifacts for burner contract
+    dir: ./contracts/burner
     cmds:
       - cmd: cargo clean
