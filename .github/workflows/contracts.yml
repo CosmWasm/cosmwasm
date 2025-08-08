@@ -9,8 +9,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ] #, macOS-latest, windows-latest ]
-        dir: [ burner, crypto-verify ] #, cyberpunk, empty, hackatom, ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts, queue, reflect, replier, staking, virus ]
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        dir: [ burner, crypto-verify, cyberpunk, empty, hackatom, ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts, queue, reflect, replier, staking, virus ]
     defaults:
       run:
         shell: bash
@@ -49,46 +49,48 @@ jobs:
       - name: Ensure schemas are up-to-date
         run: git diff --quiet ./schema
 
-#  nightly:
-#    name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
-#    runs-on: ${{ matrix.os }}
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os: [ ubuntu-latest, macOS-latest, windows-latest ]
-#        dir: [ floaty ]
-#    defaults:
-#      run:
-#        shell: bash
-#        working-directory: ./contracts/${{ matrix.dir }}
-#    steps:
-#      - name: Checkout sources
-#        uses: actions/checkout@v4
-#
-#      - name: Prepare Rust toolchain
-#        uses: actions-rust-lang/setup-rust-toolchain@v1
-#        with:
-#          toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
-#          target: wasm32-unknown-unknown
-#          components: clippy, rustfmt
-#
-#      - name: Check formatting
-#        run: cargo fmt -- --check
-#
-#      - name: Run unit tests
-#        run: cargo test --lib --locked
-#
-#      - name: Build WASM binary
-#        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
-#
-#      - name: Run linter
-#        run: cargo clippy --all-targets --tests -- -D warnings
-#
-#      - name: Run integration tests
-#        run: cargo test --test integration --locked
-#
-#      - name: Run schema generator
-#        run: cargo run --bin schema --locked
-#
-#      - name: Ensure schemas are up-to-date
-#        run: git diff --quiet ./schema
+  nightly:
+    name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        dir: [ floaty ]
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./contracts/${{ matrix.dir }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Prepare Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
+          target: wasm32-unknown-unknown
+          components: clippy, rustfmt
+          cache-directories: |
+            ${{ github.workspace }}/contracts/${{ matrix.dir }}/target
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Run unit tests
+        run: cargo test --lib --locked
+
+      - name: Build WASM binary
+        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
+
+      - name: Run linter
+        run: cargo clippy --all-targets --tests -- -D warnings
+
+      - name: Run integration tests
+        run: cargo test --test integration --locked
+
+      - name: Run schema generator
+        run: cargo run --bin schema --locked
+
+      - name: Ensure schemas are up-to-date
+        run: git diff --quiet ./schema
