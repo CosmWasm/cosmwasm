@@ -27,7 +27,6 @@ jobs:
           components: clippy, rustfmt
           cache-directories: |
             ${{ github.workspace }}/contracts
-          cache-key: contract-${{ matrix.dir }}-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
 
       - name: Check formatting
         run: cargo fmt -- --check
@@ -74,7 +73,6 @@ jobs:
           components: clippy, rustfmt
           cache-directories: |
             ${{ github.workspace }}/contracts
-          cache-key: contract-${{ matrix.dir }}-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
 
       - name: Check formatting
         run: cargo fmt -- --check
