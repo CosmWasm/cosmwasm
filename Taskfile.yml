@@ -29,9 +29,16 @@ tasks:
   check-contracts:
     desc: Performs checks for all contracts
     cmds:
-#      - task: install-cosmwasm-check
+      - task: install-cosmwasm-check
+      - task: check-contracts-fast
+
+  check-contracts-fast:
+    desc: Performs checks for all contracts without reinstalling cosmwasm-check tool
+    cmds:
       - task: check-burner
       - task: check-crypto-verify
+      - task: check-cyberpunk
+      - task: check-nested-contracts
 
   check-burner:
     desc: Performs checks for burner contract
@@ -102,6 +109,29 @@ tasks:
       # Check contract using most recent version of cosmwasm-check
       - cmd: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
 
+  check-nested-contracts:
+    desc: Performs checks for nested-contracts contracts
+    dir: ./contracts/nested-contracts
+    cmds:
+      # Check formatting
+      - cmd: cargo {{.TOOLCHAIN}} fmt -- --check
+      # Run unit tests
+      - cmd: cargo {{.TOOLCHAIN}} test --lib --locked
+      # Build WASM binary
+      - cmd: cargo {{.TOOLCHAIN}} build --release --lib --locked --target wasm32-unknown-unknown
+      # Run linter
+      - cmd: cargo {{.TOOLCHAIN}} clippy --all-targets --tests -- -D warnings
+      # Run integration tests
+      - cmd: cargo {{.TOOLCHAIN}} test --test integration --locked
+      # Build and run schema generator
+      - cmd: cargo {{.TOOLCHAIN}} run --bin schema --locked
+      # Ensure schemas are up-to-date
+      - cmd: git diff --quiet ./schema
+      # Check contract using recently released cosmwasm-check
+      - cmd: cosmwasm-check-released ./target/wasm32-unknown-unknown/release/*.wasm
+      # Check contract using most recent version of cosmwasm-check
+      - cmd: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
+
   clean:
     desc: Removes all compiled artifacts
     cmds:
@@ -109,6 +139,7 @@ tasks:
       - task: clean-burner
       - task: clean-crypto-verify
       - task: clean-cyberpunk
+      - task: clean-nested-contracts
 
   clean-burner:
     desc: Removes all compiled artifacts for burner contract
@@ -125,5 +156,11 @@ tasks:
   clean-cyberpunk:
     desc: Removes all compiled artifacts for cyberpunk contract
     dir: ./contracts/cyberpunk
+    cmds:
+      - cmd: cargo clean
+
+  clean-nested-contracts:
+    desc: Removes all compiled artifacts for nested-contracts contracts
+    dir: ./contracts/nested-contracts
     cmds:
       - cmd: cargo clean
