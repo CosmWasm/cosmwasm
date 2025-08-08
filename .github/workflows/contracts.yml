@@ -33,7 +33,7 @@ jobs:
         run: cargo test --lib --locked
 
       - name: Build WASM binary
-        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
 
       - name: Run linter
         run: cargo clippy --all-targets --tests -- -D warnings
