@@ -26,7 +26,7 @@ jobs:
           target: wasm32-unknown-unknown
           components: clippy, rustfmt
           cache-directories: |
-            contracts/${{ matrix.dir }}/target
+            ${{ github.workspace }}/contracts/${{ matrix.dir }}/target
 
       - name: Check formatting
         run: cargo fmt -- --check
