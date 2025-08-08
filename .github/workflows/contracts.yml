@@ -8,10 +8,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ubuntu-latest]
+        dir: [burner]
     defaults:
       run:
         shell: bash
+        working-directory: ./contracts/${{ matrix.dir }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -19,5 +21,5 @@ jobs:
           toolchain: 1.82.0
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
-      - name: Verify contracts using Rust stable channel
-        run: ./gh-checks/verify-contracts-stable.sh
+      - name: Check formatting
+        run: cargo fmt -- --check
