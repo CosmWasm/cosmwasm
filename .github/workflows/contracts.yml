@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        os: [ ubuntu-22.04, macOS-15, windows-2025 ]
         dir: [ burner, crypto-verify, cyberpunk, empty, hackatom, ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts, queue, reflect, replier, staking, virus ]
     defaults:
       run:
@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        os: [ ubuntu-22.04, macOS-15, windows-2025 ]
         dir: [ floaty ]
     defaults:
       run:
