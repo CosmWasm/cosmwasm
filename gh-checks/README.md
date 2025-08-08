@@ -1,3 +1,3 @@
 # Checks used by GitHub Actions
 
-1
+2
