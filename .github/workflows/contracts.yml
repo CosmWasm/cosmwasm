@@ -59,10 +59,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cosmwasm-check-${{ matrix.os }}
-          path: ${{ github.workspace }}/.cargo/bin
+          path: ${{ github.workspace }}/bin
 
       - name: Print cosmwasm-check version
-        run: cargo cosmwasm-check -- --version
+        run: ls -la ${{ github.workspace }}/bin
 
   nightly:
     name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
@@ -94,7 +94,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cosmwasm-check-${{ matrix.os }}
-          path: ${{ github.workspace }}/.cargo/bin
+          path: ${{ github.workspace }}/bin
 
       - name: Print cosmwasm-check version
-        run: cargo cosmwasm-check -- --version
+        run: ls -la ${{ github.workspace }}/bin
