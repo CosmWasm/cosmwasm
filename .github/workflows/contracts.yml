@@ -59,7 +59,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cosmwasm-check-${{ matrix.os }}
-          path: ${{ env.HOME }}/.cargo/bin
+          path: ${{ github.workspace }}/.cargo/bin
 
       - name: Print cosmwasm-check version
         run: cargo cosmwasm-check -- --version
@@ -94,7 +94,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cosmwasm-check-${{ matrix.os }}
-          path: ${{ env.HOME }}/.cargo/bin
+          path: ${{ github.workspace }}/.cargo/bin
 
       - name: Print cosmwasm-check version
         run: cargo cosmwasm-check -- --version
