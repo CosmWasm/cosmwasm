@@ -44,6 +44,15 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
+      - name: Download cosmwasm-check binary
+        uses: actions/download-artifact@v4
+        with:
+          name: cosmwasm-check-${{ matrix.os }}
+          path: ./bin
+
+      - name: Print cosmwasm-check version
+        run: ./bin/cosmwasm-check-${{ matrix.os }} --version
+
   nightly:
     name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -59,3 +68,12 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+
+      - name: Download cosmwasm-check binary
+        uses: actions/download-artifact@v4
+        with:
+          name: cosmwasm-check-${{ matrix.os }}
+          path: ./bin
+
+      - name: Print cosmwasm-check version
+        run: ./bin/cosmwasm-check-${{ matrix.os }} --version
