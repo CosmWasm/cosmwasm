@@ -9,8 +9,6 @@ edition = "2021"
 publish = false
 license = "Apache-2.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
 crate-type = ["cdylib", "rlib"]
 
@@ -28,14 +26,9 @@ overflow-checks = true
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
 # cosmwasm_1_4 is enabled here for more efficient `range_keys` and `range_values`
-cosmwasm-std = { path = "../../packages/std", features = [
-    "cosmwasm_1_4",
-    "iterator",
-] }
+cosmwasm-std = { path = "../../packages/std", features = ["cosmwasm_1_4", "iterator"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = [
-    "iterator",
-] }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
