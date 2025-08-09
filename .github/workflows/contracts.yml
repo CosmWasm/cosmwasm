@@ -44,6 +44,9 @@ jobs:
       - name: Print cargo content
         run: ls -la $HOME/.cargo/bin
 
+      - name: Print cosmwasm-check version
+        run: cargo cosmwasm-check --version
+
 #  stable:
 #    name: ${{ matrix.dir }} (stable) ${{ matrix.os }}
 #    runs-on: ${{ matrix.os }}
