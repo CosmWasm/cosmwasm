@@ -98,5 +98,8 @@ jobs:
           cache-directories: |
             ${{ github.workspace }}/contracts
 
-      - name: Print cosmwasm-check version
-        run: cosmwasm-check --version
+      - name: Build WASM binary
+        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
+
+      - name: Check contract using cosmwasm-check
+        run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
