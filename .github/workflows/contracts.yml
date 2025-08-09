@@ -115,7 +115,7 @@ jobs:
           path: ./bin
 
       - name: Make cosmwasm-check executable
-        run: chmod +x ./bin/cosmwasm-check*
+        run: chmod +x ${{ github.workspace }}/bin/cosmwasm-check*
 
       - name: Copy binary
         run: cp ${{ github.workspace }}/bin/cosmwasm-check* $HOME/.cargo/bin
