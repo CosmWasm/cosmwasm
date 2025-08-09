@@ -3,9 +3,34 @@ name: contracts
 on: [ push ]
 
 jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Prepare Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Build cosmwasm-check
+        run: cargo install cosmwasm-check --root ./build-tools
+
+      - name: Upload cosmwasm-check binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: cosmwasm-check-${{ matrix.os }}
+          path: build-tools/bin/cosmwasm-check*
+
   stable:
     name: ${{ matrix.dir }} (stable) ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    needs: build
     strategy:
       fail-fast: false
       matrix:
