@@ -117,5 +117,8 @@ jobs:
       - name: Copy binary
         run: cp ${{ github.workspace }}/bin/cosmwasm-check* $HOME/.cargo/bin
 
+      - name: Print cargo content
+        run: ls -la $HOME/.cargo/bin
+
       - name: Print cosmwasm-check version
         run: cosmwasm-check --version
