@@ -53,7 +53,7 @@ jobs:
           path: ./bin
 
       - name: Print cosmwasm-check version
-        run: ./bin/cosmwasm-check-${{ matrix.os }} --version
+        run: ${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }} --version
 
   nightly:
     name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
@@ -79,4 +79,4 @@ jobs:
           path: ./bin
 
       - name: Print cosmwasm-check version
-        run: ./bin/cosmwasm-check-${{ matrix.os }} --version
+        run: ${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }} --version
