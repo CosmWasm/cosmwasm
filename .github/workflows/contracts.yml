@@ -52,8 +52,11 @@ jobs:
           name: cosmwasm-check-${{ matrix.os }}
           path: ./bin
 
+      - name: Make the checker executable
+        run: chmod +x ${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }}
+
       - name: Print cosmwasm-check version
-        run: ${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }} --version
+        run: ./${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }} --version
 
   nightly:
     name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
@@ -78,5 +81,8 @@ jobs:
           name: cosmwasm-check-${{ matrix.os }}
           path: ./bin
 
+      - name: Make the checker executable
+        run: chmod +x ${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }}
+
       - name: Print cosmwasm-check version
-        run: ${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }} --version
+        run: ./${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }} --version
