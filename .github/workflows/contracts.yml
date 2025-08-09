@@ -96,8 +96,5 @@ jobs:
           name: cosmwasm-check-${{ matrix.os }}
           path: ${{ env.HOME }}/.cargo/bin
 
-      - name: Make the checker executable
-        run: chmod +x ${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }}
-
       - name: Print cosmwasm-check version
         run: cargo cosmwasm-check -- --version
