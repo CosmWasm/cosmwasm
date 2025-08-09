@@ -66,7 +66,7 @@ jobs:
           toolchain: 1.87.0
 
       - name: Install cosmwasm-check
-        run: cargo install --path ../../packages/check --locked
+        run: cargo install --path ../../packages/check
 
       - name: Print cosmwasm-check version
         run: cosmwasm-check --version
@@ -151,7 +151,7 @@ jobs:
           toolchain: 1.87.0
 
       - name: Install cosmwasm-check
-        run: cargo install --path ../../packages/check --locked
+        run: cargo install --path ../../packages/check
 
       - name: Print cosmwasm-check version
         run: cosmwasm-check --version
