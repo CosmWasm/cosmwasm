@@ -32,20 +32,20 @@ jobs:
           name: cosmwasm-check-${{ matrix.os }}
           path: ./build-tools/bin/cosmwasm-check*
 
-      - name: Display variables
-        run: echo $HOME
-
-      - name: Print content
-        run: ls -la ./build-tools/bin
-
-      - name: Copy binary
-        run: cp ./build-tools/bin/cosmwasm-check* $HOME/.cargo/bin
-
-      - name: Print cargo content
-        run: ls -la $HOME/.cargo/bin
-
-      - name: Print cosmwasm-check version
-        run: cosmwasm-check --version
+#      - name: Display variables
+#        run: echo $HOME
+#
+#      - name: Print content
+#        run: ls -la ./build-tools/bin
+#
+#      - name: Copy binary
+#        run: cp ./build-tools/bin/cosmwasm-check* $HOME/.cargo/bin
+#
+#      - name: Print cargo content
+#        run: ls -la $HOME/.cargo/bin
+#
+#      - name: Print cosmwasm-check version
+#        run: cosmwasm-check --version
 
 #  stable:
 #    name: ${{ matrix.dir }} (stable) ${{ matrix.os }}
@@ -115,7 +115,7 @@ jobs:
           path: ./bin
 
       - name: Copy binary
-        run: cp ./bin/cosmwasm-check* $HOME/.cargo/bin
+        run: cp ${{ github.workspace }}/bin/cosmwasm-check* $HOME/.cargo/bin
 
       - name: Print cosmwasm-check version
         run: cosmwasm-check --version
