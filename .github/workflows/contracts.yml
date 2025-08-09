@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest,  macOS-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest]
         dir: [ burner, crypto-verify, cyberpunk, empty, hackatom, ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts, queue, reflect, replier, staking, virus ]
     defaults:
       run:
@@ -59,10 +59,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cosmwasm-check-${{ matrix.os }}
-          path: ${{ github.workspace }}/bin
+          path: ${{ github.workspace }}
 
       - name: Print cosmwasm-check version
-        run: ls -la ${{ github.workspace }}/bin
+        run: ls -la ${{ github.workspace }}
 
   nightly:
     name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
@@ -71,7 +71,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ] #, macOS-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
         dir: [ floaty ]
     defaults:
       run:
@@ -94,7 +94,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cosmwasm-check-${{ matrix.os }}
-          path: ${{ github.workspace }}/bin
+          path: ${{ github.workspace }}
 
       - name: Print cosmwasm-check version
-        run: ls -la ${{ github.workspace }}/bin
+        run: ls -la ${{ github.workspace }}
