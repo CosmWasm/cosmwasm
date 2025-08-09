@@ -46,17 +46,23 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: 1.82.0
+          target: wasm32-unknown-unknown
+          components: clippy, rustfmt
+          cache-directories: |
+            ${{ github.workspace }}/contracts
+
       - name: Download cosmwasm-check binary
         uses: actions/download-artifact@v4
         with:
           name: cosmwasm-check-${{ matrix.os }}
-          path: ./bin
-
-      - name: Make the checker executable
-        run: chmod +x ${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }}
+          path: ${{ env.HOME }}/.cargo/bin
 
       - name: Print cosmwasm-check version
-        run: ./${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }} --version
+        run: cargo cosmwasm-check -- --version
 
   nightly:
     name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
@@ -75,14 +81,23 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
+      - name: Prepare Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
+          target: wasm32-unknown-unknown
+          components: clippy, rustfmt
+          cache-directories: |
+            ${{ github.workspace }}/contracts
+
       - name: Download cosmwasm-check binary
         uses: actions/download-artifact@v4
         with:
           name: cosmwasm-check-${{ matrix.os }}
-          path: ./bin
+          path: ${{ env.HOME }}/.cargo/bin
 
       - name: Make the checker executable
         run: chmod +x ${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }}
 
       - name: Print cosmwasm-check version
-        run: ./${{ github.workspace }}/bin/cosmwasm-check-${{ matrix.os }} --version
+        run: cargo cosmwasm-check -- --version
