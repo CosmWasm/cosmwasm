@@ -81,38 +81,38 @@ jobs:
 #
 #      - name: Print cosmwasm-check version
 #        run: ls -la ${{ github.workspace }}
-#
-#  nightly:
-#    name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
-#    runs-on: ${{ matrix.os }}
-#    needs: build
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os: [ ubuntu-latest, macos-latest, windows-latest ]
-#        dir: [ floaty ]
-#    defaults:
-#      run:
-#        shell: bash
-#        working-directory: ./contracts/${{ matrix.dir }}
-#    steps:
-#      - name: Checkout sources
-#        uses: actions/checkout@v4
-#
-#      - name: Prepare Rust toolchain
-#        uses: actions-rust-lang/setup-rust-toolchain@v1
-#        with:
-#          toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
-#          target: wasm32-unknown-unknown
-#          components: clippy, rustfmt
-#          cache-directories: |
-#            ${{ github.workspace }}/contracts
-#
-#      - name: Download cosmwasm-check binary
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: cosmwasm-check-${{ matrix.os }}
-#          path: ${{ github.workspace }}
-#
-#      - name: Print cosmwasm-check version
-#        run: ls -la ${{ github.workspace }}
+
+  nightly:
+    name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        dir: [ floaty ]
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./contracts/${{ matrix.dir }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Prepare Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
+          target: wasm32-unknown-unknown
+          components: clippy, rustfmt
+          cache-directories: |
+            ${{ github.workspace }}/contracts
+
+      - name: Download cosmwasm-check binary
+        uses: actions/download-artifact@v4
+        with:
+          name: cosmwasm-check-${{ matrix.os }}
+          path: $HOME/.cargo/bin
+
+      - name: Print cosmwasm-check version
+        run: cosmwasm-check --version
