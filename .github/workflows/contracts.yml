@@ -112,16 +112,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cosmwasm-check-${{ matrix.os }}
-          path: .
-
-      - name: Make cosmwasm-check executable
-        run: chmod +x cosmwasm-check*
-
-      - name: Copy binary
-        run: cp cosmwasm-check* $HOME/.cargo/bin
+          path: ${{ env.HOME }}/.cargo/bin
 
       - name: Print cargo content
-        run: ls -la $HOME/.cargo/bin
-
-      - name: Print cosmwasm-check version
-        run: cosmwasm-check --version
+        run: ls -la ${{ env.HOME }}/.cargo/bin
