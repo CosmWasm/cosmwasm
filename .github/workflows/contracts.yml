@@ -16,7 +16,7 @@ jobs:
       - name: Prepare Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: stable
+          toolchain: 1.87.0
 
       - name: Build cosmwasm-check
         run: cargo install cosmwasm-check --root ./build-tools
