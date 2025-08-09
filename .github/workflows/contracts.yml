@@ -36,7 +36,13 @@ jobs:
         run: echo $HOME
 
       - name: Print content
-        run: ls ./build-tools/bin
+        run: ls -la ./build-tools/bin
+
+      - name: Copy binary
+        run: cp ./build-tools/bin/cosmwasm-check* $HOME/.cargo/bin
+
+      - name: Print cargo content
+        run: ls -la $HOME/.cargo/bin
 
 #  stable:
 #    name: ${{ matrix.dir }} (stable) ${{ matrix.os }}
