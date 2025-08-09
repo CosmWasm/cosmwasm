@@ -114,6 +114,9 @@ jobs:
           name: cosmwasm-check-${{ matrix.os }}
           path: ./bin
 
+      - name: Make cosmwasm-check executable
+        run: chmod +x ./bin/cosmwasm-check*
+
       - name: Copy binary
         run: cp ${{ github.workspace }}/bin/cosmwasm-check* $HOME/.cargo/bin
 
