@@ -34,22 +34,22 @@ jobs:
             ${{ github.workspace }}/contracts
 
       - name: Check formatting
-        run: cargo fmt -- --check
+        run: cargo +1.82.0 fmt -- --check
 
       - name: Run unit tests
-        run: cargo test --lib --locked
+        run: cargo +1.82.0 test --lib --locked
 
       - name: Build WASM binary
-        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+        run: cargo +1.82.0 build --release --lib --locked --target wasm32-unknown-unknown
 
       - name: Run linter
-        run: cargo clippy --all-targets --tests -- -D warnings
+        run: cargo +1.82.0 clippy --all-targets --tests -- -D warnings
 
       - name: Run integration tests
-        run: cargo test --test integration --locked
+        run: cargo +1.82.0 test --test integration --locked
 
       - name: Run schema generator
-        run: cargo run --bin schema --locked
+        run: cargo +1.82.0 run --bin schema --locked
 
       - name: Ensure schemas are up-to-date
         run: git diff --quiet ./schema
@@ -97,22 +97,22 @@ jobs:
             ${{ github.workspace }}/contracts
 
       - name: Check formatting
-        run: cargo fmt -- --check
+        run: cargo +nightly-2024-09-01 fmt -- --check
 
       - name: Run unit tests
-        run: cargo test --lib --locked
+        run: cargo +nightly-2024-09-01 test --lib --locked
 
       - name: Build WASM binary
-        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
+        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo +nightly-2024-09-01 build --release --lib --locked --target wasm32-unknown-unknown
 
       - name: Run linter
-        run: cargo clippy --all-targets --tests -- -D warnings
+        run: cargo +nightly-2024-09-01 clippy --all-targets --tests -- -D warnings
 
       - name: Run integration tests
-        run: cargo test --test integration --locked
+        run: cargo +nightly-2024-09-01 test --test integration --locked
 
       - name: Run schema generator
-        run: cargo run --bin schema --locked
+        run: cargo +nightly-2024-09-01 run --bin schema --locked
 
       - name: Ensure schemas are up-to-date
         run: git diff --quiet ./schema
