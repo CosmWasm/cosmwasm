@@ -53,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.dir }}-${{ runner.os }}
-          path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/${{ matrix.dir }}.wasm
+          path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
 
   nightly:
     name: ${{ matrix.dir }}-${{ matrix.os }}
@@ -105,7 +105,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.dir }}-${{ runner.os }}
-          path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/${{ matrix.dir }}.wasm
+          path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
 
   check-released:
     name: check-released-${{ matrix.os }}
@@ -135,6 +135,15 @@ jobs:
 
       - name: Check floaty
         run: cosmwasm-check burner.wasm
+
+      - name: Download crypto-verify
+        uses: actions/download-artifact@v4
+        with:
+          name: crypto-verify-${{ runner.os }}
+          path: .
+
+      - name: Check floaty
+        run: cosmwasm-check crypto_verify.wasm
 
       - name: Download floaty
         uses: actions/download-artifact@v4
