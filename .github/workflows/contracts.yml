@@ -231,7 +231,7 @@ jobs:
           cache-key: dev
 
       - name: Install currently developed cosmwasm-check
-        run: cargo install --path ../../packages/check --force
+        run: cargo install --path ./packages/check --force
 
       - uses: actions/download-artifact@v4
         with:
