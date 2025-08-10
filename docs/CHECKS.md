@@ -17,3 +17,6 @@
 - **schema** - Checks if there are no changes in contract interface (schema).
 - **check released** - Checks the WASM binary using recently released version of `cosmwasm-check` tool.  
 - **check current** - Checks the WASM binary using currently developed version of `cosmwasm-check` tool.
+
+> All checks are executed on standard [GitHub runner images](https://github.com/actions/runner-images): 
+> `ubuntu-latest` (x86_64), `macos-latest` (arm64) and `windows-latest` (x86_64).
