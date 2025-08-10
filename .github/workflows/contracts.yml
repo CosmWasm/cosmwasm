@@ -95,8 +95,9 @@ jobs:
       - name: Ensure schemas are up-to-date
         run: git diff --quiet ./schema
 
-      - name: Upload contract WASM binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.dir }}-nightly-${{ runner.os }}
-          path: target/wasm32-unknown-unknown/release/*.wasm
+      - name: Upload WASM binary
+        run: ls target/wasm32-unknown-unknown/release
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ${{ matrix.dir }}-nightly-${{ runner.os }}
+#          path: target/wasm32-unknown-unknown/release/*.wasm
