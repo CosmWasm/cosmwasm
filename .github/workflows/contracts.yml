@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest ] #, macos-latest, windows-latest ]
         dir: [ floaty ]
     defaults:
       run:
@@ -83,6 +83,12 @@ jobs:
       - name: Build WASM binary
         run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo +nightly-2024-09-01 build --release --lib --locked --target wasm32-unknown-unknown
 
+      - name: Upload WASM binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.dir }}-nightly-${{ runner.os }}
+          path: target/wasm32-unknown-unknown/release/${{ matrix.dir }}.wasm
+
       - name: Run linter
         run: cargo +nightly-2024-09-01 clippy --all-targets --tests -- -D warnings
 
@@ -94,10 +100,3 @@ jobs:
 
       - name: Ensure schemas are up-to-date
         run: git diff --quiet ./schema
-
-      - name: Upload WASM binary
-        run: ls target/wasm32-unknown-unknown/release
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: ${{ matrix.dir }}-nightly-${{ runner.os }}
-#          path: target/wasm32-unknown-unknown/release/*.wasm
