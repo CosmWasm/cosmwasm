@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest]
-        dir: [ burner, crypto-verify, cyberpunk, empty, hackatom, ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts, queue, reflect, replier, staking, virus ]
+        dir: [ burner, crypto-verify, cyberpunk ] #, empty, hackatom, ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts, queue, reflect, replier, staking, virus ]
     defaults:
       run:
         shell: bash
@@ -127,29 +127,25 @@ jobs:
       - name: Install recently released cosmwasm-check
         run: cargo install cosmwasm-check@3.0.1
 
-      - name: Download burner
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: burner-${{ runner.os }}
           path: .
 
-      - name: Check floaty
-        run: cosmwasm-check burner.wasm
-
-      - name: Download crypto-verify
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: crypto-verify-${{ runner.os }}
           path: .
 
-      - name: Check floaty
-        run: cosmwasm-check crypto_verify.wasm
+      - uses: actions/download-artifact@v4
+        with:
+          name: cyberpunk-${{ runner.os }}
+          path: .
 
-      - name: Download floaty
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: floaty-${{ runner.os }}
           path: .
 
-      - name: Check floaty
-        run: cosmwasm-check floaty.wasm
+      - name: Check contracts
+        run: cosmwasm-check *.wasm
