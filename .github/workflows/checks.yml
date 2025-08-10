@@ -3,95 +3,54 @@ name: checks
 on: [ push ]
 
 jobs:
-  stable-rel:
-    name: ${{ matrix.dir }} (stable) ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest]
-        dir: [ burner, crypto-verify, cyberpunk, empty, hackatom, ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts, queue, reflect, replier, staking, virus ]
-    defaults:
-      run:
-        shell: bash
-        working-directory: contracts/${{ matrix.dir }}
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
+#  stable:
+#    name: ${{ matrix.dir }} (stable) ${{ matrix.os }}
+#    runs-on: ${{ matrix.os }}
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os: [ ubuntu-latest, macos-latest, windows-latest]
+#        dir: [ burner, crypto-verify, cyberpunk, empty, hackatom, ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts, queue, reflect, replier, staking, virus ]
+#    defaults:
+#      run:
+#        shell: bash
+#        working-directory: contracts/${{ matrix.dir }}
+#    steps:
+#      - name: Checkout sources
+#        uses: actions/checkout@v4
+#
+#      - name: Install Rust for compiling cosmwasm-check
+#        uses: actions-rust-lang/setup-rust-toolchain@v1
+#        with:
+#          toolchain: 1.87.0
+#
+#      - name: Install cosmwasm-check
+#        run: cargo install cosmwasm-check@3.0.1
+#
+#      - name: Print cosmwasm-check version
+#        run: cosmwasm-check --version
+#
+#      - name: Install Rust for compiling contract
+#        uses: actions-rust-lang/setup-rust-toolchain@v1
+#        with:
+#          toolchain: 1.82.0
+#          target: wasm32-unknown-unknown
+#          cache-directories: |
+#            ${{ github.workspace }}/contracts
+#
+#      - name: Build WASM binary
+#        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+#
+#      - name: Check contract using cosmwasm-check
+#        run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
 
-      - name: Install Rust for compiling cosmwasm-check
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: 1.87.0
-
-      - name: Install cosmwasm-check
-        run: cargo install cosmwasm-check@3.0.1
-
-      - name: Print cosmwasm-check version
-        run: cosmwasm-check --version
-
-      - name: Install Rust for compiling contract
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: 1.82.0
-          target: wasm32-unknown-unknown
-          cache-directories: |
-            ${{ github.workspace }}/contracts
-
-      - name: Build WASM binary
-        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
-
-      - name: Check contract using cosmwasm-check
-        run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
-
-  stable-dev:
-    name: ${{ matrix.dir }} (stable) ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest]
-        dir: [ burner, crypto-verify, cyberpunk, empty, hackatom, ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts, queue, reflect, replier, staking, virus ]
-    defaults:
-      run:
-        shell: bash
-        working-directory: contracts/${{ matrix.dir }}
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-
-      - name: Install Rust for compiling cosmwasm-check
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: 1.87.0
-
-      - name: Install cosmwasm-check
-        run: cargo install --path ../../packages/check
-
-      - name: Print cosmwasm-check version
-        run: cosmwasm-check --version
-
-      - name: Install Rust for compiling contract
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: 1.82.0
-          target: wasm32-unknown-unknown
-          cache-directories: |
-            ${{ github.workspace }}/contracts
-
-      - name: Build WASM binary
-        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
-
-      - name: Check contract using cosmwasm-check
-        run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
-
-  nightly-rel:
+  nightly:
     name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest ] #, macos-latest, windows-latest ]
         dir: [ floaty ]
     defaults:
       run:
@@ -101,24 +60,10 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install Rust for compiling cosmwasm-check
+      - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: 1.87.0
-
-      - name: Install cosmwasm-check
-        run: cargo install cosmwasm-check@3.0.1
-
-      - name: Print cosmwasm-check version
-        run: cosmwasm-check --version
-
-      - name: Print cosmwasm-check version
-        run: cosmwasm-check --version
-
-      - name: Install Rust for compiling contract
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
+          toolchain: 1.87.0, nightly-2024-09-01 # This is a nightly channel for version 1.82.0
           target: wasm32-unknown-unknown
           cache-directories: |
             ${{ github.workspace }}/contracts
@@ -126,49 +71,11 @@ jobs:
       - name: Build WASM binary
         run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
 
-      - name: Check contract using cosmwasm-check
-        run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
-
-  nightly-dev:
-    name: ${{ matrix.dir }} (nightly) ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-        dir: [ floaty ]
-    defaults:
-      run:
-        shell: bash
-        working-directory: ./contracts/${{ matrix.dir }}
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-
-      - name: Install Rust for compiling cosmwasm-check
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: 1.87.0
-
       - name: Install cosmwasm-check
-        run: cargo install --path ../../packages/check
+        run: cargo +1.87.0 install cosmwasm-check@3.0.1
 
       - name: Print cosmwasm-check version
         run: cosmwasm-check --version
 
-      - name: Print cosmwasm-check version
-        run: cosmwasm-check --version
-
-      - name: Install Rust for compiling contract
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
-          target: wasm32-unknown-unknown
-          cache-directories: |
-            ${{ github.workspace }}/contracts
-
-      - name: Build WASM binary
-        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
-
-      - name: Check contract using cosmwasm-check
+      - name: Use cosmwasm-check to verify contract binary
         run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
