@@ -22,7 +22,7 @@ jobs:
       - name: Install Rust for compiling contracts
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
+          toolchain: 1.82.0
           target: wasm32-unknown-unknown
           components: clippy, rustfmt
           cache-directories: |
