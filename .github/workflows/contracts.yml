@@ -1,4 +1,4 @@
-name: checks
+name: contracts
 
 on: [ push ]
 
