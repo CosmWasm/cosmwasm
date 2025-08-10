@@ -86,7 +86,7 @@ jobs:
       - name: Upload WASM binary
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.dir }}-nightly-${{ runner.os }}
+          name: ${{ matrix.dir }}-${{ runner.os }}
           path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/${{ matrix.dir }}.wasm
 
       - name: Run linter
@@ -118,8 +118,11 @@ jobs:
       - name: Install recently released cosmwasm-check
         run: cargo install cosmwasm-check@3.0.1
 
-      - uses: actions/download-artifact@v4
+      - name: Download floaty
+        uses: actions/download-artifact@v4
         with:
-          name: floaty-nightly-${{ runner.os }}
-          path: ./bin/floaty/nightly/${{ runner.os }}
-      - run: cosmwasm-check ./bin/floaty/nightly/${{ runner.os }}/*.wasm
+          name: floaty-${{ runner.os }}
+          path: .
+
+      - name: Check floaty
+        run: cosmwasm-check floaty.wasm
