@@ -3,7 +3,7 @@ name: contracts
 on: [ push ]
 
 jobs:
-  stable:
+  stable-rust:
     name: ${{ matrix.dir }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -55,7 +55,7 @@ jobs:
           name: ${{ matrix.dir }}-${{ runner.os }}
           path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
 
-  nightly:
+  nightly-rust:
     name: ${{ matrix.dir }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -110,7 +110,7 @@ jobs:
   check-released:
     name: check-released-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: [stable, nightly]
+    needs: [stable-rust, nightly-rust]
     strategy:
       fail-fast: false
       matrix:
@@ -148,4 +148,5 @@ jobs:
           path: .
 
       - name: Check contracts
+        shell: bash
         run: cosmwasm-check *.wasm
