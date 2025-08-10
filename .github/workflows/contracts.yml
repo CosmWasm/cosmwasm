@@ -115,16 +115,16 @@ jobs:
       - name: Install Rust for compiling cosmwasm-check
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: 1.87.0
+          toolchain: stable-1.87.0
 
       - name: Install recently released cosmwasm-check
-        run: cargo +1.87.0 install cosmwasm-check@3.0.1
+        run: cargo +stable-1.87.0 install cosmwasm-check@3.0.1
 
       - name: Verify contract binary using recently released cosmwasm-check
         run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
 
       - name: Install current cosmwasm-check
-        run: cargo +1.87.0 install --path ../../packages/check --force
+        run: cargo +stable-1.87.0 install --path ../../packages/check --force
 
       - name: Verify contract binary using current cosmwasm-check
         run: cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm

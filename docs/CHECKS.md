@@ -2,10 +2,28 @@
 
 ## Contracts
 
-| Name              | channel | fmt | unit<br/>tests | wasm | linter | integration<br/>tests | schema | check<br/>released | check<br/>current |
-|-------------------|:-------:|:---:|:--------------:|:----:|:------:|:---------------------:|:------:|:------------------:|:-----------------:|
-| **burner**        | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
-| **crypto-verify** | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+List of checks performed in `contracts.yml` workflow: 
+
+| Name                 | channel | fmt | unit<br/>tests | wasm | linter | integration<br/>tests | schema | check<br/>released | check<br/>current |
+|----------------------|:-------:|:---:|:--------------:|:----:|:------:|:---------------------:|:------:|:------------------:|:-----------------:|
+| **burner**           | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **crypto-verify**    | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **cyberpunk**        | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **empty**            | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **floaty**           | nightly |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **hackatom**         | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **ibc2**             | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **ibc-callbacks**    | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **ibc-reflect**      | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **ibc-reflect-send** | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **nested-contracts** | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **queue**            | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **reflect**          | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **replier**          | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **staking**          | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+| **virus**            | stable  |  +  |       +        |  +   |   +    |           +           |   +    |         +          |         +         |
+
+Legend:
 
 - **channel** - Rust channel used to run the checks. Possible values are **stable** or **nightly**.
   Most of the contracts use **stable** channel, but in some cases **nightly** channel is required.
