@@ -87,7 +87,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.dir }}-nightly-${{ runner.os }}
-          path: ./target/wasm32-unknown-unknown/release/${{ matrix.dir }}.wasm
+          path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/${{ matrix.dir }}.wasm
 
       - name: Run linter
         run: cargo +nightly-2024-09-01 clippy --all-targets --tests -- -D warnings
