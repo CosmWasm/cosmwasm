@@ -1,7 +1,6 @@
 name: contracts
 
-#on: [ push ]
-on: [ pull_request_review ]
+on: [ push ]
 
 env:
   TOOLCHAIN_STABLE: 1.82.0 # toolchain for building contracts in stable channel
@@ -15,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
         dir: [ burner, crypto-verify, cyberpunk, empty, hackatom, ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts, queue, reflect, replier, staking, virus ]
     defaults:
       run:
@@ -130,7 +129,7 @@ jobs:
   chkr:
     name: check-rel-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: [stable, nightly]
+    needs: [ stable, nightly ]
     strategy:
       fail-fast: false
       matrix:
