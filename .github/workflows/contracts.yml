@@ -4,15 +4,17 @@ on: [ push ]
 
 jobs:
   stable-rust:
-    name: stable-${{ matrix.os }}
+    name: ${{ matrix.dir }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest]
+        dir: [ burner, crypto-verify, cyberpunk, empty, hackatom, ibc2, ibc-callbacks, ibc-reflect, ibc-reflect-send, nested-contracts, queue, reflect, replier, staking, virus ]
     defaults:
       run:
         shell: bash
+        working-directory: contracts/${{ matrix.dir }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -24,96 +26,61 @@ jobs:
           target: wasm32-unknown-unknown
           components: clippy, rustfmt
           cache-directories: |
-            ${{ github.workspace }}/contracts
+            ${{ github.workspace }}/contracts/burner/target
+            ${{ github.workspace }}/contracts/crypto-verify/target
+            ${{ github.workspace }}/contracts/cyberpunk/target
+            ${{ github.workspace }}/contracts/empty/target
+            ${{ github.workspace }}/contracts/hackatom/target
+            ${{ github.workspace }}/contracts/ibc2/target
+            ${{ github.workspace }}/contracts/ibc-callbacks/target
+            ${{ github.workspace }}/contracts/ibc-reflect/target
+            ${{ github.workspace }}/contracts/ibc-reflect-send/target
+            ${{ github.workspace }}/contracts/nested-contracts/target
+            ${{ github.workspace }}/contracts/queue/target
+            ${{ github.workspace }}/contracts/reflect/target
+            ${{ github.workspace }}/contracts/replier/target
+            ${{ github.workspace }}/contracts/staking/target
+            ${{ github.workspace }}/contracts/virus/target
 
-      - name: Verify contracts
-        run: ./gh-actions/verify-contracts-stable.sh
+      - name: Check formatting
+        run: cargo fmt -- --check
 
-      - uses: actions/upload-artifact@v4
+      - name: Run unit tests
+        run: cargo test --lib --locked
+
+      - name: Build WASM binary
+        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+
+      - name: Run linter
+        run: cargo clippy --all-targets --tests -- -D warnings
+
+      - name: Run integration tests
+        run: cargo test --test integration --locked
+
+      - name: Run schema generator
+        run: cargo run --bin schema --locked
+
+      - name: Ensure schemas are up-to-date
+        run: git diff --quiet ./schema
+
+      - name: Upload WASM binary
+        uses: actions/upload-artifact@v4
         with:
-          name: burner-${{ runner.os }}
-          path: ./contracts/burner/target/wasm32-unknown-unknown/release/burner.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: crypto-verify-${{ runner.os }}
-          path: ./contracts/crypto-verify/target/wasm32-unknown-unknown/release/crypto_verify.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: cyberpunk-${{ runner.os }}
-          path: ./contracts/cyberpunk/target/wasm32-unknown-unknown/release/cyberpunk.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: empty-${{ runner.os }}
-          path: ./contracts/empty/target/wasm32-unknown-unknown/release/empty.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: hackatom-${{ runner.os }}
-          path: ./contracts/hackatom/target/wasm32-unknown-unknown/release/hackatom.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: ibc2-${{ runner.os }}
-          path: ./contracts/ibc2/target/wasm32-unknown-unknown/release/ibc2.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: ibc-callbacks-${{ runner.os }}
-          path: ./contracts/ibc-callbacks/target/wasm32-unknown-unknown/release/ibc_callbacks.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: ibc-reflect-${{ runner.os }}
-          path: ./contracts/ibc-reflect/target/wasm32-unknown-unknown/release/ibc_reflect.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: ibc-reflect-send-${{ runner.os }}
-          path: ./contracts/ibc-reflect-send/target/wasm32-unknown-unknown/release/ibc_reflect_send.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: nested-contracts-${{ runner.os }}
-          path: ./contracts/nested-contracts/target/wasm32-unknown-unknown/release/nested_contracts.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: queue-${{ runner.os }}
-          path: ./contracts/queue/target/wasm32-unknown-unknown/release/queue.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: reflect-${{ runner.os }}
-          path: ./contracts/reflect/target/wasm32-unknown-unknown/release/reflect.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: replier-${{ runner.os }}
-          path: ./contracts/replier/target/wasm32-unknown-unknown/release/replier.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: staking-${{ runner.os }}
-          path: ./contracts/staking/target/wasm32-unknown-unknown/release/staking.wasm
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: virus-${{ runner.os }}
-          path: ./contracts/virus/target/wasm32-unknown-unknown/release/virus.wasm
+          name: ${{ matrix.dir }}-${{ runner.os }}
+          path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
 
   nightly-rust:
-    name: nightly-${{ matrix.os }}
+    name: ${{ matrix.dir }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
+        dir: [ floaty ]
     defaults:
       run:
         shell: bash
+        working-directory: ./contracts/${{ matrix.dir }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -125,17 +92,36 @@ jobs:
           target: wasm32-unknown-unknown
           components: clippy, rustfmt
           cache-directories: |
-            ${{ github.workspace }}/contracts
+            ${{ github.workspace }}/contracts/floaty/target
 
-      - name: Verify contracts
-        run: ./gh-actions/verify-contracts-nightly.sh
+      - name: Check formatting
+        run: cargo fmt -- --check
 
-      - uses: actions/upload-artifact@v4
+      - name: Run unit tests
+        run: cargo test --lib --locked
+
+      - name: Build WASM binary
+        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
+
+      - name: Run linter
+        run: cargo clippy --all-targets --tests -- -D warnings
+
+      - name: Run integration tests
+        run: cargo test --test integration --locked
+
+      - name: Run schema generator
+        run: cargo run --bin schema --locked
+
+      - name: Ensure schemas are up-to-date
+        run: git diff --quiet ./schema
+
+      - name: Upload WASM binary
+        uses: actions/upload-artifact@v4
         with:
-          name: floaty-${{ runner.os }}
-          path: ./contracts/floaty/target/wasm32-unknown-unknown/release/floaty.wasm
+          name: ${{ matrix.dir }}-${{ runner.os }}
+          path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
 
-  check-rel:
+  check-r:
     name: check-released-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: [stable-rust, nightly-rust]
@@ -240,7 +226,7 @@ jobs:
         shell: bash
         run: cosmwasm-check *.wasm
 
-  check-dev:
+  check-d:
     name: check-released-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: [ stable-rust, nightly-rust ]
