@@ -1,10 +1,9 @@
 name: contracts
 
-# on: [ push ]
-on: [ pull_request_review ]
+on: [ push ]
 
 jobs:
-  stable-rust:
+  stable:
     name: ${{ matrix.dir }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -70,7 +69,7 @@ jobs:
           name: ${{ matrix.dir }}-${{ runner.os }}
           path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
 
-  nightly-rust:
+  nightly:
     name: ${{ matrix.dir }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -125,7 +124,7 @@ jobs:
   check-r:
     name: check-rel-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: [stable-rust, nightly-rust]
+    needs: [stable, nightly]
     strategy:
       fail-fast: false
       matrix:
@@ -230,7 +229,7 @@ jobs:
   check-d:
     name: check-dev-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: [ stable-rust, nightly-rust ]
+    needs: [ stable, nightly ]
     strategy:
       fail-fast: false
       matrix:
