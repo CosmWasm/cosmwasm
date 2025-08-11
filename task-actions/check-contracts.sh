@@ -14,8 +14,7 @@ msg() {
   fi
 }
 
-check_contract_stable() {
-  toolchain=1.82.0
+check_contract() {
   (
     contract_dir=$1
     contract="$(basename "$contract_dir" | tr - _)"
@@ -25,22 +24,22 @@ check_contract_stable() {
     cd "$contract_dir" || exit 1
 
     msg "CHECK FORMATTING" "$contract"
-    cargo +$toolchain fmt -- --check
+    cargo +"$2" fmt -- --check
 
     msg "RUN UNIT TESTS" "$contract"
-    cargo +$toolchain test --lib --locked
+    cargo +"$2" test --lib --locked
 
     msg "BUILD WASM" "$contract"
-    cargo +$toolchain build --release --lib --locked --target wasm32-unknown-unknown
+    RUSTFLAGS="$3" cargo +"$2" build --release --lib --locked --target wasm32-unknown-unknown
 
     msg "RUN LINTER" "$contract"
-    cargo +$toolchain clippy --all-targets --tests -- -D warnings
+    cargo +"$2" clippy --all-targets --tests -- -D warnings
 
     msg "RUN INTEGRATION TESTS" "$contract"
-    cargo +$toolchain test --test integration --locked
+    cargo +"$2" test --test integration --locked
 
     msg "GENERATE SCHEMA" "$contract"
-    cargo +$toolchain run --bin schema --locked
+    cargo +"$2" run --bin schema --locked
 
     msg "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
     git diff --quiet ./schema
@@ -50,45 +49,6 @@ check_contract_stable() {
 
     msg "cosmwasm-check (develop)" "$contract"
     cosmwasm-check "$wasm"
-  )
-}
-
-check_contract_nightly() {
-  toolchain=nightly-2024-09-01
-  (
-    contract_dir=$1
-    contract="$(basename "$contract_dir" | tr - _)"
-    wasm="./target/wasm32-unknown-unknown/release/$contract.wasm"
-
-    msg "CHANGE DIRECTORY" "$contract_dir"
-    cd "$contract_dir" || exit 1
-
-    msg "CHECK FORMATTING" "$contract"
-    cargo +$toolchain fmt -- --check
-
-    msg "RUN UNIT TESTS" "$contract"
-    cargo +$toolchain test --lib --locked
-
-    msg "BUILD WASM" "$contract"
-    RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo +$toolchain build --release --lib --locked --target wasm32-unknown-unknown
-
-    msg "RUN LINTER" "$contract"
-    cargo +$toolchain clippy --all-targets --tests -- -D warnings
-
-    msg "RUN INTEGRATION TESTS" "$contract"
-    cargo +$toolchain test --test integration --locked
-
-    msg "GENERATE SCHEMA" "$contract"
-    cargo +$toolchain run --bin schema --locked
-
-    msg "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
-    git diff --quiet ./schema
-
-    msg "cosmwasm-check (release)" "$contract"
-    cosmwasm-check-release "$wasm"
-
-    msg "cosmwasm-check (develop)" "$contract"
-    cosmwasm-check  "$wasm"
   )
 }
 
@@ -114,19 +74,25 @@ contracts_nightly=(
   contracts/floaty
 )
 
+toolchain_stable=1.82.0
+rustflags_stable=""
+
+toolchain_nightly=nightly-2024-09-01
+rustflags_nightly="-C target-feature=+nontrapping-fptoint"
+
 if (( parallel )); then
   for dir in "${contracts_stable[@]}"; do
-    check_contract_stable "$dir" > /dev/null &
+    check_contract "$dir" "$toolchain_stable" "$rustflags_stable" > /dev/null &
   done
   for dir in "${contracts_nightly[@]}"; do
-    check_contract_nightly "$dir" > /dev/null &
+    check_contract "$dir" "$toolchain_nightly" "$rustflags_nightly" > /dev/null &
   done
   wait
 else
   for dir in "${contracts_stable[@]}"; do
-    check_contract_stable "$dir"
+    check_contract "$dir" "$toolchain_stable" "$rustflags_stable"
   done
   for dir in "${contracts_nightly[@]}"; do
-    check_contract_nightly "$dir"
+    check_contract "$dir" "$toolchain_nightly" "$rustflags_nightly"
   done
 fi
