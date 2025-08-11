@@ -27,7 +27,7 @@ jobs:
             ${{ github.workspace }}/contracts
 
       - name: Verify contracts
-        run: ./gh-actions/verify-contracts-stable
+        run: ./gh-actions/verify-contracts-stable.sh
 
       - uses: actions/upload-artifact@v4
         with:
@@ -128,7 +128,7 @@ jobs:
             ${{ github.workspace }}/contracts
 
       - name: Verify contracts
-        run: ./gh-actions/verify-contracts-nightly
+        run: ./gh-actions/verify-contracts-nightly.sh
 
       - uses: actions/upload-artifact@v4
         with:
