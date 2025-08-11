@@ -122,7 +122,7 @@ jobs:
           path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
 
   check-r:
-    name: check-released-${{ matrix.os }}
+    name: check-rel-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: [stable-rust, nightly-rust]
     strategy:
@@ -227,7 +227,7 @@ jobs:
         run: cosmwasm-check *.wasm
 
   check-d:
-    name: check-released-${{ matrix.os }}
+    name: check-dev-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: [ stable-rust, nightly-rust ]
     strategy:

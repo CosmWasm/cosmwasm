@@ -136,31 +136,4 @@ tasks:
     desc: Removes all compiled artifacts
     cmds:
       - cmd: cargo clean
-      - task: clean-burner
-      - task: clean-crypto-verify
-      - task: clean-cyberpunk
-      - task: clean-nested-contracts
-
-  clean-burner:
-    desc: Removes all compiled artifacts for burner contract
-    dir: ./contracts/burner
-    cmds:
-      - cmd: cargo clean
-
-  clean-crypto-verify:
-    desc: Removes all compiled artifacts for crypto-verify contract
-    dir: ./contracts/crypto-verify
-    cmds:
-      - cmd: cargo clean
-
-  clean-cyberpunk:
-    desc: Removes all compiled artifacts for cyberpunk contract
-    dir: ./contracts/cyberpunk
-    cmds:
-      - cmd: cargo clean
-
-  clean-nested-contracts:
-    desc: Removes all compiled artifacts for nested-contracts contracts
-    dir: ./contracts/nested-contracts
-    cmds:
-      - cmd: cargo clean
+      - cmd: ./task-actions/contracts-clean.sh

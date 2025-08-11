@@ -32,5 +32,7 @@ for dir in "${contracts[@]}"; do
 
     echo -e "\e[1;34mENSURE SCHEMA IS UP-TO-DATE\e[0m"
     git diff --quiet ./schema
-  )
+  ) &
 done
+
+wait
