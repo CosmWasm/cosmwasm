@@ -53,20 +53,24 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          target: thumbv7em-none-eabi
 
-      - run: cargo build -p cosmwasm-core
-      - run: cargo build -p cosmwasm-crypto
-      - run: cargo build -p cosmwasm-derive
-      - run: cargo build -p cosmwasm-std
-      - run: cargo build -p cosmwasm-std --no-default-features --features std
-      - run: cargo build -p cosmwasm-std --features std,iterator,staking,stargate,cosmwasm_1_2
-      - run: cargo build -p cosmwasm-schema
-      - run: cargo build -p cosmwasm-schema-derive
-      - run: cargo build -p cw-schema
-      - run: cargo build -p cw-schema-derive
-      - run: cargo build -p cosmwasm-vm --features iterator,stargate
-      - run: cargo build -p cosmwasm-vm-derive
-      - run: cargo build -p cosmwasm-check
+      - run: cargo build -p cosmwasm-core --locked --no-default-features
+      - run: cargo build -p cosmwasm-core --locked --all-features
+      - run: cargo build -p cosmwasm-core --locked --release --lib --target thumbv7em-none-eabi --no-default-features
+      - run: cargo build -p cosmwasm-core --locked --release --lib --target thumbv7em-none-eabi --all-features
+      - run: cargo build -p cosmwasm-crypto --locked
+      - run: cargo build -p cosmwasm-derive --locked
+      - run: cargo build -p cosmwasm-std --locked
+      - run: cargo build -p cosmwasm-std --locked --no-default-features --features std
+      - run: cargo build -p cosmwasm-std --locked --features std,iterator,staking,stargate,cosmwasm_1_2
+      - run: cargo build -p cosmwasm-schema --locked
+      - run: cargo build -p cosmwasm-schema-derive --locked
+      - run: cargo build -p cw-schema --locked
+      - run: cargo build -p cw-schema-derive --locked
+      - run: cargo build -p cosmwasm-vm --locked --features iterator,stargate
+      - run: cargo build -p cosmwasm-vm-derive --locked
+      - run: cargo build -p cosmwasm-check --locked
 
   wasm:
     name: wasm-${{ matrix.os }}
@@ -85,8 +89,11 @@ jobs:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
           target: wasm32-unknown-unknown
 
-      - run: cargo build -p cosmwasm-std --lib --target wasm32-unknown-unknown
-      - run: cargo build -p cosmwasm-std --lib --target wasm32-unknown-unknown --features std,iterator,staking,stargate
+      - run: cargo build -p cosmwasm-core --release --lib --locked --target wasm32-unknown-unknown --no-default-features
+      - run: cargo build -p cosmwasm-core --release --lib --locked --target wasm32-unknown-unknown --all-features
+      - run: cargo build -p cosmwasm-std --release --lib --locked --target wasm32-unknown-unknown
+      - run: cargo build -p cosmwasm-std --release --lib --locked --target wasm32-unknown-unknown --no-default-features --features std
+      - run: cargo build -p cosmwasm-std --release --lib --locked --target wasm32-unknown-unknown --features std,iterator,staking,stargate
 
   test:
     name: test-${{ matrix.os }}
@@ -104,14 +111,15 @@ jobs:
         with:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
 
-      - run: cargo test -p cosmwasm-core
-      - run: cargo test -p cosmwasm-crypto
-      - run: cargo test -p cosmwasm-derive
-      - run: cargo test -p cosmwasm-std --features std,iterator,staking,stargate,cosmwasm_1_2
-      - run: cargo test -p cosmwasm-schema
-      - run: cargo test -p cosmwasm-schema-derive
-      - run: cargo test -p cw-schema
-      - run: cargo test -p cw-schema-derive
-      - run: cargo test -p cosmwasm-vm --features iterator,stargate
-      - run: cargo test -p cosmwasm-vm-derive
-      - run: cargo test -p cosmwasm-check
+      - run: cargo test -p cosmwasm-core --locked --no-default-features
+      - run: cargo test -p cosmwasm-core --locked --all-features
+      - run: cargo test -p cosmwasm-crypto --locked
+      - run: cargo test -p cosmwasm-derive --locked
+      - run: cargo test -p cosmwasm-std --locked --features std,iterator,staking,stargate,cosmwasm_1_2
+      - run: cargo test -p cosmwasm-schema --locked
+      - run: cargo test -p cosmwasm-schema-derive --locked
+      - run: cargo test -p cw-schema --locked
+      - run: cargo test -p cw-schema-derive --locked
+      - run: cargo test -p cosmwasm-vm --locked --features iterator,stargate
+      - run: cargo test -p cosmwasm-vm-derive --locked
+      - run: cargo test -p cosmwasm-check --locked
