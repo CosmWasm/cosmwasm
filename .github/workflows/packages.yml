@@ -54,7 +54,7 @@ jobs:
         run: cargo clippy -p cosmwasm-vm --all-targets --features iterator,stargate -- -D warnings
 
       - name: Run linter (cosmwasm-vm-derive)
-        run: cargo clippy -p cosmwasm-vm-derive --all-targets --features iterator,stargate -- -D warnings
+        run: cargo clippy -p cosmwasm-vm-derive --all-targets -- -D warnings
 
       - name: Run linter (cosmwasm-check)
         run: cargo clippy -p cosmwasm-check --all-targets -- -D warnings
