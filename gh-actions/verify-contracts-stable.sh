@@ -2,7 +2,6 @@
 
 set -o errexit -o nounset -o pipefail
 
-# List of contracts to be checked using stable Rust channel.
 contracts=(
   contracts/burner/
   contracts/crypto-verify/
@@ -32,7 +31,7 @@ for dir in "${contracts[@]}"; do
     echo -e "\e[1;34mRUN UNIT TESTS\e[0m"
     cargo +1.82.0 test --lib --locked
 
-    echo  -e "\e[1;34mBUILD WASM\e[0m"
+    echo -e "\e[1;34mBUILD WASM\e[0m"
     cargo +1.82.0 build --release --lib --locked --target wasm32-unknown-unknown
 
     echo -e "\e[1;34mRUN LINTER\e[0m"
