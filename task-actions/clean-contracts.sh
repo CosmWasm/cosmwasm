@@ -23,10 +23,11 @@ contracts=(
 
 for dir in "${contracts[@]}"; do
   (
-    echo -e "\e[1;34mCONTRACT\e[0m: \e[1;32m$(basename "$dir")\e[0m"
+    contract="$(basename "$dir" | tr - _)"
+
+    echo -e "\e[1;34mClean contract\e[0m \e[1;32m$contract\e[0m"
     cd "$dir" || exit 1
 
-    echo -e "\e[1;34mclean\e[0m"
     cargo clean
   )
 done

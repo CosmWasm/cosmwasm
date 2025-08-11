@@ -136,4 +136,4 @@ tasks:
     desc: Removes all compiled artifacts
     cmds:
       - cmd: cargo clean
-      - cmd: ./task-actions/contracts-clean.sh
+      - cmd: ./task-actions/clean-contracts.sh
