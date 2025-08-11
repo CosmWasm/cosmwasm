@@ -32,7 +32,7 @@ tasks:
       - cmd: ./task-actions/check-contracts.sh
 
   check-contracts-parallel:
-    desc: Performs checks for all contracts
+    desc: Performs checks in parallel for all contracts
     cmds:
       - task: install-cosmwasm-check
       - cmd: ./task-actions/check-contracts.sh parallel
@@ -43,7 +43,7 @@ tasks:
       - cmd: ./task-actions/check-contracts.sh
 
   check-contracts-fast-parallel:
-    desc: Performs checks for all contracts without reinstalling cosmwasm-check tool
+    desc: Performs checks in parallel for all contracts without reinstalling cosmwasm-check tool
     cmds:
       - cmd: ./task-actions/check-contracts.sh parallel
 

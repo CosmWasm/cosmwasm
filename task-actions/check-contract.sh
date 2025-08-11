@@ -2,7 +2,7 @@
 
 set -o errexit -o nounset -o pipefail
 
-message() {
+msg() {
   echo -e "\e[1;34m$1\e[0m \e[1;32m$2\e[0m"
 }
 
@@ -11,36 +11,37 @@ check_contract_stable() {
   (
     contract_dir=$1
     contract="$(basename "$contract_dir" | tr - _)"
+    wasm="./target/wasm32-unknown-unknown/release/$contract.wasm"
 
-    message "CHANGE DIRECTORY" "$contract_dir"
+    msg "CHANGE DIRECTORY" "$contract_dir"
     cd "$contract_dir" || exit 1
 
-    message "CHECK FORMATTING" "$contract"
+    msg "CHECK FORMATTING" "$contract"
     cargo +$toolchain fmt -- --check
 
-    message "RUN UNIT TESTS" "$contract"
+    msg "RUN UNIT TESTS" "$contract"
     cargo +$toolchain test --lib --locked
 
-    message "BUILD WASM" "$contract"
+    msg "BUILD WASM" "$contract"
     cargo +$toolchain build --release --lib --locked --target wasm32-unknown-unknown
 
-    message "RUN LINTER" "$contract"
+    msg "RUN LINTER" "$contract"
     cargo +$toolchain clippy --all-targets --tests -- -D warnings
 
-    message "RUN INTEGRATION TESTS" "$contract"
+    msg "RUN INTEGRATION TESTS" "$contract"
     cargo +$toolchain test --test integration --locked
 
-    message "GENERATE SCHEMA" "$contract"
+    msg "GENERATE SCHEMA" "$contract"
     cargo +$toolchain run --bin schema --locked
 
-    message "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
+    msg "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
     git diff --quiet ./schema
 
-    message "cosmwasm-check (release)" "$contract"
-    cosmwasm-check-release "$contract_dir"target/wasm32-unknown-unknown/release/*wasm
+    msg "cosmwasm-check (release)" "$contract"
+    cosmwasm-check-release "$wasm"
 
-    message "cosmwasm-check (develop)" "$contract"
-    cosmwasm-check "$contract_dir"target/wasm32-unknown-unknown/release/*wasm
+    msg "cosmwasm-check (develop)" "$contract"
+    cosmwasm-check "$wasm"
   )
 }
 
@@ -49,35 +50,36 @@ check_contract_nightly() {
   (
     contract_dir=$1
     contract="$(basename "$contract_dir" | tr - _)"
+    wasm="./target/wasm32-unknown-unknown/release/$contract.wasm"
 
-    message "CHANGE DIRECTORY" "$contract_dir"
+    msg "CHANGE DIRECTORY" "$contract_dir"
     cd "$contract_dir" || exit 1
 
-    message "CHECK FORMATTING" "$contract"
+    msg "CHECK FORMATTING" "$contract"
     cargo +$toolchain fmt -- --check
 
-    message "RUN UNIT TESTS" "$contract"
+    msg "RUN UNIT TESTS" "$contract"
     cargo +$toolchain test --lib --locked
 
-    message "BUILD WASM" "$contract"
+    msg "BUILD WASM" "$contract"
     RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo +$toolchain build --release --lib --locked --target wasm32-unknown-unknown
 
-    message "RUN LINTER" "$contract"
+    msg "RUN LINTER" "$contract"
     cargo +$toolchain clippy --all-targets --tests -- -D warnings
 
-    message "RUN INTEGRATION TESTS" "$contract"
+    msg "RUN INTEGRATION TESTS" "$contract"
     cargo +$toolchain test --test integration --locked
 
-    message "GENERATE SCHEMA" "$contract"
+    msg "GENERATE SCHEMA" "$contract"
     cargo +$toolchain run --bin schema --locked
 
-    message "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
+    msg "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
     git diff --quiet ./schema
 
-    message "cosmwasm-check (release)" "$contract"
-    cosmwasm-check-release "$contract_dir"target/wasm32-unknown-unknown/release/*wasm
+    msg "cosmwasm-check (release)" "$contract"
+    cosmwasm-check-release "$wasm"
 
-    message "cosmwasm-check (develop)" "$contract"
-    cosmwasm-check "$contract_dir"target/wasm32-unknown-unknown/release/*wasm
+    msg "cosmwasm-check (develop)" "$contract"
+    cosmwasm-check  "$wasm"
   )
 }
