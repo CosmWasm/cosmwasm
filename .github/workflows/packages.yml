@@ -79,11 +79,23 @@ jobs:
 
       # cosmwasm-schema
       - run: cargo build -p cosmwasm-schema --locked
+
+      # cosmwasm-schema-derive
       - run: cargo build -p cosmwasm-schema-derive --locked
+
+      # cw-schema
       - run: cargo build -p cw-schema --locked
+
+      # cw-schema-derive
       - run: cargo build -p cw-schema-derive --locked
+
+      # cosmwasm-vm
       - run: cargo build -p cosmwasm-vm --locked --features iterator,stargate
+
+      # cosmwasm-vm-derive
       - run: cargo build -p cosmwasm-vm-derive --locked
+
+      # cosmwasm-check
       - run: cargo build -p cosmwasm-check --locked
 
   test:
@@ -102,18 +114,38 @@ jobs:
         with:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
 
+      # cosmwasm-core
       - run: cargo test -p cosmwasm-core --locked --no-default-features
       - run: cargo test -p cosmwasm-core --locked --all-features
 
+      # cosmwasm-crypto
       - run: cargo test -p cosmwasm-crypto --locked
+
+      # cosmwasm-derive
       - run: cargo test -p cosmwasm-derive --locked
 
+      # cosmwasm-std
+      - run: cargo test -p cosmwasm-std --locked
+      - run: cargo test -p cosmwasm-std --locked --no-default-features --features std
       - run: cargo test -p cosmwasm-std --locked --features std,iterator,staking,stargate,cosmwasm_1_2
 
+      # cosmwasm-schema
       - run: cargo test -p cosmwasm-schema --locked
+
+      # cosmwasm-schema-derive
       - run: cargo test -p cosmwasm-schema-derive --locked
+
+      # cw-schema
       - run: cargo test -p cw-schema --locked
+
+      # cw-schema-derive
       - run: cargo test -p cw-schema-derive --locked
+
+      # cosmwasm-vm
       - run: cargo test -p cosmwasm-vm --locked --features iterator,stargate
+
+      # cosmwasm-vm-derive
       - run: cargo test -p cosmwasm-vm-derive --locked
+
+      # cosmwasm-check
       - run: cargo test -p cosmwasm-check --locked
