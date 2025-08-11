@@ -26,19 +26,17 @@ jobs:
       - name: Check formatting
         run: cargo fmt -- --check
 
-      - name: Run linter
-        run: |
-          cargo clippy -p cosmwasm-core --all-targets -- -D warnings
-          cargo clippy -p cosmwasm-crypto --all-targets -- -D warnings
-          cargo clippy -p cosmwasm-derive --all-targets -- -D warnings
-          cargo clippy -p cosmwasm-std --all-targets --features std,iterator,staking,stargate -- -D warnings
-          cargo clippy -p cosmwasm-schema --all-targets -- -D warnings
-          cargo clippy -p cosmwasm-schema-derive --all-targets -- -D warnings
-          cargo clippy -p cw-schema --all-targets -- -D warnings
-          cargo clippy -p cw-schema-derive --all-targets -- -D warnings
-          cargo clippy -p cosmwasm-vm --all-targets --features iterator,stargate -- -D warnings
-          cargo clippy -p cosmwasm-vm-derive --all-targets -- -D warnings
-          cargo clippy -p cosmwasm-check --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-core --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-crypto --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-derive --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-std --all-targets --features std,iterator,staking,stargate -- -D warnings
+      - run: cargo clippy -p cosmwasm-schema --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-schema-derive --all-targets -- -D warnings
+      - run: cargo clippy -p cw-schema --all-targets -- -D warnings
+      - run: cargo clippy -p cw-schema-derive --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-vm --all-targets --features iterator,stargate -- -D warnings
+      - run: cargo clippy -p cosmwasm-vm-derive --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-check --all-targets -- -D warnings
 
   build:
     name: build-${{ matrix.os }}
@@ -56,21 +54,19 @@ jobs:
         with:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
 
-      - name: Build packages
-        run: | 
-          cargo build -p cosmwasm-core
-          cargo build -p cosmwasm-crypto
-          cargo build -p cosmwasm-derive
-          cargo build -p cosmwasm-std
-          cargo build -p cosmwasm-std --no-default-features --features std
-          cargo build -p cosmwasm-std --features std,iterator,staking,stargate,cosmwasm_1_2
-          cargo build -p cosmwasm-schema
-          cargo build -p cosmwasm-schema-derive
-          cargo build -p cw-schema
-          cargo build -p cw-schema-derive
-          cargo build -p cosmwasm-vm --features iterator,stargate
-          cargo build -p cosmwasm-vm-derive
-          cargo build -p cosmwasm-check
+      - run: cargo build -p cosmwasm-core
+      - run: cargo build -p cosmwasm-crypto
+      - run: cargo build -p cosmwasm-derive
+      - run: cargo build -p cosmwasm-std
+      - run: cargo build -p cosmwasm-std --no-default-features --features std
+      - run: cargo build -p cosmwasm-std --features std,iterator,staking,stargate,cosmwasm_1_2
+      - run: cargo build -p cosmwasm-schema
+      - run: cargo build -p cosmwasm-schema-derive
+      - run: cargo build -p cw-schema
+      - run: cargo build -p cw-schema-derive
+      - run: cargo build -p cosmwasm-vm --features iterator,stargate
+      - run: cargo build -p cosmwasm-vm-derive
+      - run: cargo build -p cosmwasm-check
 
 #  wasm:
 #    name: wasm on ${{ matrix.os }}
@@ -92,28 +88,30 @@ jobs:
 #      - run: cargo build -p cosmwasm-std --lib --target wasm32-unknown-unknown
 #      - run: cargo build -p cosmwasm-std --lib --target wasm32-unknown-unknown --features std,iterator,staking,stargate
 #
-#  test:
-#    name: test on ${{ matrix.os }}
-#    runs-on: ${{ matrix.os }}
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os: [ ubuntu-latest, macOS-latest, windows-latest ]
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: dtolnay/rust-toolchain@stable
-#        with:
-#          toolchain: 1.82.0
-#
-#      - name: Cache build artifacts
-#        uses: Swatinem/rust-cache@v2
-#
-#      - run: cargo test -p cosmwasm-crypto
-#      - run: cargo test -p cosmwasm-derive
-#      - run: cargo test -p cosmwasm-std --features std,iterator,staking,stargate,cosmwasm_1_2
-#      - run: cargo test -p cosmwasm-schema
-#      - run: cargo test -p cosmwasm-schema-derive
-#      - run: cargo test -p cw-schema
-#      - run: cargo test -p cw-schema-derive
-#      - run: cargo test -p cosmwasm-vm --features iterator,stargate
-#      - run: cargo test -p cosmwasm-check
+  test:
+    name: test-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+
+      - run: cargo test -p cosmwasm-core
+      - run: cargo test -p cosmwasm-crypto
+      - run: cargo test -p cosmwasm-derive
+      - run: cargo test -p cosmwasm-std --features std,iterator,staking,stargate,cosmwasm_1_2
+      - run: cargo test -p cosmwasm-schema
+      - run: cargo test -p cosmwasm-schema-derive
+      - run: cargo test -p cw-schema
+      - run: cargo test -p cw-schema-derive
+      - run: cargo test -p cosmwasm-vm --features iterator,stargate
+      - run: cargo test -p cosmwasm-vm-derive
+      - run: cargo test -p cosmwasm-check
