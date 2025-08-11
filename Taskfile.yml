@@ -3,7 +3,6 @@ version: '3'
 silent: true
 
 vars:
-  TOOLCHAIN: +1.81.0-x86_64-unknown-linux-gnu
   COSMWASM_CHECK_VERSION: 3.0.1
 
 tasks:
@@ -20,117 +19,33 @@ tasks:
   install-cosmwasm-check:
     desc: Installs cosmwasm-check tool (released version and currently developed version)
     cmds:
-      # Install recently released cosmwasm-check and rename it to cosmwasm-check-released
-      - cmd: cargo install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
-      - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-released
-      # Install most recent version of cosmwasm-check
-      - cmd: cargo install --path ./packages/check --locked --force
+      # Install recently released cosmwasm-check and rename it to cosmwasm-check-release
+      - cmd: cargo +1.88.0 install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
+      - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-release
+      # Install currently developed version of cosmwasm-check
+      - cmd: cargo +1.88.0 install --path ./packages/check --locked --force
 
   check-contracts:
     desc: Performs checks for all contracts
     cmds:
       - task: install-cosmwasm-check
-      - task: check-contracts-fast
+      - cmd: ./task-actions/check-contracts.sh
+
+  check-contracts-parallel:
+    desc: Performs checks for all contracts
+    cmds:
+      - task: install-cosmwasm-check
+      - cmd: ./task-actions/check-contracts.sh parallel
 
   check-contracts-fast:
     desc: Performs checks for all contracts without reinstalling cosmwasm-check tool
     cmds:
-      - task: check-burner
-      - task: check-crypto-verify
-      - task: check-cyberpunk
-      - task: check-nested-contracts
+      - cmd: ./task-actions/check-contracts.sh
 
-  check-burner:
-    desc: Performs checks for burner contract
-    dir: ./contracts/burner
+  check-contracts-fast-parallel:
+    desc: Performs checks for all contracts without reinstalling cosmwasm-check tool
     cmds:
-      # Check formatting
-      - cmd: cargo {{.TOOLCHAIN}} fmt -- --check
-      # Run unit tests
-      - cmd: cargo {{.TOOLCHAIN}} test --lib --locked
-      # Build WASM binary
-      - cmd: cargo {{.TOOLCHAIN}} build --release --lib --locked --target wasm32-unknown-unknown
-      # Run linter
-      - cmd: cargo {{.TOOLCHAIN}} clippy --all-targets --tests -- -D warnings
-      # Run integration tests
-      - cmd: cargo {{.TOOLCHAIN}} test --test integration --locked
-      # Build and run schema generator
-      - cmd: cargo {{.TOOLCHAIN}} run --bin schema --locked
-      # Ensure schemas are up-to-date
-      - cmd: git diff --quiet ./schema
-      # Check contract using recently released cosmwasm-check
-      - cmd: cosmwasm-check-released ./target/wasm32-unknown-unknown/release/*.wasm
-      # Check contract using most recent version of cosmwasm-check
-      - cmd: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
-
-  check-crypto-verify:
-    desc: Performs checks for crypto-verify contract
-    dir: ./contracts/crypto-verify
-    cmds:
-      # Check formatting
-      - cmd: cargo {{.TOOLCHAIN}} fmt -- --check
-      # Run unit tests
-      - cmd: cargo {{.TOOLCHAIN}} test --lib --locked
-      # Build WASM binary
-      - cmd: cargo {{.TOOLCHAIN}} build --release --lib --locked --target wasm32-unknown-unknown
-      # Run linter
-      - cmd: cargo {{.TOOLCHAIN}} clippy --all-targets --tests -- -D warnings
-      # Run integration tests
-      - cmd: cargo {{.TOOLCHAIN}} test --test integration --locked
-      # Build and run schema generator
-      - cmd: cargo {{.TOOLCHAIN}} run --bin schema --locked
-      # Ensure schemas are up-to-date
-      - cmd: git diff --quiet ./schema
-      # Check contract using recently released cosmwasm-check
-      - cmd: cosmwasm-check-released ./target/wasm32-unknown-unknown/release/*.wasm
-      # Check contract using most recent version of cosmwasm-check
-      - cmd: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
-
-  check-cyberpunk:
-    desc: Performs checks for cyberpunk contract
-    dir: ./contracts/cyberpunk
-    cmds:
-      # Check formatting
-      - cmd: cargo {{.TOOLCHAIN}} fmt -- --check
-      # Run unit tests
-      - cmd: cargo {{.TOOLCHAIN}} test --lib --locked
-      # Build WASM binary
-      - cmd: cargo {{.TOOLCHAIN}} build --release --lib --locked --target wasm32-unknown-unknown
-      # Run linter
-      - cmd: cargo {{.TOOLCHAIN}} clippy --all-targets --tests -- -D warnings
-      # Run integration tests
-      - cmd: cargo {{.TOOLCHAIN}} test --test integration --locked
-      # Build and run schema generator
-      - cmd: cargo {{.TOOLCHAIN}} run --bin schema --locked
-      # Ensure schemas are up-to-date
-      - cmd: git diff --quiet ./schema
-      # Check contract using recently released cosmwasm-check
-      - cmd: cosmwasm-check-released ./target/wasm32-unknown-unknown/release/*.wasm
-      # Check contract using most recent version of cosmwasm-check
-      - cmd: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
-
-  check-nested-contracts:
-    desc: Performs checks for nested-contracts contracts
-    dir: ./contracts/nested-contracts
-    cmds:
-      # Check formatting
-      - cmd: cargo {{.TOOLCHAIN}} fmt -- --check
-      # Run unit tests
-      - cmd: cargo {{.TOOLCHAIN}} test --lib --locked
-      # Build WASM binary
-      - cmd: cargo {{.TOOLCHAIN}} build --release --lib --locked --target wasm32-unknown-unknown
-      # Run linter
-      - cmd: cargo {{.TOOLCHAIN}} clippy --all-targets --tests -- -D warnings
-      # Run integration tests
-      - cmd: cargo {{.TOOLCHAIN}} test --test integration --locked
-      # Build and run schema generator
-      - cmd: cargo {{.TOOLCHAIN}} run --bin schema --locked
-      # Ensure schemas are up-to-date
-      - cmd: git diff --quiet ./schema
-      # Check contract using recently released cosmwasm-check
-      - cmd: cosmwasm-check-released ./target/wasm32-unknown-unknown/release/*.wasm
-      # Check contract using most recent version of cosmwasm-check
-      - cmd: cosmwasm-check ./target/wasm32-unknown-unknown/release/*.wasm
+      - cmd: ./task-actions/check-contracts.sh parallel
 
   clean:
     desc: Removes all compiled artifacts

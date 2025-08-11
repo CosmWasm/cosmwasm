@@ -2,6 +2,11 @@ name: contracts
 
 on: [ push ]
 
+env:
+  TOOLCHAIN_STABLE: 1.82.0 # toolchain for building contracts in stable channel
+  TOOLCHAIN_NIGHTLY: nightly-2024-09-01 # toolchain for building contracts in nightly channel for version 1.82.0
+  TOOLCHAIN_CHECK: 1.88.0 # toolchain for building cosmwasm-check tool
+
 jobs:
   stable:
     name: ${{ matrix.dir }}-${{ matrix.os }}
@@ -22,7 +27,7 @@ jobs:
       - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: 1.82.0
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
           target: wasm32-unknown-unknown
           components: clippy, rustfmt
           cache-directories: |
@@ -88,7 +93,7 @@ jobs:
       - name: Install Rust for compiling contracts
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: nightly-2024-09-01 # This is a nightly channel for version 1.82.0
+          toolchain: ${{ env.TOOLCHAIN_NIGHTLY }}
           target: wasm32-unknown-unknown
           components: clippy, rustfmt
           cache-directories: |
@@ -136,7 +141,7 @@ jobs:
       - name: Install Rust for compiling cosmwasm-check
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: 1.87.0
+          toolchain: ${{ env.TOOLCHAIN_CHECK }}
           cache-key: release
 
       - name: Install recently released cosmwasm-check
@@ -241,7 +246,7 @@ jobs:
       - name: Install Rust for compiling cosmwasm-check
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: 1.87.0
+          toolchain: ${{ env.TOOLCHAIN_CHECK }}
           cache-key: develop
 
       - name: Install currently developed cosmwasm-check

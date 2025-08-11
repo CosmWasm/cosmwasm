@@ -35,6 +35,12 @@ check_contract_stable() {
 
     message "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
     git diff --quiet ./schema
+
+    message "cosmwasm-check (release)" "$contract"
+    cosmwasm-check-release "$contract_dir"target/wasm32-unknown-unknown/release/*wasm
+
+    message "cosmwasm-check (develop)" "$contract"
+    cosmwasm-check "$contract_dir"target/wasm32-unknown-unknown/release/*wasm
   )
 }
 
@@ -67,5 +73,11 @@ check_contract_nightly() {
 
     message "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
     git diff --quiet ./schema
+
+    message "cosmwasm-check (release)" "$contract"
+    cosmwasm-check-release "$contract_dir"target/wasm32-unknown-unknown/release/*wasm
+
+    message "cosmwasm-check (develop)" "$contract"
+    cosmwasm-check "$contract_dir"target/wasm32-unknown-unknown/release/*wasm
   )
 }
