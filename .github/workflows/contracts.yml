@@ -22,7 +22,7 @@ jobs:
         working-directory: contracts/${{ matrix.dir }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -88,7 +88,7 @@ jobs:
         working-directory: ./contracts/${{ matrix.dir }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Rust for compiling contracts
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -136,7 +136,7 @@ jobs:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Rust for compiling cosmwasm-check
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -241,7 +241,7 @@ jobs:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Rust for compiling cosmwasm-check
         uses: actions-rust-lang/setup-rust-toolchain@v1
