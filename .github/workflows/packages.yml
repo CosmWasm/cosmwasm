@@ -163,7 +163,8 @@ jobs:
       - run: cargo test -p cosmwasm-vm --locked --all-features
       - run: |
           cargo build --locked --example multi_threaded_cache
-          time target/debug/examples/multi_threaded_cache > /dev/null      
+          time target/debug/examples/multi_threaded_cache > /dev/null
+        if: runner.os == 'Linux'
 
       # cosmwasm-vm-derive
       - run: cargo test -p cosmwasm-vm-derive --locked
