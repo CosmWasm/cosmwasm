@@ -1,5 +1,6 @@
 ---
 source: packages/cw-schema/tests/basic.rs
+assertion_line: 12
 expression: schema
 ---
 {
@@ -47,15 +48,15 @@ expression: schema
         {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "const": "named"
-            },
             "properties": {
               "type": "object",
               "additionalProperties": {
                 "$ref": "#/$defs/StructProperty"
               }
+            },
+            "type": {
+              "type": "string",
+              "const": "named"
             }
           },
           "required": [
@@ -66,10 +67,6 @@ expression: schema
         {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "const": "tuple"
-            },
             "items": {
               "type": "array",
               "items": {
@@ -77,6 +74,10 @@ expression: schema
                 "format": "uint",
                 "minimum": 0
               }
+            },
+            "type": {
+              "type": "string",
+              "const": "tuple"
             }
           },
           "required": [
@@ -134,10 +135,6 @@ expression: schema
         {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "const": "decimal"
-            },
             "precision": {
               "type": "integer",
               "format": "uint64",
@@ -145,6 +142,10 @@ expression: schema
             },
             "signed": {
               "type": "boolean"
+            },
+            "type": {
+              "type": "string",
+              "const": "decimal"
             }
           },
           "required": [
@@ -156,10 +157,6 @@ expression: schema
         {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "const": "integer"
-            },
             "precision": {
               "type": "integer",
               "format": "uint64",
@@ -167,6 +164,10 @@ expression: schema
             },
             "signed": {
               "type": "boolean"
+            },
+            "type": {
+              "type": "string",
+              "const": "integer"
             }
           },
           "required": [
@@ -262,14 +263,14 @@ expression: schema
         {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "const": "array"
-            },
             "items": {
               "type": "integer",
               "format": "uint",
               "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "const": "array"
             }
           },
           "required": [
@@ -293,10 +294,6 @@ expression: schema
         {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "const": "tuple"
-            },
             "items": {
               "type": "array",
               "items": {
@@ -304,6 +301,10 @@ expression: schema
                 "format": "uint",
                 "minimum": 0
               }
+            },
+            "type": {
+              "type": "string",
+              "const": "tuple"
             }
           },
           "required": [
@@ -314,10 +315,6 @@ expression: schema
         {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "const": "enum"
-            },
             "cases": {
               "type": "object",
               "additionalProperties": {
@@ -329,6 +326,10 @@ expression: schema
                 "string",
                 "null"
               ]
+            },
+            "type": {
+              "type": "string",
+              "const": "enum"
             }
           },
           "required": [
@@ -339,10 +340,6 @@ expression: schema
         {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "const": "map"
-            },
             "key": {
               "type": "integer",
               "format": "uint",
@@ -350,6 +347,10 @@ expression: schema
             },
             "kind": {
               "$ref": "#/$defs/MapKind"
+            },
+            "type": {
+              "type": "string",
+              "const": "map"
             },
             "value": {
               "type": "integer",
@@ -367,14 +368,14 @@ expression: schema
         {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "const": "boxed"
-            },
             "inner": {
               "type": "integer",
               "format": "uint",
               "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "const": "boxed"
             }
           },
           "required": [
@@ -385,14 +386,14 @@ expression: schema
         {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "const": "optional"
-            },
             "inner": {
               "type": "integer",
               "format": "uint",
               "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "const": "optional"
             }
           },
           "required": [
@@ -420,16 +421,16 @@ expression: schema
     "SchemaV1": {
       "type": "object",
       "properties": {
-        "root": {
-          "type": "integer",
-          "format": "uint",
-          "minimum": 0
-        },
         "definitions": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/Node"
           }
+        },
+        "root": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0
         }
       },
       "required": [
@@ -440,14 +441,14 @@ expression: schema
     "StructProperty": {
       "type": "object",
       "properties": {
+        "defaulting": {
+          "type": "boolean"
+        },
         "description": {
           "type": [
             "string",
             "null"
           ]
-        },
-        "defaulting": {
-          "type": "boolean"
         },
         "value": {
           "type": "integer",
