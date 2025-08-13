@@ -6,7 +6,7 @@ env:
   TOOLCHAIN_STABLE: 1.82.0 # toolchain for building packages
 
 jobs:
-  build:
+  formatting:
     name: build-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -21,13 +21,28 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
-          target: thumbv7em-none-eabi, wasm32-unknown-unknown
-          components: clippy, rustfmt
+          components: rustfmt
 
-      - name: Check formatting
-        run: cargo fmt -- --check
+      - run: cargo fmt -- --check
 
-      # cosmwasm-core
+  package-cosmwasm-core:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          targets: thumbv7em-none-eabi, wasm32-unknown-unknown
+          components: clippy
+
       - run: cargo clippy -p cosmwasm-core --all-targets -- -D warnings
       - run: cargo clippy -p cosmwasm-core --all-features --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-core --locked
@@ -42,37 +57,150 @@ jobs:
       - run: cargo test -p cosmwasm-core --locked --no-default-features
       - run: cargo test -p cosmwasm-core --locked --all-features
 
-      # cosmwasm-crypto
+  package-cosmwasm-crypto:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          components: clippy
+
       - run: cargo clippy -p cosmwasm-crypto --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-crypto --locked
       - run: cargo test -p cosmwasm-crypto --locked
 
-      # cw-schema
+  package-cw-schema:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          components: clippy
+
       - run: cargo clippy -p cw-schema --all-targets -- -D warnings
       - run: cargo build -p cw-schema --locked
       - run: cargo test -p cw-schema --locked
 
-      # cw-schema-derive
+  package-cw-schema-derive:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          components: clippy
+
       - run: cargo clippy -p cw-schema-derive --all-targets -- -D warnings
       - run: cargo build -p cw-schema-derive --locked
       - run: cargo test -p cw-schema-derive --locked
 
-      # cosmwasm-derive
+  package-cosmwasm-derive:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          components: clippy
+
       - run: cargo clippy -p cosmwasm-derive --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-derive --locked
       - run: cargo test -p cosmwasm-derive --locked
 
-      # cosmwasm-schema
+  package-cosmwasm-schema:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          components: clippy
+
       - run: cargo clippy -p cosmwasm-schema --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-schema --locked
       - run: cargo test -p cosmwasm-schema --locked
 
-      # cosmwasm-schema-derive
+  package-cosmwasm-schema-derive:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          components: clippy
+
       - run: cargo clippy -p cosmwasm-schema-derive --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-schema-derive --locked
       - run: cargo test -p cosmwasm-schema-derive --locked
 
-      # cosmwasm-std
+  package-cosmwasm-std:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          targets: wasm32-unknown-unknown
+          components: clippy
+
       - run: cargo clippy -p cosmwasm-std --all-targets -- -D warnings
       - run: cargo clippy -p cosmwasm-std --all-targets --features std,iterator,staking,stargate -- -D warnings
       - run: cargo clippy -p cosmwasm-std --all-features --all-targets -- -D warnings
@@ -89,7 +217,23 @@ jobs:
       - run: cargo test -p cosmwasm-std --locked --features std,iterator,staking,stargate,cosmwasm_1_2
       - run: cargo test -p cosmwasm-std --locked --all-features
 
-      # cosmwasm-vm
+  package-cosmwasm-vm:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          components: clippy
+
       - run: cargo clippy -p cosmwasm-vm --all-targets --no-default-features -- -D warnings
       - run: cargo clippy -p cosmwasm-vm --all-targets --features iterator,staking,stargate -- -D warnings
       - run: cargo build -p cosmwasm-vm --locked
@@ -103,12 +247,44 @@ jobs:
           time target/debug/examples/multi_threaded_cache > /dev/null
         if: runner.os == 'Linux'
 
-      # cosmwasm-vm-derive
+  package-cosmwasm-vm-derive:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          components: clippy
+
       - run: cargo clippy -p cosmwasm-vm-derive --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-vm-derive --locked
       - run: cargo test -p cosmwasm-vm-derive --locked
 
-      # cosmwasm-check
+  package-cosmwasm-check:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          components: clippy
+
       - run: cargo clippy -p cosmwasm-check --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-check --locked
       - run: cargo test -p cosmwasm-check --locked
