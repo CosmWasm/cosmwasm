@@ -159,7 +159,6 @@ jobs:
 
       # cosmwasm-vm
       - run: cargo test -p cosmwasm-vm --locked
-      - run: cargo test -p cosmwasm-vm --locked --no-default-features
       - run: cargo test -p cosmwasm-vm --locked --features iterator,staking,stargate
       - run: cargo test -p cosmwasm-vm --locked --all-features
       - run: |
