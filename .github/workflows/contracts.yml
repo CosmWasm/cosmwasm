@@ -1,6 +1,6 @@
 name: contracts
 
-on: [ push ]
+on: [ pull_request_review ]
 
 env:
   TOOLCHAIN_STABLE: 1.82.0 # toolchain for building contracts in stable channel
