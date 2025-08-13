@@ -6,43 +6,6 @@ env:
   TOOLCHAIN_STABLE: 1.82.0 # toolchain for building packages
 
 jobs:
-  lint:
-    name: lint-${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v5
-
-      - name: Install Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: ${{ env.TOOLCHAIN_STABLE }}
-          components: clippy, rustfmt
-          cache-key: lint
-
-      - name: Check formatting
-        run: cargo fmt -- --check
-
-      - run: cargo clippy -p cosmwasm-core --all-targets -- -D warnings
-      - run: cargo clippy -p cosmwasm-core --all-features --all-targets -- -D warnings
-      - run: cargo clippy -p cosmwasm-crypto --all-targets -- -D warnings
-      - run: cargo clippy -p cosmwasm-derive --all-targets -- -D warnings
-      - run: cargo clippy -p cosmwasm-std --all-targets -- -D warnings
-      - run: cargo clippy -p cosmwasm-std --all-targets --features std,iterator,staking,stargate -- -D warnings
-      - run: cargo clippy -p cosmwasm-std --all-features --all-targets -- -D warnings
-      - run: cargo clippy -p cosmwasm-schema --all-targets -- -D warnings
-      - run: cargo clippy -p cosmwasm-schema-derive --all-targets -- -D warnings
-      - run: cargo clippy -p cw-schema --all-targets -- -D warnings
-      - run: cargo clippy -p cw-schema-derive --all-targets -- -D warnings
-      - run: cargo clippy -p cosmwasm-vm --all-targets --no-default-features -- -D warnings
-      - run: cargo clippy -p cosmwasm-vm --all-targets --features iterator,staking,stargate -- -D warnings
-      - run: cargo clippy -p cosmwasm-vm-derive --all-targets -- -D warnings
-      - run: cargo clippy -p cosmwasm-check --all-targets -- -D warnings
-
   build:
     name: build-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -55,13 +18,18 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
           target: thumbv7em-none-eabi, wasm32-unknown-unknown
-          cache-key: build
+          components: clippy, rustfmt
+
+      - name: Check formatting
+        run: cargo fmt -- --check
 
       # cosmwasm-core
+      - run: cargo clippy -p cosmwasm-core --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-core --all-features --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-core --locked
       - run: cargo build -p cosmwasm-core --locked --release --lib --target wasm32-unknown-unknown
       - run: cargo build -p cosmwasm-core --locked --release --lib --target thumbv7em-none-eabi
@@ -71,26 +39,43 @@ jobs:
       - run: cargo build -p cosmwasm-core --locked --all-features
       - run: cargo build -p cosmwasm-core --locked --all-features --release --lib --target wasm32-unknown-unknown
       - run: cargo build -p cosmwasm-core --locked --all-features --release --lib --target thumbv7em-none-eabi
+      - run: cargo test -p cosmwasm-core --locked --no-default-features
+      - run: cargo test -p cosmwasm-core --locked --all-features
 
       # cosmwasm-crypto
+      - run: cargo clippy -p cosmwasm-crypto --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-crypto --locked
+      - run: cargo test -p cosmwasm-crypto --locked
 
       # cw-schema
+      - run: cargo clippy -p cw-schema --all-targets -- -D warnings
       - run: cargo build -p cw-schema --locked
+      - run: cargo test -p cw-schema --locked
 
       # cw-schema-derive
+      - run: cargo clippy -p cw-schema-derive --all-targets -- -D warnings
       - run: cargo build -p cw-schema-derive --locked
+      - run: cargo test -p cw-schema-derive --locked
 
       # cosmwasm-derive
+      - run: cargo clippy -p cosmwasm-derive --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-derive --locked
+      - run: cargo test -p cosmwasm-derive --locked
 
       # cosmwasm-schema
+      - run: cargo clippy -p cosmwasm-schema --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-schema --locked
+      - run: cargo test -p cosmwasm-schema --locked
 
       # cosmwasm-schema-derive
+      - run: cargo clippy -p cosmwasm-schema-derive --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-schema-derive --locked
+      - run: cargo test -p cosmwasm-schema-derive --locked
 
       # cosmwasm-std
+      - run: cargo clippy -p cosmwasm-std --all-targets -- -D warnings
+      - run: cargo clippy -p cosmwasm-std --all-targets --features std,iterator,staking,stargate -- -D warnings
+      - run: cargo clippy -p cosmwasm-std --all-features --all-targets -- -D warnings
       - run: cargo build -p cosmwasm-std --locked
       - run: cargo build -p cosmwasm-std --locked --release --lib --target wasm32-unknown-unknown
       - run: cargo build -p cosmwasm-std --locked --no-default-features --features std
@@ -99,65 +84,17 @@ jobs:
       - run: cargo build -p cosmwasm-std --locked --features std,iterator,staking,stargate,cosmwasm_1_2 --release --lib --target wasm32-unknown-unknown
       - run: cargo build -p cosmwasm-std --locked --all-features
       - run: cargo build -p cosmwasm-std --locked --all-features --release --lib --target wasm32-unknown-unknown
-
-      # cosmwasm-vm
-      - run: cargo build -p cosmwasm-vm --locked
-      - run: cargo build -p cosmwasm-vm --locked --features iterator,staking,stargate
-      - run: cargo build -p cosmwasm-vm --locked --all-features
-
-      # cosmwasm-vm-derive
-      - run: cargo build -p cosmwasm-vm-derive --locked
-
-      # cosmwasm-check
-      - run: cargo build -p cosmwasm-check --locked
-
-
-  test:
-    name: test-${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v5
-
-      - name: Install Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: ${{ env.TOOLCHAIN_STABLE }}
-          cache-key: test
-
-      # cosmwasm-core
-      - run: cargo test -p cosmwasm-core --locked --no-default-features
-      - run: cargo test -p cosmwasm-core --locked --all-features
-
-      # cosmwasm-crypto
-      - run: cargo test -p cosmwasm-crypto --locked
-
-      # cw-schema
-      - run: cargo test -p cw-schema --locked
-
-      # cw-schema-derive
-      - run: cargo test -p cw-schema-derive --locked
-
-      # cosmwasm-derive
-      - run: cargo test -p cosmwasm-derive --locked
-
-      # cosmwasm-schema
-      - run: cargo test -p cosmwasm-schema --locked
-
-      # cosmwasm-schema-derive
-      - run: cargo test -p cosmwasm-schema-derive --locked
-
-      # cosmwasm-std
       - run: cargo test -p cosmwasm-std --locked
       - run: cargo test -p cosmwasm-std --locked --no-default-features --features std
       - run: cargo test -p cosmwasm-std --locked --features std,iterator,staking,stargate,cosmwasm_1_2
       - run: cargo test -p cosmwasm-std --locked --all-features
 
       # cosmwasm-vm
+      - run: cargo clippy -p cosmwasm-vm --all-targets --no-default-features -- -D warnings
+      - run: cargo clippy -p cosmwasm-vm --all-targets --features iterator,staking,stargate -- -D warnings
+      - run: cargo build -p cosmwasm-vm --locked
+      - run: cargo build -p cosmwasm-vm --locked --features iterator,staking,stargate
+      - run: cargo build -p cosmwasm-vm --locked --all-features
       - run: cargo test -p cosmwasm-vm --locked
       - run: cargo test -p cosmwasm-vm --locked --features iterator,staking,stargate
       - run: cargo test -p cosmwasm-vm --locked --all-features
@@ -167,7 +104,11 @@ jobs:
         if: runner.os == 'Linux'
 
       # cosmwasm-vm-derive
+      - run: cargo clippy -p cosmwasm-vm-derive --all-targets -- -D warnings
+      - run: cargo build -p cosmwasm-vm-derive --locked
       - run: cargo test -p cosmwasm-vm-derive --locked
 
       # cosmwasm-check
+      - run: cargo clippy -p cosmwasm-check --all-targets -- -D warnings
+      - run: cargo build -p cosmwasm-check --locked
       - run: cargo test -p cosmwasm-check --locked
