@@ -46,22 +46,6 @@ jobs:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
           target: wasm32-unknown-unknown
           components: clippy, rustfmt
-          cache-directories: |
-            ${{ github.workspace }}/contracts/burner/target
-            ${{ github.workspace }}/contracts/crypto-verify/target
-            ${{ github.workspace }}/contracts/cyberpunk/target
-            ${{ github.workspace }}/contracts/empty/target
-            ${{ github.workspace }}/contracts/hackatom/target
-            ${{ github.workspace }}/contracts/ibc2/target
-            ${{ github.workspace }}/contracts/ibc-callbacks/target
-            ${{ github.workspace }}/contracts/ibc-reflect/target
-            ${{ github.workspace }}/contracts/ibc-reflect-send/target
-            ${{ github.workspace }}/contracts/nested-contracts/target
-            ${{ github.workspace }}/contracts/queue/target
-            ${{ github.workspace }}/contracts/reflect/target
-            ${{ github.workspace }}/contracts/replier/target
-            ${{ github.workspace }}/contracts/staking/target
-            ${{ github.workspace }}/contracts/virus/target
 
       - name: Check formatting
         run: cargo fmt -- --check
@@ -112,8 +96,6 @@ jobs:
           toolchain: ${{ env.TOOLCHAIN_NIGHTLY }}
           target: wasm32-unknown-unknown
           components: clippy, rustfmt
-          cache-directories: |
-            ${{ github.workspace }}/contracts/floaty/target
 
       - name: Check formatting
         run: cargo fmt -- --check
