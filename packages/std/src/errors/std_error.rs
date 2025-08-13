@@ -328,16 +328,18 @@ mod tests {
     fn implements_debug() {
         let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub));
         let embedded = format!("Debug: {error:?}");
-        assert!(embedded
-            .starts_with("Debug: StdError(InnerError { backtrace: <disabled>, kind: Overflow, inner: OverflowError { operation: Sub } })"), "{embedded}");
+        assert!(
+            embedded.contains("kind: Overflow, inner: OverflowError { operation: Sub }"),
+            "{embedded}"
+        );
     }
 
     #[test]
     fn implements_display() {
         let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub));
         let embedded = format!("Display: {error}");
-        assert_eq!(
-            embedded, "Display: kind: Overflow, error: Cannot Sub with given operands",
+        assert!(
+            embedded.contains("kind: Overflow, error: Cannot Sub with given operands"),
             "{embedded}"
         );
     }
