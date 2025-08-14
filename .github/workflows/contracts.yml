@@ -1,6 +1,6 @@
 name: contracts
 
-on: [ deployment ]
+on: [ pull_request_review ]
 
 env:
   TOOLCHAIN_STABLE: 1.82.0 # toolchain for building contracts in stable channel
@@ -41,27 +41,11 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
-          target: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
           components: clippy, rustfmt
-          cache-directories: |
-            ${{ github.workspace }}/contracts/burner/target
-            ${{ github.workspace }}/contracts/crypto-verify/target
-            ${{ github.workspace }}/contracts/cyberpunk/target
-            ${{ github.workspace }}/contracts/empty/target
-            ${{ github.workspace }}/contracts/hackatom/target
-            ${{ github.workspace }}/contracts/ibc2/target
-            ${{ github.workspace }}/contracts/ibc-callbacks/target
-            ${{ github.workspace }}/contracts/ibc-reflect/target
-            ${{ github.workspace }}/contracts/ibc-reflect-send/target
-            ${{ github.workspace }}/contracts/nested-contracts/target
-            ${{ github.workspace }}/contracts/queue/target
-            ${{ github.workspace }}/contracts/reflect/target
-            ${{ github.workspace }}/contracts/replier/target
-            ${{ github.workspace }}/contracts/staking/target
-            ${{ github.workspace }}/contracts/virus/target
 
       - name: Check formatting
         run: cargo fmt -- --check
@@ -107,13 +91,11 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Rust for compiling contracts
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@nightly
         with:
           toolchain: ${{ env.TOOLCHAIN_NIGHTLY }}
-          target: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
           components: clippy, rustfmt
-          cache-directories: |
-            ${{ github.workspace }}/contracts/floaty/target
 
       - name: Check formatting
         run: cargo fmt -- --check
@@ -155,10 +137,9 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Rust for compiling cosmwasm-check
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.TOOLCHAIN_CHECK }}
-          cache-key: release
 
       - name: Install recently released cosmwasm-check
         run: cargo install cosmwasm-check@3.0.1
@@ -260,10 +241,9 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Rust for compiling cosmwasm-check
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.TOOLCHAIN_CHECK }}
-          cache-key: develop
 
       - name: Install currently developed cosmwasm-check
         run: cargo install --path ./packages/check --force
