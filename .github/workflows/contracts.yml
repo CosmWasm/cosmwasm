@@ -1,0 +1,333 @@
+name: contracts
+
+on: [ push ]
+
+env:
+  TOOLCHAIN_STABLE: 1.82.0 # toolchain for building contracts in stable channel
+  TOOLCHAIN_NIGHTLY: nightly-2024-09-01 # toolchain for building contracts in nightly channel for version 1.82.0
+  TOOLCHAIN_CHECK: 1.88.0 # toolchain for building cosmwasm-check tool
+
+jobs:
+  stable:
+    name: ${{ matrix.dir }}-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        dir: [
+          burner,
+          crypto-verify,
+          cyberpunk,
+          empty,
+          hackatom,
+          ibc2,
+          ibc-callbacks,
+          ibc-reflect,
+          ibc-reflect-send,
+          nested-contracts,
+          queue,
+          reflect,
+          replier,
+          staking,
+          virus
+        ]
+    defaults:
+      run:
+        shell: bash
+        working-directory: contracts/${{ matrix.dir }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Run unit tests
+        run: cargo test --lib --locked
+
+      - name: Build WASM binary
+        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+
+      - name: Run linter
+        run: cargo clippy --all-targets --tests -- -D warnings
+
+      - name: Run integration tests
+        run: cargo test --test integration --locked
+
+      - name: Run schema generator
+        run: cargo run --bin schema --locked
+
+      - name: Ensure schemas are up-to-date
+        run: git diff --quiet ./schema
+
+      - name: Upload WASM binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.dir }}-${{ runner.os }}
+          path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
+
+  nightly:
+    name: ${{ matrix.dir }}-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        dir: [ floaty ]
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./contracts/${{ matrix.dir }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust for compiling contracts
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: ${{ env.TOOLCHAIN_NIGHTLY }}
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Run unit tests
+        run: cargo test --lib --locked
+
+      - name: Build WASM binary
+        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
+
+      - name: Run linter
+        run: cargo clippy --all-targets --tests -- -D warnings
+
+      - name: Run integration tests
+        run: cargo test --test integration --locked
+
+      - name: Run schema generator
+        run: cargo run --bin schema --locked
+
+      - name: Ensure schemas are up-to-date
+        run: git diff --quiet ./schema
+
+      - name: Upload WASM binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.dir }}-${{ runner.os }}
+          path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
+
+  chkr:
+    name: check-rel-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: [ stable, nightly ]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust for compiling cosmwasm-check
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_CHECK }}
+
+      - name: Install recently released cosmwasm-check
+        run: cargo install cosmwasm-check@3.0.1
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: burner-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: crypto-verify-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: cyberpunk-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: empty-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: floaty-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: hackatom-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ibc2-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ibc-callbacks-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ibc-reflect-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ibc-reflect-send-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: nested-contracts-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: queue-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: reflect-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: replier-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: staking-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: virus-${{ runner.os }}
+          path: .
+
+      - name: Check contracts
+        shell: bash
+        run: cosmwasm-check *.wasm
+
+  chkd:
+    name: check-dev-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: [ stable, nightly ]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust for compiling cosmwasm-check
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_CHECK }}
+
+      - name: Install currently developed cosmwasm-check
+        run: cargo install --path ./packages/check --force
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: burner-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: crypto-verify-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: cyberpunk-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: empty-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: floaty-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: hackatom-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ibc2-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ibc-callbacks-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ibc-reflect-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ibc-reflect-send-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: nested-contracts-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: queue-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: reflect-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: replier-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: staking-${{ runner.os }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: virus-${{ runner.os }}
+          path: .
+
+      - name: Check contracts
+        shell: bash
+        run: cosmwasm-check *.wasm
