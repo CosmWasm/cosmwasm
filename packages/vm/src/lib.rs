@@ -1,3 +1,8 @@
+//! CosmWasm is a smart contract platform for the Cosmos ecosystem.
+//! This crate provides VM bindings to run CosmWasm contracts.
+//!
+//! For more information, see: <https://docs.cosmwasm.com>
+
 mod backend;
 mod cache;
 mod calls;
