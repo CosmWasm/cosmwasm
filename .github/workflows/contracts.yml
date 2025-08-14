@@ -44,7 +44,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
-          target: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
       - name: Check formatting
@@ -94,7 +94,7 @@ jobs:
         uses: dtolnay/rust-toolchain@nightly
         with:
           toolchain: ${{ env.TOOLCHAIN_NIGHTLY }}
-          target: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
       - name: Check formatting
