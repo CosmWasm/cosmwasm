@@ -6,8 +6,6 @@ edition = "2021"
 publish = false
 license = "Apache-2.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
 crate-type = ["cdylib", "rlib"]
 
@@ -24,11 +22,7 @@ overflow-checks = true
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = [
-    "cosmwasm_2_2",
-    "exports",
-    "std",
-] }
+cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["cosmwasm_2_2", "exports", "std"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 sha2 = "0.10"
