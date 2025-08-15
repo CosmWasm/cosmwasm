@@ -1,8 +1,0 @@
-{
-  "rust-analyzer.cargo.features": [
-    "ibc2",
-    "stargate",
-    "staking",
-    "cosmwasm_2_1"
-  ]
-}
