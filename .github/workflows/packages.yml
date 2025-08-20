@@ -1,6 +1,9 @@
 name: packages
 
-on: [ pull_request_review ]
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
 
 env:
   TOOLCHAIN_STABLE: 1.82.0 # toolchain for building packages
