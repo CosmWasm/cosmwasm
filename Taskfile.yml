@@ -1,0 +1,54 @@
+version: '3'
+
+silent: true
+
+vars:
+  COSMWASM_CHECK_VERSION: 3.0.1
+
+tasks:
+
+  all:
+    desc: Runs all checks
+    summary: |
+      Runs all viable checks for cosmwasm.
+      Execute this task before pushing any changes.
+      This task takes a significant amount of time to complete.
+    cmds:
+      - task: clean
+
+  install-cosmwasm-check:
+    desc: Installs cosmwasm-check tool (released version and currently developed version)
+    cmds:
+      # Install recently released cosmwasm-check and rename it to cosmwasm-check-release
+      - cmd: cargo +1.88.0 install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
+      - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-release
+      # Install currently developed version of cosmwasm-check
+      - cmd: cargo +1.88.0 install --path ./packages/check --locked --force
+
+  check-contracts:
+    desc: Performs checks for all contracts
+    cmds:
+      - task: install-cosmwasm-check
+      - cmd: ./devtools/check-contracts.sh
+
+  check-contracts-parallel:
+    desc: Performs checks in parallel for all contracts
+    cmds:
+      - task: install-cosmwasm-check
+      - cmd: ./devtools/check-contracts.sh parallel
+
+  check-contracts-fast:
+    desc: Performs checks for all contracts without reinstalling cosmwasm-check tool
+    cmds:
+      - cmd: ./devtools/check-contracts.sh
+
+  check-contracts-fast-parallel:
+    desc: Performs checks in parallel for all contracts without reinstalling cosmwasm-check tool
+    cmds:
+      - cmd: ./devtools/check-contracts.sh parallel
+
+  clean:
+    desc: Removes all compiled artifacts
+    cmds:
+      - cmd: cargo clean
+      - cmd: ./devtools/clean-contracts.sh
