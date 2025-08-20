@@ -9,10 +9,7 @@ version = "3.0.1"
 
 [workspace.dependencies]
 schemars = "0.8.4"
-serde = { version = "1.0.192", default-features = false, features = [
-    "alloc",
-    "derive",
-] }
+serde = { version = "1.0.192", default-features = false, features = ["alloc", "derive"] }
 
 [workspace.metadata.release]
 shared-version = true

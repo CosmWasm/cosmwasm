@@ -1,10 +1,10 @@
 [package]
 name = "nested-contracts"
-version = "0.1.0"
+version = "0.0.0"
 authors = ["Aumetra Weisman <aumetra@cryptolab.net>"]
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+publish = false
+license = "Apache-2.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -29,17 +29,13 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 
 [dependencies]
 cosmwasm-schema = "2.1.0"
-cosmwasm-std = { version = "2.1.0", features = [
-    "cosmwasm_1_4",
-    # Enable this if you only deploy to chains that have CosmWasm 2.0 or higher
-    # "cosmwasm_2_0",
-] }
+# Enable "cosmwasm_2_0" feature if you only deploy to chains that have CosmWasm 2.0 or higher.
+cosmwasm-std = { version = "2.1.0", features = ["cosmwasm_1_4"] }
 cw-storage-plus = "2.0.0"
 cw2 = "2.0.0"
 schemars = "0.8.16"
 serde = { version = "1.0.197", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.58" }
-
 inner-contract = { path = "./inner-contract" }
 
 [dev-dependencies]
