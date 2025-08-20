@@ -1,48 +1,95 @@
 # CosmWasm
 
-[![CircleCI](https://circleci.com/gh/CosmWasm/cosmwasm/tree/main.svg?style=shield)](https://circleci.com/gh/CosmWasm/cosmwasm/tree/main)
+![component][component-badge]
+[![license][apache-badge]][apache-url]
+
+[component-badge]: https://img.shields.io/badge/CosmWasm-6343ae.svg
+[apache-badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+[apache-url]: LICENSE
+[notice-url]: NOTICE
 
 **WebAssembly Smart Contracts for the Cosmos SDK**
 
-## Packages
+## Rust crates
 
-The following packages are maintained here:
+The following Rust crates are maintained in this repository:
 
-| Crate           | Usage                | Download                                                                                                                         | Docs                                                                                  | Coverage                                         |
-| --------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| cosmwasm-crypto | Internal only        | [![cosmwasm-crypto on crates.io](https://img.shields.io/crates/v/cosmwasm-crypto.svg)](https://crates.io/crates/cosmwasm-crypto) | [![Docs](https://docs.rs/cosmwasm-crypto/badge.svg)](https://docs.rs/cosmwasm-crypto) | [![Coverage][cov-badge-crypto]][cov-link-crypto] |
-| cosmwasm-derive | Internal only        | [![cosmwasm-derive on crates.io](https://img.shields.io/crates/v/cosmwasm-derive.svg)](https://crates.io/crates/cosmwasm-derive) | [![Docs](https://docs.rs/cosmwasm-derive/badge.svg)](https://docs.rs/cosmwasm-derive) | [![Coverage][cov-badge-derive]][cov-link-derive] |
-| cosmwasm-schema | Contract development | [![cosmwasm-schema on crates.io](https://img.shields.io/crates/v/cosmwasm-schema.svg)](https://crates.io/crates/cosmwasm-schema) | [![Docs](https://docs.rs/cosmwasm-schema/badge.svg)](https://docs.rs/cosmwasm-schema) | [![Coverage][cov-badge-schema]][cov-link-schema] |
-| cosmwasm-core   | Internal only        | [![cosmwasm-core on crates.io](https://img.shields.io/crates/v/cosmwasm-core.svg)](https://crates.io/crates/cosmwasm-core)       | [![Docs](https://docs.rs/cosmwasm-core/badge.svg)](https://docs.rs/cosmwasm-core)     | [![Coverage][cov-badge-core]][cov-link-core]     |
-| cosmwasm-std    | Contract development | [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)          | [![Docs](https://docs.rs/cosmwasm-std/badge.svg)](https://docs.rs/cosmwasm-std)       | [![Coverage][cov-badge-std]][cov-link-std]       |
-| cosmwasm-vm     | Host environments    | [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)             | [![Docs](https://docs.rs/cosmwasm-vm/badge.svg)](https://docs.rs/cosmwasm-vm)         | [![Coverage][cov-badge-vm]][cov-link-vm]         |
-| cosmwasm-check  | Contract development | [![cosmwasm-check on crates.io](https://img.shields.io/crates/v/cosmwasm-check.svg)](https://crates.io/crates/cosmwasm-check)    | `cosmwasm-check -h`                                                                   | N/A                                              |
+| Crate                              | Usage                | Download                                                                                                                         | Docs                                                                                  | Coverage                                         |
+|------------------------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|--------------------------------------------------|
+| cosmwasm&#8209;check               | Contract development | [![cosmwasm-check on crates.io](https://img.shields.io/crates/v/cosmwasm-check.svg)](https://crates.io/crates/cosmwasm-check)    | `cosmwasm-check -h`                                                                   | N/A                                              |
+| cosmwasm&#8209;core                | Internal use only    | [![cosmwasm-core on crates.io](https://img.shields.io/crates/v/cosmwasm-core.svg)](https://crates.io/crates/cosmwasm-core)       | [![Docs](https://docs.rs/cosmwasm-core/badge.svg)](https://docs.rs/cosmwasm-core)     | [![Coverage][cov-badge-core]][cov-link-core]     |
+| cosmwasm&#8209;crypto              | Internal use only    | [![cosmwasm-crypto on crates.io](https://img.shields.io/crates/v/cosmwasm-crypto.svg)](https://crates.io/crates/cosmwasm-crypto) | [![Docs](https://docs.rs/cosmwasm-crypto/badge.svg)](https://docs.rs/cosmwasm-crypto) | [![Coverage][cov-badge-crypto]][cov-link-crypto] |
+| cosmwasm&#8209;derive              | Internal use only    | [![cosmwasm-derive on crates.io](https://img.shields.io/crates/v/cosmwasm-derive.svg)](https://crates.io/crates/cosmwasm-derive) | [![Docs](https://docs.rs/cosmwasm-derive/badge.svg)](https://docs.rs/cosmwasm-derive) | [![Coverage][cov-badge-derive]][cov-link-derive] |
+| cosmwasm&#8209;schema              | Contract development | [![cosmwasm-schema on crates.io](https://img.shields.io/crates/v/cosmwasm-schema.svg)](https://crates.io/crates/cosmwasm-schema) | [![Docs](https://docs.rs/cosmwasm-schema/badge.svg)](https://docs.rs/cosmwasm-schema) | [![Coverage][cov-badge-schema]][cov-link-schema] |
+| cosmwasm&#8209;schema&#8209;derive | Internal use only    |                                                                                                                                  |                                                                                       |                                                  |
+| cosmwasm&#8209;std                 | Contract development | [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)          | [![Docs](https://docs.rs/cosmwasm-std/badge.svg)](https://docs.rs/cosmwasm-std)       | [![Coverage][cov-badge-std]][cov-link-std]       |
+| cosmwasm&#8209;vm                  | Host environments    | [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)             | [![Docs](https://docs.rs/cosmwasm-vm/badge.svg)](https://docs.rs/cosmwasm-vm)         | [![Coverage][cov-badge-vm]][cov-link-vm]         |
+| cosmwasm&#8209;vm&#8209;derive     | Internal use only    |                                                                                                                                  |                                                                                       |                                                  |
 
-[cosmwasm-storage](https://crates.io/crates/cosmwasm-storage) is no longer
-maintained and has been dropped in favor of
-[cw-storage-plus](https://github.com/CosmWasm/cw-storage-plus).
-
-[cov-badge-crypto]:
-  https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-crypto
-[cov-badge-derive]:
-  https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-derive
-[cov-badge-schema]:
-  https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-schema
-[cov-badge-core]:
-  https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-core
-[cov-badge-std]:
-  https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-std
-[cov-badge-vm]:
-  https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-vm
-[cov-link-crypto]:
-  https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/crypto
-[cov-link-derive]:
-  https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/derive
-[cov-link-schema]:
-  https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/schema
+[cov-badge-crypto]: https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-crypto
+[cov-badge-derive]: https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-derive
+[cov-badge-schema]: https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-schema
+[cov-badge-core]: https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-core
+[cov-badge-std]: https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-std
+[cov-badge-vm]: https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-vm
+[cov-link-crypto]: https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/crypto
+[cov-link-derive]: https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/derive
+[cov-link-schema]: https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/schema
 [cov-link-core]: https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/core
 [cov-link-std]: https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/std
 [cov-link-vm]: https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/vm
+
+## Dependencies
+
+The following diagram shows the dependencies between the Rust crates in this repository:
+
+```mermaid
+---
+config:
+  theme: 'forest'
+---
+
+graph BT
+    A("`**cosmwasm-core**
+        3.0.1`")
+        
+    B("`**cosmwasm-std**
+        3.0.1`")
+            
+    C("`**cosmwasm-crypto**
+        3.0.1`")
+        
+    D("`**cosmwasm-vm**
+        3.0.1`")
+        
+    F("`**cosmwasm-vm-derive**
+        3.0.1`")
+        
+    G("`**cosmwasm-derive**
+        3.0.1`")    
+        
+    J("`**cosmwasm-schema**
+        3.0.1`")
+
+    K("`**cosmwasm-schema-derive**
+        3.0.1`")
+        
+    L("`**cosmwasm-check**
+        3.0.1`")
+        
+    A --> B
+    A --> C
+    A --> D
+    C --> B
+    C --> D
+    B --> D
+    F --> D
+    G --> B
+    K --> J
+    B --> L
+    D --> L
+    J --> B
+```
 
 ## Overview
 
@@ -74,7 +121,7 @@ This code is compiled into Wasm bytecode as part of the smart contract.
   Please submit your contract or interface via PR.
 - [rust-optimizer](https://github.com/cosmwasm/rust-optimizer) - A docker image
   and scripts to take your Rust code and produce the smallest possible Wasm
-  output, deterministically. This is designed both for preparing contracts for
+  output, deterministically. This is designed for preparing contracts for
   deployment as well as validating that a given deployed contract is based on
   some given source code, allowing a
   [similar contract verification algorithm](https://medium.com/coinmonks/how-to-verify-and-publish-on-etherscan-52cf25312945)
@@ -462,3 +509,11 @@ nightly toolchain installed as well.
 | 1    | fast checks, rebuilds lock files | `./devtools/check_contracts_fast.sh`   |
 | 2    | medium fast checks               | `./devtools/check_contracts_medium.sh` |
 | 3    | slower checks                    | `./devtools/check_contracts_full.sh`   |
+
+## License
+
+Licensed under [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+(see [LICENSE][apache-url] and [NOTICE][notice-url]).
+
+Any contribution intentionally submitted for inclusion in this crate by you,
+shall be licensed as above, without any additional terms or conditions.
