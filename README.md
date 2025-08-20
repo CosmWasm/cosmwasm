@@ -14,17 +14,42 @@
 
 The following Rust crates are maintained in this repository:
 
-| Crate                              | Usage                | Download                                                                                                                         | Docs                                                                                  | Coverage                                         |
-|------------------------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|--------------------------------------------------|
-| cosmwasm&#8209;check               | Contract development | [![cosmwasm-check on crates.io](https://img.shields.io/crates/v/cosmwasm-check.svg)](https://crates.io/crates/cosmwasm-check)    | `cosmwasm-check -h`                                                                   | N/A                                              |
-| cosmwasm&#8209;core                | Internal use only    | [![cosmwasm-core on crates.io](https://img.shields.io/crates/v/cosmwasm-core.svg)](https://crates.io/crates/cosmwasm-core)       | [![Docs](https://docs.rs/cosmwasm-core/badge.svg)](https://docs.rs/cosmwasm-core)     | [![Coverage][cov-badge-core]][cov-link-core]     |
-| cosmwasm&#8209;crypto              | Internal use only    | [![cosmwasm-crypto on crates.io](https://img.shields.io/crates/v/cosmwasm-crypto.svg)](https://crates.io/crates/cosmwasm-crypto) | [![Docs](https://docs.rs/cosmwasm-crypto/badge.svg)](https://docs.rs/cosmwasm-crypto) | [![Coverage][cov-badge-crypto]][cov-link-crypto] |
-| cosmwasm&#8209;derive              | Internal use only    | [![cosmwasm-derive on crates.io](https://img.shields.io/crates/v/cosmwasm-derive.svg)](https://crates.io/crates/cosmwasm-derive) | [![Docs](https://docs.rs/cosmwasm-derive/badge.svg)](https://docs.rs/cosmwasm-derive) | [![Coverage][cov-badge-derive]][cov-link-derive] |
-| cosmwasm&#8209;schema              | Contract development | [![cosmwasm-schema on crates.io](https://img.shields.io/crates/v/cosmwasm-schema.svg)](https://crates.io/crates/cosmwasm-schema) | [![Docs](https://docs.rs/cosmwasm-schema/badge.svg)](https://docs.rs/cosmwasm-schema) | [![Coverage][cov-badge-schema]][cov-link-schema] |
-| cosmwasm&#8209;schema&#8209;derive | Internal use only    |                                                                                                                                  |                                                                                       |                                                  |
-| cosmwasm&#8209;std                 | Contract development | [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)          | [![Docs](https://docs.rs/cosmwasm-std/badge.svg)](https://docs.rs/cosmwasm-std)       | [![Coverage][cov-badge-std]][cov-link-std]       |
-| cosmwasm&#8209;vm                  | Host environments    | [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)             | [![Docs](https://docs.rs/cosmwasm-vm/badge.svg)](https://docs.rs/cosmwasm-vm)         | [![Coverage][cov-badge-vm]][cov-link-vm]         |
-| cosmwasm&#8209;vm&#8209;derive     | Internal use only    |                                                                                                                                  |                                                                                       |                                                  |
+| Crate                              | Usage                | Download                                                                                                                         | Docs                                                                                  | Coverage |
+|------------------------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|----------|
+| cosmwasm&#8209;check               | Contract development | [![cosmwasm-check][crates-badge-cosmwasm-check]][crates-url-cosmwasm-check]                                                      |                                                                                       |          |
+| cosmwasm&#8209;core                | Internal use only    | [![cosmwasm-core][crates-badge-cosmwasm-core]][crates-url-cosmwasm-core]                                                         | [![docs-cosmwasm-core][docs-badge-cosmwasm-core]][docs-url-cosmwasm-core]             |          |
+| cosmwasm&#8209;crypto              | Internal use only    | [![cosmwasm-crypto on crates.io](https://img.shields.io/crates/v/cosmwasm-crypto.svg)](https://crates.io/crates/cosmwasm-crypto) | [![Docs](https://docs.rs/cosmwasm-crypto/badge.svg)](https://docs.rs/cosmwasm-crypto) |          |
+| cosmwasm&#8209;derive              | Internal use only    | [![cosmwasm-derive on crates.io](https://img.shields.io/crates/v/cosmwasm-derive.svg)](https://crates.io/crates/cosmwasm-derive) | [![Docs](https://docs.rs/cosmwasm-derive/badge.svg)](https://docs.rs/cosmwasm-derive) |          |
+| cosmwasm&#8209;schema              | Contract development | [![cosmwasm-schema][crates-badge-cosmwasm-schema]][crates-url-cosmwasm-schema]                                                   | [![Docs](https://docs.rs/cosmwasm-schema/badge.svg)](https://docs.rs/cosmwasm-schema) |          |
+| cosmwasm&#8209;schema&#8209;derive | Internal use only    | [![cosmwasm-schema-derive][crates-badge-cosmwasm-schema-derive]][crates-url-cosmwasm-schema-derive]                              |                                                                                       |          |
+| cosmwasm&#8209;std                 | Contract development | [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)          | [![Docs](https://docs.rs/cosmwasm-std/badge.svg)](https://docs.rs/cosmwasm-std)       |          |
+| cosmwasm&#8209;vm                  | Host environments    | [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)             | [![Docs](https://docs.rs/cosmwasm-vm/badge.svg)](https://docs.rs/cosmwasm-vm)         |          |
+| cosmwasm&#8209;vm&#8209;derive     | Internal use only    | [![cosmwasm-vm-derive][crates-badge-cosmwasm-vm-derive]][crates-url-cosmwasm-vm-derive]                                          |                                                                                       |          |
+| cw&#8209;schema                    | Contract development | [![cw-schema][crates-badge-cw-schema]][crates-url-cw-schema]                                                                     |                                                                                       |          |
+| cw&#8209;schema&#8209;derive       | Internal use only    | [![cw-schema-derive][crates-badge-cw-schema-derive]][crates-url-cw-schema-derive]                                                |                                                                                       |          |
+
+[crates-badge-cosmwasm-check]: https://img.shields.io/crates/v/cosmwasm-check.svg
+[crates-url-cosmwasm-check]: https://crates.io/crates/cosmwasm-check
+
+[crates-badge-cosmwasm-core]: https://img.shields.io/crates/v/cosmwasm-core.svg
+[crates-url-cosmwasm-core]: https://crates.io/crates/cosmwasm-core
+[docs-badge-cosmwasm-core]: https://docs.rs/cosmwasm-core/badge.svg
+[docs-url-cosmwasm-core]: https://docs.rs/cosmwasm-core
+
+[crates-badge-cosmwasm-schema]: https://img.shields.io/crates/v/cosmwasm-schema.svg
+[crates-url-cosmwasm-schema]: https://crates.io/crates/cosmwasm-schema
+
+[crates-badge-cosmwasm-schema-derive]: https://img.shields.io/crates/v/cosmwasm-schema-derive.svg
+[crates-url-cosmwasm-schema-derive]: https://crates.io/crates/cosmwasm-schema-derive
+
+[crates-badge-cosmwasm-vm-derive]: https://img.shields.io/crates/v/cosmwasm-vm-derive.svg
+[crates-url-cosmwasm-vm-derive]: https://crates.io/crates/cosmwasm-vm-derive
+
+[crates-badge-cw-schema]: https://img.shields.io/crates/v/cw-schema.svg
+[crates-url-cw-schema]: https://crates.io/crates/cw-schema
+
+[crates-badge-cw-schema-derive]: https://img.shields.io/crates/v/cw-schema-derive.svg
+[crates-url-cw-schema-derive]: https://crates.io/crates/cw-schema-derive
 
 [cov-badge-crypto]: https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-crypto
 [cov-badge-derive]: https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-derive
@@ -52,29 +77,35 @@ config:
 graph BT
     A("`**cosmwasm-core**
         3.0.1`")
-        
+ 
     B("`**cosmwasm-std**
         3.0.1`")
-            
+ 
     C("`**cosmwasm-crypto**
         3.0.1`")
         
     D("`**cosmwasm-vm**
         3.0.1`")
         
-    F("`**cosmwasm-vm-derive**
+    E("`**cosmwasm-vm-derive**
         3.0.1`")
         
-    G("`**cosmwasm-derive**
+    F("`**cosmwasm-derive**
         3.0.1`")    
         
-    J("`**cosmwasm-schema**
+    G("`**cosmwasm-schema**
         3.0.1`")
 
-    K("`**cosmwasm-schema-derive**
+    H("`**cosmwasm-schema-derive**
         3.0.1`")
         
-    L("`**cosmwasm-check**
+    I("`**cosmwasm-check**
+        3.0.1`")
+        
+    J("`**cw-schema**
+        3.0.1`")
+
+    K("`**cw-schema-derive**
         3.0.1`")
         
     A --> B
@@ -83,12 +114,15 @@ graph BT
     C --> B
     C --> D
     B --> D
-    F --> D
+    E --> D
+    F --> B
+    H --> G
+    B --> I
+    D --> I
     G --> B
-    K --> J
-    B --> L
-    D --> L
     J --> B
+    J --> G
+    K --> J
 ```
 
 ## Overview
