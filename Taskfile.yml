@@ -52,3 +52,15 @@ tasks:
     cmds:
       - cmd: cargo clean
       - cmd: ./devtools/clean-contracts.sh
+
+  cov-cosmwasm-check:
+    desc: Generates the code coverage report for cosmwasm-check in text format and prints it to stdout
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo +1.88.0 llvm-cov -p cosmwasm-check --no-cfg-coverage
+
+  cov-cosmwasm-std:
+    desc: Generates the code coverage report for cosmwasm-std in text format and prints it to stdout
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo +1.82.0 llvm-cov -p cosmwasm-std --no-cfg-coverage
