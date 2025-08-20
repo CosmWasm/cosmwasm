@@ -38,10 +38,7 @@ base64 = "0.22.0"
 base64-serde = "0.7.0"
 criterion = "0.5.1"
 rand_core = { version = "0.6", features = ["getrandom"] }
-serde = { version = "1.0.103", default-features = false, features = [
-    "alloc",
-    "derive",
-] }
+serde = { version = "1.0.103", default-features = false, features = ["alloc", "derive"] }
 serde_json = "1.0.140"
 sha2 = "0.10"
 sha3 = "0.10"
