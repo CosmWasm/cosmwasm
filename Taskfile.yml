@@ -29,26 +29,26 @@ tasks:
     desc: Performs checks for all contracts
     cmds:
       - task: install-cosmwasm-check
-      - cmd: ./task-actions/check-contracts.sh
+      - cmd: ./devtools/check-contracts.sh
 
   check-contracts-parallel:
     desc: Performs checks in parallel for all contracts
     cmds:
       - task: install-cosmwasm-check
-      - cmd: ./task-actions/check-contracts.sh parallel
+      - cmd: ./devtools/check-contracts.sh parallel
 
   check-contracts-fast:
     desc: Performs checks for all contracts without reinstalling cosmwasm-check tool
     cmds:
-      - cmd: ./task-actions/check-contracts.sh
+      - cmd: ./devtools/check-contracts.sh
 
   check-contracts-fast-parallel:
     desc: Performs checks in parallel for all contracts without reinstalling cosmwasm-check tool
     cmds:
-      - cmd: ./task-actions/check-contracts.sh parallel
+      - cmd: ./devtools/check-contracts.sh parallel
 
   clean:
     desc: Removes all compiled artifacts
     cmds:
       - cmd: cargo clean
-      - cmd: ./task-actions/clean-contracts.sh
+      - cmd: ./devtools/clean-contracts.sh
