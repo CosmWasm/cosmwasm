@@ -4,6 +4,7 @@ silent: true
 
 vars:
   COSMWASM_CHECK_VERSION: 3.0.1
+  TOOLCHAIN: +1.82.0
 
 tasks:
 
@@ -15,6 +16,11 @@ tasks:
       This task takes a significant amount of time to complete.
     cmds:
       - task: clean
+
+  build:
+    desc: Build all crates
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} build --workspace
 
   install-cosmwasm-check:
     desc: Installs cosmwasm-check tool (released version and currently developed version)

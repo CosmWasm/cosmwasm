@@ -9,8 +9,8 @@ publish = false
 release = false
 
 [dependencies]
-cosmwasm-std = { version = "3.0.1", path = "../std", features = ["cosmwasm_3_0", "staking", "stargate"] }
-cosmwasm-schema = { version = "3.0.1", path = "../schema" }
+cosmwasm-std = { path = "../std", features = ["cosmwasm_3_0", "staking", "stargate"] }
+cosmwasm-schema = { path = "../schema" }
 anyhow = "1"
 indenter = "0.3.3"
 schemars = { workspace = true }

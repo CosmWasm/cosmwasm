@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-schema"
-version.workspace = true
+version = { workspace = true }
 authors = [
     "Ethan Frey <ethanfrey@users.noreply.github.com>",
     "Simon Warta <webmaster128@users.noreply.github.com>",
@@ -11,8 +11,8 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/schema"
 license = "Apache-2.0"
 
 [dependencies]
-cosmwasm-schema-derive = { version = "=3.0.1", path = "../schema-derive" }
-cw-schema = { version = "=3.0.1", path = "../cw-schema" }
+cosmwasm-schema-derive = { path = "../schema-derive" }
+cw-schema = { path = "../cw-schema" }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = "1.0.140"
