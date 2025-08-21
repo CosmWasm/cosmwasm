@@ -16,14 +16,10 @@ tasks:
     cmds:
       - task: clean
 
-  install-cosmwasm-check:
-    desc: Installs cosmwasm-check tool (released version and currently developed version)
+  build:
+    desc: Build all crates
     cmds:
-      # Install recently released cosmwasm-check and rename it to cosmwasm-check-release
-      - cmd: cargo +1.88.0 install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
-      - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-release
-      # Install currently developed version of cosmwasm-check
-      - cmd: cargo +1.88.0 install --path ./packages/check --locked --force
+      - cmd: cargo +1.82.0 build --workspace
 
   check-contracts:
     desc: Performs checks for all contracts
@@ -52,3 +48,36 @@ tasks:
     cmds:
       - cmd: cargo clean
       - cmd: ./devtools/clean-contracts.sh
+
+  cov-cosmwasm-check:
+    desc: Generates code coverage report for cosmwasm-check in text format
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo +1.88.0 llvm-cov -p cosmwasm-check --no-cfg-coverage
+
+  cov-badge-cosmwasm-check:
+    desc: Generates the detailed code coverage badge for cosmwasm-check
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo +1.88.0 llvm-cov --no-cfg-coverage -p cosmwasm-check --json --summary-only | coverio
+
+  cov-cosmwasm-std:
+    desc: Generates code coverage report for cosmwasm-std in text format
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo +1.82.0 llvm-cov -p cosmwasm-std --no-cfg-coverage
+
+  cov-badge-cosmwasm-std:
+    desc: Generates the detailed code coverage badge for cosmwasm-std
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cosmwasm-std --json --summary-only | coverio
+
+  install-cosmwasm-check:
+    desc: Installs cosmwasm-check tool (released version and currently developed version)
+    cmds:
+      # Install recently released cosmwasm-check and rename it to cosmwasm-check-release
+      - cmd: cargo +1.88.0 install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
+      - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-release
+      # Install currently developed version of cosmwasm-check
+      - cmd: cargo +1.88.0 install --path ./packages/check --locked --force
