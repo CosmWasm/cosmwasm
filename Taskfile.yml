@@ -61,6 +61,18 @@ tasks:
       - cmd: cargo llvm-cov clean
       - cmd: cargo +1.88.0 llvm-cov --no-cfg-coverage -p cosmwasm-check --json --summary-only | coverio
 
+  cov-cosmwasm-core:
+    desc: Generates code coverage report for cosmwasm-core in text format
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo +1.82.0 llvm-cov -p cosmwasm-core --no-cfg-coverage
+
+  cov-badge-cosmwasm-core:
+    desc: Generates the detailed code coverage badge for cosmwasm-core
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cosmwasm-core --json --summary-only | coverio
+
   cov-cosmwasm-std:
     desc: Generates code coverage report for cosmwasm-std in text format
     cmds:
