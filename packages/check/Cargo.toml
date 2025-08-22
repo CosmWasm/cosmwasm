@@ -12,7 +12,7 @@ anyhow = "1.0.57"
 clap = "4"
 colored = "2.1.0"
 cosmwasm-vm = { workspace = true }
-cosmwasm-std = { workspace = true }
+cosmwasm-std = { workspace = true, default-features = true }
 
 [dev-dependencies]
 assert_cmd = "2.0.12"
