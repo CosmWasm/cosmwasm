@@ -1,6 +1,6 @@
 [package]
 name = "cw-schema"
-version.workspace = true
+version = { workspace = true }
 authors = ["Aumetra Weisman <aumetra@cryptolab.net>"]
 edition = "2021"
 description = "A dependency for CosmWasm contracts to generate schema files for their messages."
@@ -8,7 +8,7 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/cw-schema"
 license = "Apache-2.0"
 
 [dependencies]
-cw-schema-derive = { version = "=3.0.1", path = "../cw-schema-derive" }
+cw-schema-derive = { path = "../cw-schema-derive" }
 indexmap = { version = "2.3.0", default-features = false }
 schemars = { version = "1.0.4", optional = true }
 serde = { version = "1.0.204", features = ["derive"] }
