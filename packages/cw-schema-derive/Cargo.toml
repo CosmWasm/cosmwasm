@@ -1,6 +1,6 @@
 [package]
 name = "cw-schema-derive"
-version.workspace = true
+version = { workspace = true }
 authors = ["Aumetra Weisman <aumetra@cryptolab.net>"]
 edition = "2021"
 description = "Derive macros for cw-schema"
