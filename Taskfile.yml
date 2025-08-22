@@ -22,6 +22,11 @@ tasks:
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} build --workspace
 
+  build-cw-schema:
+    desc: Build cw-schema
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} build -p cw-schema
+
   check-contracts:
     desc: Performs checks for all contracts
     cmds:
@@ -45,9 +50,14 @@ tasks:
       - cmd: ./devtools/check-contracts.sh parallel
 
   clean:
-    desc: Removes all compiled artifacts
+    desc: Removes compiled artifacts for crates
     cmds:
       - cmd: cargo clean
+
+  clean-all:
+    desc: Removes all compiled artifacts (crates and contracts)
+    cmds:
+      - task: clean
       - cmd: ./devtools/clean-contracts.sh
 
   cov:
@@ -218,3 +228,8 @@ tasks:
     desc: Runs tests for cosmwasm-core
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} test -p cosmwasm-core
+
+  test-cw-schema:
+    desc: Runs tests for cw-schema
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} test -p cw-schema
