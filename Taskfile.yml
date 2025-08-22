@@ -4,7 +4,7 @@ silent: true
 
 vars:
   COSMWASM_CHECK_VERSION: 3.0.1
-  TOOLCHAIN: +1.82.0
+  TOOLCHAIN: +1.88.0
 
 tasks:
 
@@ -26,10 +26,10 @@ tasks:
     desc: Installs cosmwasm-check tool (released version and currently developed version)
     cmds:
       # Install recently released cosmwasm-check and rename it to cosmwasm-check-release
-      - cmd: cargo +1.88.0 install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
+      - cmd: cargo {{.TOOLCHAIN}} install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
       - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-release
       # Install currently developed version of cosmwasm-check
-      - cmd: cargo +1.88.0 install --path ./packages/check --locked --force
+      - cmd: cargo {{.TOOLCHAIN}} install --path ./packages/check --locked --force
 
   check-contracts:
     desc: Performs checks for all contracts
@@ -58,3 +58,13 @@ tasks:
     cmds:
       - cmd: cargo clean
       - cmd: ./devtools/clean-contracts.sh
+
+  test:
+    desc: Runs all tests
+    cmds:
+      - task: test-cosmwasm-core
+
+  test-cosmwasm-core:
+    desc: Runs tests for cosmwasm-core
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} test -p cosmwasm-core
