@@ -45,7 +45,7 @@ bech32 = "0.11.0"
 blake2 = "0.10.6"
 # Uses the path when built locally; uses the given version from crates.io when published
 cosmwasm-core = { workspace = true }
-cosmwasm-std = { workspace = true, default-features = false, features = ["std"] }
+cosmwasm-std = { workspace = true, features = ["std"] }
 cosmwasm-crypto = { workspace = true }
 cosmwasm-vm-derive = { workspace = true }
 derive_more = { version = "=1.0.0-beta.6", default-features = false, features = ["debug"] }
