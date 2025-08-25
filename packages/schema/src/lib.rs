@@ -1,7 +1,7 @@
 //! CosmWasm is a smart contract platform for the Cosmos ecosystem.
 //! This crate is a dev-dependency for CosmWasm contracts to generate JSON Schema files.
 //!
-//! For more information, see: <https://docs.cosmwasm.com>
+//! For more information, see: <https://cosmwasm.cosmos.network>
 
 mod casing;
 mod export;
