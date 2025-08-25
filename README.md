@@ -14,74 +14,85 @@
 
 The following Rust crates are maintained in this repository:
 
-| Crate                              | Usage                | Download                                                                                            | Docs                                                                                                 | Coverage |
-|------------------------------------|----------------------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|----------|
-| cosmwasm&#8209;check               | Contract development | [![cosmwasm-check][crates-badge-cosmwasm-check]][crates-url-cosmwasm-check]                         | [![docs-cosmwasm-check][docs-badge-cosmwasm-check]][docs-url-cosmwasm-check]                         |          |
-| cosmwasm&#8209;core                | Internal use only    | [![cosmwasm-core][crates-badge-cosmwasm-core]][crates-url-cosmwasm-core]                            | [![docs-cosmwasm-core][docs-badge-cosmwasm-core]][docs-url-cosmwasm-core]                            |          |
-| cosmwasm&#8209;crypto              | Internal use only    | [![cosmwasm-crypto][crates-badge-cosmwasm-crypto]][crates-url-cosmwasm-crypto]                      | [![docs-cosmwasm-crypto][docs-badge-cosmwasm-crypto]][docs-url-cosmwasm-crypto]                      |          |
-| cosmwasm&#8209;derive              | Internal use only    | [![cosmwasm-derive][crates-badge-cosmwasm-derive]][crates-url-cosmwasm-derive]                      | [![docs-cosmwasm-derive][docs-badge-cosmwasm-derive]][docs-url-cosmwasm-derive]                      |          |
-| cosmwasm&#8209;schema              | Contract development | [![cosmwasm-schema][crates-badge-cosmwasm-schema]][crates-url-cosmwasm-schema]                      | [![docs-cosmwasm-schema][docs-badge-cosmwasm-schema]][docs-url-cosmwasm-schema]                      |          |
-| cosmwasm&#8209;schema&#8209;derive | Internal use only    | [![cosmwasm-schema-derive][crates-badge-cosmwasm-schema-derive]][crates-url-cosmwasm-schema-derive] | [![docs-cosmwasm-schema-derive][docs-badge-cosmwasm-schema-derive]][docs-url-cosmwasm-schema-derive] |          |
-| cosmwasm&#8209;std                 | Contract development | [![cosmwasm-std][crates-badge-cosmwasm-std]][crates-url-cosmwasm-std]                               | [![docs-cosmwasm-std][docs-badge-cosmwasm-std]][docs-url-cosmwasm-std]                               |          |
-| cosmwasm&#8209;vm                  | Host environments    | [![cosmwasm-vm][crates-badge-cosmwasm-vm]][crates-url-cosmwasm-vm]                                  | [![docs-cosmwasm-vm][docs-badge-cosmwasm-vm]][docs-url-cosmwasm-vm]                                  |          |
-| cosmwasm&#8209;vm&#8209;derive     | Internal use only    | [![cosmwasm-vm-derive][crates-badge-cosmwasm-vm-derive]][crates-url-cosmwasm-vm-derive]             | [![docs-cosmwasm-vm-derive][docs-badge-cosmwasm-vm-derive]][docs-url-cosmwasm-vm-derive]             |          |
-| cw&#8209;schema                    | Contract development | [![cw-schema][crates-badge-cw-schema]][crates-url-cw-schema]                                        | [![docs-cw-schema][docs-badge-cw-schema]][docs-url-cw-schema]                                        |          |
-| cw&#8209;schema&#8209;derive       | Internal use only    | [![cw-schema-derive][crates-badge-cw-schema-derive]][crates-url-cw-schema-derive]                   | [![docs-cw-schema-derive][docs-badge-cw-schema-derive]][docs-url-cw-schema-derive]                   |          |
+| Crate                              | Usage                | Download                                                                                            | Docs                                                                                                 | Coverage                                                        |
+|------------------------------------|----------------------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| cosmwasm&#8209;check               | Contract development | [![cosmwasm-check][crates-badge-cosmwasm-check]][crates-url-cosmwasm-check]                         | [![docs-cosmwasm-check][docs-badge-cosmwasm-check]][docs-url-cosmwasm-check]                         | ![cov-cosmwasm-check][cov-badge-cosmwasm-check]                 |
+| cosmwasm&#8209;core                | Internal use only    | [![cosmwasm-core][crates-badge-cosmwasm-core]][crates-url-cosmwasm-core]                            | [![docs-cosmwasm-core][docs-badge-cosmwasm-core]][docs-url-cosmwasm-core]                            | ![cov-cosmwasm-core][cov-badge-cosmwasm-core]                   |
+| cosmwasm&#8209;crypto              | Internal use only    | [![cosmwasm-crypto][crates-badge-cosmwasm-crypto]][crates-url-cosmwasm-crypto]                      | [![docs-cosmwasm-crypto][docs-badge-cosmwasm-crypto]][docs-url-cosmwasm-crypto]                      | ![cov-cosmwasm-crypto][cov-badge-cosmwasm-crypto]               |
+| cosmwasm&#8209;derive              | Internal use only    | [![cosmwasm-derive][crates-badge-cosmwasm-derive]][crates-url-cosmwasm-derive]                      | [![docs-cosmwasm-derive][docs-badge-cosmwasm-derive]][docs-url-cosmwasm-derive]                      | ![cov-cosmwasm-derive][cov-badge-cosmwasm-derive]               |
+| cosmwasm&#8209;schema              | Contract development | [![cosmwasm-schema][crates-badge-cosmwasm-schema]][crates-url-cosmwasm-schema]                      | [![docs-cosmwasm-schema][docs-badge-cosmwasm-schema]][docs-url-cosmwasm-schema]                      | ![cov-cosmwasm-schema][cov-badge-cosmwasm-schema]               |
+| cosmwasm&#8209;schema&#8209;derive | Internal use only    | [![cosmwasm-schema-derive][crates-badge-cosmwasm-schema-derive]][crates-url-cosmwasm-schema-derive] | [![docs-cosmwasm-schema-derive][docs-badge-cosmwasm-schema-derive]][docs-url-cosmwasm-schema-derive] | ![cov-cosmwasm-schema-derive][cov-badge-cosmwasm-schema-derive] |
+| cosmwasm&#8209;std                 | Contract development | [![cosmwasm-std][crates-badge-cosmwasm-std]][crates-url-cosmwasm-std]                               | [![docs-cosmwasm-std][docs-badge-cosmwasm-std]][docs-url-cosmwasm-std]                               | ![cov-cosmwasm-std][cov-badge-cosmwasm-std]                     |
+| cosmwasm&#8209;vm                  | Host environments    | [![cosmwasm-vm][crates-badge-cosmwasm-vm]][crates-url-cosmwasm-vm]                                  | [![docs-cosmwasm-vm][docs-badge-cosmwasm-vm]][docs-url-cosmwasm-vm]                                  | ![cov-cosmwasm-vm][cov-badge-cosmwasm-vm]                       |
+| cosmwasm&#8209;vm&#8209;derive     | Internal use only    | [![cosmwasm-vm-derive][crates-badge-cosmwasm-vm-derive]][crates-url-cosmwasm-vm-derive]             | [![docs-cosmwasm-vm-derive][docs-badge-cosmwasm-vm-derive]][docs-url-cosmwasm-vm-derive]             | ![cov-cosmwasm-vm-derive][cov-badge-cosmwasm-vm-derive]         |
+| cw&#8209;schema                    | Contract development | [![cw-schema][crates-badge-cw-schema]][crates-url-cw-schema]                                        | [![docs-cw-schema][docs-badge-cw-schema]][docs-url-cw-schema]                                        | ![cov-cw-schema][cov-badge-cw-schema]                           |
+| cw&#8209;schema&#8209;derive       | Internal use only    | [![cw-schema-derive][crates-badge-cw-schema-derive]][crates-url-cw-schema-derive]                   | [![docs-cw-schema-derive][docs-badge-cw-schema-derive]][docs-url-cw-schema-derive]                   | ![cov-cw-schema-derive][cov-badge-cw-schema-derive]             |
 
 [crates-badge-cosmwasm-check]: https://img.shields.io/crates/v/cosmwasm-check.svg
 [crates-url-cosmwasm-check]: https://crates.io/crates/cosmwasm-check
 [docs-badge-cosmwasm-check]: https://docs.rs/cosmwasm-check/badge.svg
 [docs-url-cosmwasm-check]: https://docs.rs/cosmwasm-check
+[cov-badge-cosmwasm-check]: https://img.shields.io/badge/coverage-98%25%20%E2%94%82%20100%25%20%E2%94%82%20100%25-21b577.svg
 
 [crates-badge-cosmwasm-core]: https://img.shields.io/crates/v/cosmwasm-core.svg
 [crates-url-cosmwasm-core]: https://crates.io/crates/cosmwasm-core
 [docs-badge-cosmwasm-core]: https://docs.rs/cosmwasm-core/badge.svg
 [docs-url-cosmwasm-core]: https://docs.rs/cosmwasm-core
+[cov-badge-cosmwasm-core]: https://img.shields.io/badge/coverage-%E2%80%94%20%E2%94%82%20%E2%80%94%20%E2%94%82%20%E2%80%94-21b577.svg
 
 [crates-badge-cosmwasm-crypto]: https://img.shields.io/crates/v/cosmwasm-crypto.svg
 [crates-url-cosmwasm-crypto]: https://crates.io/crates/cosmwasm-crypto
 [docs-badge-cosmwasm-crypto]: https://docs.rs/cosmwasm-crypto/badge.svg
 [docs-url-cosmwasm-crypto]: https://docs.rs/cosmwasm-crypto
+[cov-badge-cosmwasm-crypto]: https://img.shields.io/badge/coverage-81%25%20%E2%94%82%2084%25%20%E2%94%82%2092%25-21b577.svg
 
 [crates-badge-cosmwasm-derive]: https://img.shields.io/crates/v/cosmwasm-derive.svg
 [crates-url-cosmwasm-derive]: https://crates.io/crates/cosmwasm-derive
 [docs-badge-cosmwasm-derive]: https://docs.rs/cosmwasm-derive/badge.svg
 [docs-url-cosmwasm-derive]: https://docs.rs/cosmwasm-derive
+[cov-badge-cosmwasm-derive]: https://img.shields.io/badge/coverage-84%25%20%E2%94%82%2085%25%20%E2%94%82%2094%25-21b577.svg
 
 [crates-badge-cosmwasm-schema]: https://img.shields.io/crates/v/cosmwasm-schema.svg
 [crates-url-cosmwasm-schema]: https://crates.io/crates/cosmwasm-schema
 [docs-badge-cosmwasm-schema]: https://docs.rs/cosmwasm-schema/badge.svg
 [docs-url-cosmwasm-schema]: https://docs.rs/cosmwasm-schema
+[cov-badge-cosmwasm-schema]: https://img.shields.io/badge/coverage-61%25%20%E2%94%82%2047%25%20%E2%94%82%2065%25-f52020.svg
 
 [crates-badge-cosmwasm-schema-derive]: https://img.shields.io/crates/v/cosmwasm-schema-derive.svg
 [crates-url-cosmwasm-schema-derive]: https://crates.io/crates/cosmwasm-schema-derive
 [docs-badge-cosmwasm-schema-derive]: https://docs.rs/cosmwasm-schema-derive/badge.svg
 [docs-url-cosmwasm-schema-derive]: https://docs.rs/cosmwasm-schema-derive
+[cov-badge-cosmwasm-schema-derive]: https://img.shields.io/badge/coverage-76%25%20%E2%94%82%2087%25%20%E2%94%82%2091%25-f4b01b.svg
 
 [crates-badge-cosmwasm-std]: https://img.shields.io/crates/v/cosmwasm-std.svg
 [crates-url-cosmwasm-std]: https://crates.io/crates/cosmwasm-std
 [docs-badge-cosmwasm-std]: https://docs.rs/cosmwasm-std/badge.svg
 [docs-url-cosmwasm-std]: https://docs.rs/cosmwasm-std
+[cov-badge-cosmwasm-std]: https://img.shields.io/badge/coverage-92%25%20%E2%94%82%2091%25%20%E2%94%82%2094%25-21b577.svg
 
 [crates-badge-cosmwasm-vm]: https://img.shields.io/crates/v/cosmwasm-vm.svg
 [crates-url-cosmwasm-vm]: https://crates.io/crates/cosmwasm-vm
 [docs-badge-cosmwasm-vm]: https://docs.rs/cosmwasm-vm/badge.svg
 [docs-url-cosmwasm-vm]: https://docs.rs/cosmwasm-vm
+[cov-badge-cosmwasm-vm]: https://img.shields.io/badge/coverage-79%25%20%E2%94%82%2083%25%20%E2%94%82%2090%25-f4b01b.svg 
 
 [crates-badge-cosmwasm-vm-derive]: https://img.shields.io/crates/v/cosmwasm-vm-derive.svg
 [crates-url-cosmwasm-vm-derive]: https://crates.io/crates/cosmwasm-vm-derive
 [docs-badge-cosmwasm-vm-derive]: https://docs.rs/cosmwasm-vm-derive/badge.svg
 [docs-url-cosmwasm-vm-derive]: https://docs.rs/cosmwasm-vm-derive
+[cov-badge-cosmwasm-vm-derive]: https://img.shields.io/badge/coverage-0%25%20%E2%94%82%200%25%20%E2%94%82%200%25-f52020.svg
 
 [crates-badge-cw-schema]: https://img.shields.io/crates/v/cw-schema.svg
 [crates-url-cw-schema]: https://crates.io/crates/cw-schema
 [docs-badge-cw-schema]: https://docs.rs/cw-schema/badge.svg
 [docs-url-cw-schema]: https://docs.rs/cw-schema
+[cov-badge-cw-schema]: https://img.shields.io/badge/coverage-63%25%20%E2%94%82%2069%25%20%E2%94%82%2065%25-f4b01b.svg
 
 [crates-badge-cw-schema-derive]: https://img.shields.io/crates/v/cw-schema-derive.svg
 [crates-url-cw-schema-derive]: https://crates.io/crates/cw-schema-derive
 [docs-badge-cw-schema-derive]: https://docs.rs/cw-schema-derive/badge.svg
 [docs-url-cw-schema-derive]: https://docs.rs/cw-schema-derive
+[cov-badge-cw-schema-derive]: https://img.shields.io/badge/coverage-0%25%20%E2%94%82%200%25%20%E2%94%82%200%25-f52020.svg
 
 [cov-badge-crypto]: https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-crypto
 [cov-badge-derive]: https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-derive
