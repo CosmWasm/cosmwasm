@@ -1,7 +1,7 @@
 //! Derive macros for CosmWasm contract development. For internal use only. Do not use directly.
 //!
 //! CosmWasm is a smart contract platform for the Cosmos ecosystem.
-//! For more information, see: <https://docs.cosmwasm.com>
+//! For more information, see: <https://cosmwasm.cosmos.network>
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use std::env;
