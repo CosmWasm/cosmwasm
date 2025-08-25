@@ -1,7 +1,7 @@
 //! CosmWasm is a smart contract platform for the Cosmos ecosystem.
 //! This binary provides a CLI tool for verifying CosmWasm smart contracts before uploading to a blockchain.
 //!
-//! For more information, see: <https://docs.cosmwasm.com>
+//! For more information, see: <https://cosmwasm.cosmos.network>
 
 use std::collections::HashSet;
 use std::fs::File;
