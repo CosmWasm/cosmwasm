@@ -562,9 +562,6 @@ like hashing or signature verification.
 
 ## Developing
 
-The ultimate auto-updating guide to building this project is the CI
-configuration in `.circleci/config.yml`.
-
 For manually building this repo locally during development, here are a few
 commands. They assume you use a stable Rust version by default and have a
 nightly toolchain installed as well.
