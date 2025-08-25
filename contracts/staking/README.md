@@ -26,7 +26,7 @@ transferred to the owners account. (The ownership can also be transferred).
 
 ## Using this project
 
-You should check out [Developing](./Developing.md) to explain more on how to run
+You should check out [Developing](../../README.md#developing) to explain more on how to run
 tests and develop code. Or go through the
 [online tutorial](https://book.cosmwasm.com/index.html) to get a better feel of
 how to develop.
