@@ -1,12 +1,51 @@
 # CHANGELOG
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to
-[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+[Keep a Changelog]: https://keepachangelog.com/en/1.0.0
+[Semantic Versioning]: https://semver.org/spec/v2.0.0.html
 
-<!-- next-header -->
+The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+[Unreleased] changes
+
+---
+
+## [3.0.2] - 2025-08-26
+
+## Changed
+
+- cosmwasm repository: Add and fix crate-level documentation for all CosmWasm crates ([#2510])
+- cosmwasm repository: Minor maintenance fixes ([#2514])
+- cosmwasm repository: Unified security policy ([#2515])
+- cosmwasm-crypto: Correct malformed crates.io links in crypto ([#2518])
+- cosmwasm repository: Updated copyright notice ([#2519])
+- cosmwasm repository: Migrate CircleCI to GitHub Actions ([#2523])
+- cosmwasm repository: Remove unused configuration files ([#2524])
+- cosmwasm repository: Enable checks on pull request ([#2527])
+- cosmwasm-crypto: Fix `ed25519-zebra` to version **`=4.0.3`** ([#2528])
+- cosmwasm repository: Unified formatting of Cargo.toml files ([#2529])
+- cosmwasm repository: Initial Task script ([#2530])
+- cosmwasm repository: Update README ([#2531])
+- cosmwasm repository: Local dependency paths ([#2532])
+- cosmwasm-core: Add tests for `cosmwasm-core` ([#2533])
+- cosmwasm repository: Unified dependencies ([#2534])
+- cosmwasm-std: Fix typos ([#2537])
+
+[#2510]: https://github.com/CosmWasm/cosmwasm/pull/2510
+[#2514]: https://github.com/CosmWasm/cosmwasm/pull/2514
+[#2515]: https://github.com/CosmWasm/cosmwasm/pull/2515
+[#2518]: https://github.com/CosmWasm/cosmwasm/pull/2518
+[#2519]: https://github.com/CosmWasm/cosmwasm/pull/2519
+[#2523]: https://github.com/CosmWasm/cosmwasm/pull/2523
+[#2524]: https://github.com/CosmWasm/cosmwasm/pull/2524
+[#2527]: https://github.com/CosmWasm/cosmwasm/pull/2527
+[#2528]: https://github.com/CosmWasm/cosmwasm/pull/2528
+[#2529]: https://github.com/CosmWasm/cosmwasm/pull/2529
+[#2530]: https://github.com/CosmWasm/cosmwasm/pull/2530
+[#2531]: https://github.com/CosmWasm/cosmwasm/pull/2531
+[#2532]: https://github.com/CosmWasm/cosmwasm/pull/2532
+[#2533]: https://github.com/CosmWasm/cosmwasm/pull/2533
+[#2534]: https://github.com/CosmWasm/cosmwasm/pull/2534
+[#2537]: https://github.com/CosmWasm/cosmwasm/pull/2537
 
 ## [3.0.1] - 2025-06-26
 
@@ -1303,12 +1342,11 @@ and this project adheres to
 
 ---
 
-The CHANGELOG for versions before 1.0.0 was moved to
-[CHANGELOG-pre1.0.0.md](./CHANGELOG-pre1.0.0.md).
+The CHANGELOG for versions before **1.0.0** was moved to
+[CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
-<!-- next-url -->
-
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.1...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.2...HEAD
+[3.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v3.0.0
 [2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.5...v2.2.0
