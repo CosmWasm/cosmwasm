@@ -5,7 +5,7 @@ exclude = ["contracts"]
 resolver = "2"
 
 [workspace.package]
-version = "3.0.2-dev"
+version = "3.0.2"
 
 [workspace.dependencies]
 cosmwasm-core = { path = "./packages/core" }
