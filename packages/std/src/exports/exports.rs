@@ -346,7 +346,7 @@ where
 
 /// do_ibc_channel_connect is designed for use with #[entry_point] to make a "C" extern
 ///
-/// contract_fn is a callback when a IBC channel is established (after both sides agree in open)
+/// contract_fn is a callback when an IBC channel is established (after both sides agree in open)
 ///
 /// - `Q`: custom query type (see QueryRequest)
 /// - `C`: custom response message type (see CosmosMsg)
@@ -374,7 +374,7 @@ where
 
 /// do_ibc_channel_close is designed for use with #[entry_point] to make a "C" extern
 ///
-/// contract_fn is a callback when a IBC channel belonging to this contract is closed
+/// contract_fn is a callback when an IBC channel belonging to this contract is closed
 ///
 /// - `Q`: custom query type (see QueryRequest)
 /// - `C`: custom response message type (see CosmosMsg)

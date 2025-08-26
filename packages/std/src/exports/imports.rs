@@ -101,7 +101,7 @@ extern "C" {
     /// greater than 1 in case of error.
     fn ed25519_batch_verify(messages_ptr: u32, signatures_ptr: u32, public_keys_ptr: u32) -> u32;
 
-    /// Writes a debug message (UFT-8 encoded) to the host for debugging purposes.
+    /// Writes a debug message (UTF-8 encoded) to the host for debugging purposes.
     /// The host is free to log or process this in any way it considers appropriate.
     /// In production environments it is expected that those messages are discarded.
     fn debug(source_ptr: u32);
