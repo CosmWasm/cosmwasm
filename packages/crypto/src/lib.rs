@@ -1,7 +1,11 @@
-//! The crypto crate is intended to be used in internal crates / utils.
-//! Please don't use any of these types directly, as
-//! they might change frequently, or be removed in the future.
-//! This crate does not adhere to semantic versioning.
+//! CosmWasm is a smart contract platform for the Cosmos ecosystem.
+//! This crate implements cryptography-related functions for CosmWasm contracts and internal crates.
+//!
+//! **Note:** This crate is intended to be used in internal crates / utils only.
+//! Please don't use any of these types directly, as they might change frequently,
+//! or be removed in the future. This crate does not adhere to semantic versioning.
+//!
+//! For more information, see: <https://cosmwasm.cosmos.network>
 
 extern crate alloc;
 

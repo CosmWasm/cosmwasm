@@ -1,3 +1,8 @@
+//! CosmWasm is a smart contract platform for the Cosmos ecosystem.
+//! This crate is a dependency for CosmWasm contracts to generate schema files for their messages.
+//!
+//! For more information, see: <https://cosmwasm.cosmos.network>
+
 #![no_std]
 
 extern crate alloc;

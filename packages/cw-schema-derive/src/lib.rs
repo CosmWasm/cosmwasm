@@ -1,3 +1,8 @@
+//! Derive macros for cw-schema. For internal use only.
+//!
+//! CosmWasm is a smart contract platform for the Cosmos ecosystem.
+//! For more information, see: <https://cosmwasm.cosmos.network>
+
 mod expand;
 
 macro_rules! bail {
