@@ -3,7 +3,7 @@ version: '3'
 silent: true
 
 vars:
-  COSMWASM_CHECK_VERSION: 3.0.1
+  COSMWASM_CHECK_VERSION: 3.0.2
   TOOLCHAIN: +1.88.0
 
 tasks:
