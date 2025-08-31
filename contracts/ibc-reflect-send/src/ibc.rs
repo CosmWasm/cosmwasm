@@ -58,7 +58,7 @@ pub fn ibc_channel_connect(
 
     let channel_id = &channel.endpoint.channel_id;
 
-    // create an account holder the channel exists (not found if not registered)
+    // create an account holder when the channel exists (not found if not registered)
     let data = AccountData::default();
     save_account(deps.storage, channel_id, &data)?;
 
@@ -110,7 +110,7 @@ pub fn ibc_packet_ack(
     env: Env,
     msg: IbcPacketAckMsg,
 ) -> StdResult<IbcBasicResponse> {
-    // which local channel was this packet send from
+    // which local channel was this packet sent from
     let caller = msg.original_packet.src.channel_id;
     // we need to parse the ack based on our request
     let packet: PacketMsg = from_json(msg.original_packet.data)?;
