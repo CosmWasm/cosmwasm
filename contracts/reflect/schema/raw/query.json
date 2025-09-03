@@ -662,7 +662,7 @@
               ],
               "properties": {
                 "address": {
-                  "description": "The validator's address (e.g. (e.g. cosmosvaloper1...))",
+                  "description": "The validator's address (e.g. cosmosvaloper1...)",
                   "type": "string"
                 }
               },
