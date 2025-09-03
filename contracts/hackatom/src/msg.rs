@@ -21,7 +21,7 @@ pub struct MigrateMsg {
 }
 
 /// SudoMsg is only exposed for internal Cosmos SDK modules to call.
-/// This is showing how we can expose "admin" functionality than can not be called by
+/// This is showing how we can expose "admin" functionality that can not be called by
 /// external users or contracts, but only trusted (native/Go) code in the blockchain
 #[cw_serde]
 pub enum SudoMsg {
