@@ -33,7 +33,7 @@ pub enum StakingQuery {
     ///
     /// The query response type is `ValidatorResponse`.
     Validator {
-        /// The validator's address (e.g. (e.g. cosmosvaloper1...))
+        /// The validator's address (e.g. cosmosvaloper1...)
         address: String,
     },
 }
