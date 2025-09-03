@@ -254,7 +254,9 @@ on our [YouTube channel](https://www.youtube.com/@CosmWasm), or
 
 ## Minimum Supported Rust Version (MSRV)
 
-See [Minimum Supported Rust Version (MSRV)](./docs/MSRV.md).
+See [Minimum Supported Rust Version (MSRV)] on Wiki.
+
+[Minimum Supported Rust Version (MSRV)]: https://github.com/CosmWasm/cosmwasm/wiki/Minimum-Supported-Rust-Version-(MSRV)
 
 ## API entry points
 
