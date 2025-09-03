@@ -233,3 +233,8 @@ tasks:
     desc: Runs tests for cw-schema
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} test -p cw-schema
+
+  update-schemas:
+    desc: Updates schemas for all contracts
+    cmds:
+      - cmd: ./devtools/update-schemas.sh

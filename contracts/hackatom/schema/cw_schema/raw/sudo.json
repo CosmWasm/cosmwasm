@@ -4,7 +4,7 @@
   "definitions": [
     {
       "name": "hackatom_msg_SudoMsg",
-      "description": "SudoMsg is only exposed for internal Cosmos SDK modules to call.\nThis is showing how we can expose \"admin\" functionality than can not be called by\nexternal users or contracts, but only trusted (native/Go) code in the blockchain",
+      "description": "SudoMsg is only exposed for internal Cosmos SDK modules to call.\nThis is showing how we can expose \"admin\" functionality that can not be called by\nexternal users or contracts, but only trusted (native/Go) code in the blockchain",
       "type": "enum",
       "cases": {
         "steal_funds": {
