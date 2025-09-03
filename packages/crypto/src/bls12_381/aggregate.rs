@@ -150,13 +150,13 @@ mod tests {
     }
 
     #[test]
-    fn bls12_318_aggregate_g1_empty_err() {
+    fn bls12_381_aggregate_g1_empty_err() {
         let res = bls12_381_aggregate_g1(b"");
         assert!(res.is_err());
     }
 
     #[test]
-    fn bls12_318_aggregate_g2_empty_err() {
+    fn bls12_381_aggregate_g2_empty_err() {
         let res = bls12_381_aggregate_g2(b"");
         assert!(res.is_err());
     }
