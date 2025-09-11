@@ -56,7 +56,7 @@ pub struct InvestmentInfo {
     /// this is how much the owner takes as a cut when someone unbonds
     pub exit_tax: Decimal,
     /// All tokens are bonded to this validator
-    /// addr_humanize/addr_canonicalize doesn't work for validator addrresses (e.g. cosmosvaloper1...)
+    /// addr_humanize/addr_canonicalize doesn't work for validator addresses (e.g. cosmosvaloper1...)
     pub validator: String,
     /// This is the minimum amount we will pull out to reinvest, as well as a minimum
     /// that can be unbonded (to avoid needless staking tx)
