@@ -109,7 +109,7 @@ pub fn try_change_owner(
         .add_attribute("owner", new_owner))
 }
 
-/// This just stores the result for future query
+/// This just stores the result for future queries
 #[entry_point]
 pub fn reply(deps: DepsMut<SpecialQuery>, _env: Env, msg: Reply) -> Result<Response, ReflectError> {
     save_reply(deps.storage, msg.id, &msg)?;
@@ -181,7 +181,7 @@ mod tests {
     };
 
     #[test]
-    fn proper_instantialization() {
+    fn proper_initialization() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
         let creator = deps.api.addr_make("creator");
 
