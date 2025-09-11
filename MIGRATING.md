@@ -1620,7 +1620,7 @@ arbitrary ones.
   `Result<HandleResponse, MyCustomError>` and `query` returning
   `StdResult<Binary>`.
 
-  You can have a top-hevel `init`/`migrate`/`handle`/`query` that returns a
+  You can have a top-level `init`/`migrate`/`handle`/`query` that returns a
   custom error but some of its implementations only return errors from the
   standard library (`StdResult<HandleResponse>` aka.
   `Result<HandleResponse, StdError>`). Then use `Ok(std_result?)` to convert
