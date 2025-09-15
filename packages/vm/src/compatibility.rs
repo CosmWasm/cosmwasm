@@ -112,7 +112,6 @@ pub fn check_wasm(
     check_wasm_imports(&module, SUPPORTED_IMPORTS, limits, logs)?;
     check_wasm_capabilities(&module, available_capabilities, logs)?;
     check_wasm_functions(&module, limits, logs)?;
-
     module.validate_funcs()
 }
 

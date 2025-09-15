@@ -78,7 +78,8 @@ impl<'a> ParsedWasm<'a> {
             | WasmFeatures::SIGN_EXTENSION
             | WasmFeatures::MULTI_VALUE
             | WasmFeatures::FLOATS
-            | WasmFeatures::REFERENCE_TYPES;
+            | WasmFeatures::REFERENCE_TYPES
+            | WasmFeatures::BULK_MEMORY;
 
         let mut validator = Validator::new_with_features(features);
 
@@ -129,7 +130,7 @@ impl<'a> ParsedWasm<'a> {
                                 }
                                 CompositeInnerType::Array(_) | CompositeInnerType::Struct(_) => {
                                     // ignoring these for now, as they are only available with the GC
-                                    // proposal and we explicitly disabled that above
+                                    // proposal, and we explicitly disabled that above
                                 }
                             }
                         }
