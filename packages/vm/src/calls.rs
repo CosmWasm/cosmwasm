@@ -46,27 +46,27 @@ mod read_limits {
     pub const RESULT_REPLY: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a query call.
     pub const RESULT_QUERY: usize = 64 * MI;
-    /// Max length (in bytes) of the result data from a ibc_channel_open call.
+    /// Max length (in bytes) of the result data from an ibc_channel_open call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_CHANNEL_OPEN: usize = 64 * MI;
-    /// Max length (in bytes) of the result data from a ibc_channel_connect call.
+    /// Max length (in bytes) of the result data from an ibc_channel_connect call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_CHANNEL_CONNECT: usize = 64 * MI;
-    /// Max length (in bytes) of the result data from a ibc_channel_close call.
+    /// Max length (in bytes) of the result data from an ibc_channel_close call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_CHANNEL_CLOSE: usize = 64 * MI;
-    /// Max length (in bytes) of the result data from a ibc_packet_receive call.
+    /// Max length (in bytes) of the result data from an ibc_packet_receive call.
     #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_RECEIVE: usize = 64 * MI;
-    /// Max length (in bytes) of the result data from a ibc_packet_ack call.
+    /// Max length (in bytes) of the result data from an ibc_packet_ack call.
     #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_ACK: usize = 64 * MI;
-    /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
+    /// Max length (in bytes) of the result data from an ibc_packet_timeout call.
     #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 64 * MI;
-    /// Max length (in bytes) of the result data from a ibc_source_callback call.
+    /// Max length (in bytes) of the result data from an ibc_source_callback call.
     pub const RESULT_IBC_SOURCE_CALLBACK: usize = 64 * MI;
-    /// Max length (in bytes) of the result data from a ibc_destination_callback call.
+    /// Max length (in bytes) of the result data from an ibc_destination_callback call.
     pub const RESULT_IBC_DESTINATION_CALLBACK: usize = 64 * MI;
     #[cfg(feature = "ibc2")]
     pub const RESULT_IBC2_PACKET_SEND: usize = 64 * MI;
@@ -91,29 +91,29 @@ mod deserialization_limits {
     pub const RESULT_REPLY: usize = 256 * KI;
     /// Max length (in bytes) of the result data from a query call.
     pub const RESULT_QUERY: usize = 256 * KI;
-    /// Max length (in bytes) of the result data from a ibc_channel_open call.
+    /// Max length (in bytes) of the result data from an ibc_channel_open call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_CHANNEL_OPEN: usize = 256 * KI;
-    /// Max length (in bytes) of the result data from a ibc_channel_connect call.
+    /// Max length (in bytes) of the result data from an ibc_channel_connect call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_CHANNEL_CONNECT: usize = 256 * KI;
-    /// Max length (in bytes) of the result data from a ibc_channel_close call.
+    /// Max length (in bytes) of the result data from an ibc_channel_close call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_CHANNEL_CLOSE: usize = 256 * KI;
-    /// Max length (in bytes) of the result data from a ibc_packet_receive call.
+    /// Max length (in bytes) of the result data from an ibc_packet_receive call.
     #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_RECEIVE: usize = 256 * KI;
-    /// Max length (in bytes) of the result data from a ibc_packet_ack call.
+    /// Max length (in bytes) of the result data from an ibc_packet_ack call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_PACKET_ACK: usize = 256 * KI;
-    /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
+    /// Max length (in bytes) of the result data from an ibc_packet_timeout call.
     #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 256 * KI;
-    /// Max length (in bytes) of the result data from a ibc_source_callback call.
+    /// Max length (in bytes) of the result data from an ibc_source_callback call.
     pub const RESULT_IBC_SOURCE_CALLBACK: usize = 256 * KI;
-    /// Max length (in bytes) of the result data from a ibc_destination_callback call.
+    /// Max length (in bytes) of the result data from an ibc_destination_callback call.
     pub const RESULT_IBC_DESTINATION_CALLBACK: usize = 256 * KI;
-    /// Max length (in bytes) of the result data from a ibc_packet_receive call.
+    /// Max length (in bytes) of the result data from an ibc_packet_receive call.
     #[cfg(feature = "ibc2")]
     pub const RESULT_IBC2_PACKET_SEND: usize = 256 * KI;
 }
