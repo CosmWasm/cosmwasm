@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-schema"
-version.workspace = true
+version = { workspace = true }
 authors = [
     "Ethan Frey <ethanfrey@users.noreply.github.com>",
     "Simon Warta <webmaster128@users.noreply.github.com>",

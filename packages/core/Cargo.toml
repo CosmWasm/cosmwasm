@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-core"
-version.workspace = true
+version = { workspace = true }
 edition = "2021"
 description = "Components of cosmwasm-std that can be used in no_std environments"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/core"
