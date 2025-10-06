@@ -81,48 +81,6 @@ jobs:
       - run: cargo build  -p cosmwasm-crypto --locked
       - run: cargo test   -p cosmwasm-crypto --locked
 
-  package-cw-schema:
-    name: cw-schema-${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v5
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ env.TOOLCHAIN_STABLE }}
-          components: clippy
-
-      - run: cargo clippy -p cw-schema --all-targets -- -D warnings
-      - run: cargo build  -p cw-schema --locked
-      - run: cargo test   -p cw-schema --locked
-
-  package-cw-schema-derive:
-    name: cw-schema-derive-${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v5
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ env.TOOLCHAIN_STABLE }}
-          components: clippy
-
-      - run: cargo clippy -p cw-schema-derive --all-targets -- -D warnings
-      - run: cargo build  -p cw-schema-derive --locked
-      - run: cargo test   -p cw-schema-derive --locked
-
   package-cosmwasm-derive:
     name: cosmwasm-derive-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
