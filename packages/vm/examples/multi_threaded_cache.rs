@@ -25,8 +25,9 @@ const INSTANTIATION_THREADS: usize = 2048;
 const THREADS: usize = STORE_CODE_THREADS + INSTANTIATION_THREADS;
 
 pub fn main() {
+    let temp_dir = TempDir::new().unwrap();
     let options = CacheOptions::new(
-        TempDir::new().unwrap().into_path(),
+        temp_dir.path().to_path_buf(),
         capabilities_from_csv("iterator,staking"),
         MEMORY_CACHE_SIZE,
         DEFAULT_MEMORY_LIMIT,
