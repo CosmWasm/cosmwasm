@@ -639,8 +639,9 @@ mod tests {
     }
 
     fn make_testing_options() -> CacheOptions {
+        let temp_dir = TempDir::new().unwrap();
         CacheOptions {
-            base_dir: TempDir::new().unwrap().into_path(),
+            base_dir: temp_dir.path().to_path_buf(),
             available_capabilities: default_capabilities(),
             memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
@@ -650,8 +651,9 @@ mod tests {
     fn make_stargate_testing_options() -> CacheOptions {
         let mut capabilities = default_capabilities();
         capabilities.insert("stargate".into());
+        let temp_dir = TempDir::new().unwrap();
         CacheOptions {
-            base_dir: TempDir::new().unwrap().into_path(),
+            base_dir: temp_dir.path().to_path_buf(),
             available_capabilities: capabilities,
             memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
@@ -686,10 +688,8 @@ mod tests {
 
     #[test]
     fn new_base_dir_will_be_created() {
-        let my_base_dir = TempDir::new()
-            .unwrap()
-            .into_path()
-            .join("non-existent-sub-dir");
+        let temp_dir = TempDir::new().unwrap();
+        let my_base_dir = temp_dir.path().join("non-existent-sub-dir");
         let options = CacheOptions {
             base_dir: my_base_dir.clone(),
             ..make_testing_options()
