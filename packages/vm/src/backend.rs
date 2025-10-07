@@ -99,7 +99,7 @@ pub trait Storage {
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
     ///
-    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
+    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, no matter of the order.
     ///
     /// This call must not change data in the storage, but creating and storing a new iterator can be a mutating operation on
     /// the Storage implementation.
