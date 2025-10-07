@@ -6,5 +6,3 @@ description = "Components of cosmwasm-std that can be used in no_std environment
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/core"
 license = "Apache-2.0"
 readme = "README.md"
-
-[dependencies]
