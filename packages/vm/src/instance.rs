@@ -118,7 +118,7 @@ where
         );
 
         // Reads human address from source_ptr and checks if it is valid.
-        // Returns 0 on if the input is valid. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
+        // Returns 0 if the input is valid. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
         // Ownership of the input pointer is not transferred to the host.
         env_imports.insert(
             "addr_validate",
@@ -143,7 +143,7 @@ where
             Function::new_typed_with_env(&mut store, &fe, do_addr_humanize),
         );
 
-        // Reads a list of points on of the subgroup G1 on the BLS12-381 curve and aggregates them down to a single element.
+        // Reads a list of points of the subgroup G1 on the BLS12-381 curve and aggregates them down to a single element.
         // The "out_ptr" parameter has to be a pointer to a region with the sufficient size to fit an element of G1 (48 bytes).
         // Returns a u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
         env_imports.insert(
@@ -151,7 +151,7 @@ where
             Function::new_typed_with_env(&mut store, &fe, do_bls12_381_aggregate_g1),
         );
 
-        // Reads a list of points on of the subgroup G2 on the BLS12-381 curve and aggregates them down to a single element.
+        // Reads a list of points of the subgroup G2 on the BLS12-381 curve and aggregates them down to a single element.
         // The "out_ptr" parameter has to be a pointer to a region with the sufficient size to fit an element of G2 (96 bytes).
         // Returns a u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
         env_imports.insert(
