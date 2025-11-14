@@ -457,7 +457,7 @@ impl Decimal {
         self.0 / Self::DECIMAL_FRACTIONAL
     }
 
-    /// Converts this decimal to an unsigned integer by rounting up
+    /// Converts this decimal to an unsigned integer by rounding up
     /// to the next integer, e.g. 22.3 becomes 23.
     ///
     /// ## Examples
