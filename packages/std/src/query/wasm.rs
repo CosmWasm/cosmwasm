@@ -52,7 +52,7 @@ pub enum WasmQuery {
         /// Inclusive start bound. This is the first key you would like to get data for.
         ///
         /// If `start` is lexicographically greater than or equal to `end`,
-        /// an empty range is described, mo matter of the order.
+        /// an empty range is described, no matter of the order.
         start: Option<Binary>,
         /// Exclusive end bound. This is the key after the last key you would like to get data for.
         end: Option<Binary>,
