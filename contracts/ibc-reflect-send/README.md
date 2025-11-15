@@ -2,7 +2,7 @@
 
 This is a simple contract to demonstrate using contracts using IBC messages. The
 first case we build is to simulate the `reflect` contract on another chain. That
-is, you can send a message over IBC to the reflect contract and it will
+is, you can send a message over IBC to the `reflect` contract, and it will
 "reflect" that message on the remote chain as if it sent it.
 
 This is inspired by
