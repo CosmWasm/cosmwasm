@@ -150,7 +150,7 @@ fn parse_query(
     Ok((query, return_val))
 }
 
-/// Extract the nested query  -> response mapping out of an enum variant.
+/// Extract the nested query -> response mapping out of an enum variant.
 fn parse_subquery(ctx: &Context, v: &Variant, schema_backend: SchemaBackend) -> syn::Result<Expr> {
     let crate_name = &ctx.crate_name;
     let submsg = match v.fields {
