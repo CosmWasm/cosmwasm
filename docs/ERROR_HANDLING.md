@@ -51,7 +51,7 @@ from the contract, they have to be deterministic. With the new separation, wasmd
 now passes the full contract error message back into the calling contract,
 massively improving the debugging experience.
 
-## Handing ibc_packet_receive errors
+## Handling ibc_packet_receive errors
 
 From wasmd 0.22 to 0.31 (inclusive), contract errors and VM errors were handled
 the same. They got the special treatment of reverting state changes, writing an
