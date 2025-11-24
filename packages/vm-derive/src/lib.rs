@@ -23,7 +23,7 @@ use maybe;
 /// # use cosmwasm_vm_derive::hash_function;
 /// #[hash_function(const_name = "HASH")]
 /// fn foo() {
-///    println!("Hello, world!");
+///     println!("Hello, world!");
 /// }
 /// ```
 #[proc_macro_attribute]
