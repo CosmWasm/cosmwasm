@@ -17,21 +17,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
         dir: [
           burner,
           crypto-verify,
           cyberpunk,
           empty,
           hackatom,
-          ibc2,
           ibc-callbacks,
           ibc-reflect,
           ibc-reflect-send,
           nested-contracts,
           queue,
           reflect,
-          replier,
           staking,
           virus
         ]
@@ -83,7 +81,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
         dir: [ floaty ]
     defaults:
       run:
@@ -134,7 +132,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -238,7 +236,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6

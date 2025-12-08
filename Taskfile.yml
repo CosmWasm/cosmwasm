@@ -60,6 +60,12 @@ tasks:
       - task: clean
       - cmd: ./devtools/clean-contracts.sh
 
+  clippy:
+    desc: Runs linter
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} clippy --workspace --all-targets -- -D warnings
+      - cmd: cargo {{.TOOLCHAIN}} clippy --workspace --all-features --all-targets -- -D warnings
+
   cov:
     desc: Generates code coverage report for all crates in text format
     cmds:
