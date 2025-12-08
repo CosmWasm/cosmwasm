@@ -177,11 +177,6 @@ jobs:
 
       - uses: actions/download-artifact@v5
         with:
-          name: ibc2-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v5
-        with:
           name: ibc-callbacks-${{ runner.os }}
           path: .
 
@@ -208,11 +203,6 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           name: reflect-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v5
-        with:
-          name: replier-${{ runner.os }}
           path: .
 
       - uses: actions/download-artifact@v5
@@ -279,11 +269,6 @@ jobs:
           name: hackatom-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: ibc2-${{ runner.os }}
-          path: .
-
       - uses: actions/download-artifact@v5
         with:
           name: ibc-callbacks-${{ runner.os }}
@@ -312,11 +297,6 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           name: reflect-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v5
-        with:
-          name: replier-${{ runner.os }}
           path: .
 
       - uses: actions/download-artifact@v5
