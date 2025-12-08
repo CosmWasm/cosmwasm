@@ -1,12 +1,9 @@
 [package]
 name = "go-gen"
+version = { workspace = true }
 authors = ["Christoph Otter <chris@confio.gmbh>"]
-version = "0.1.0"
 edition = "2021"
 publish = false
-
-[package.metadata.release]
-release = false
 
 [dependencies]
 cosmwasm-std = { workspace = true, features = ["cosmwasm_2_2", "staking", "stargate"] }
