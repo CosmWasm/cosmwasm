@@ -7,16 +7,6 @@ description = "VM bindings to run cosmwams contracts"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm"
 license = "Apache-2.0"
 
-[package.metadata.release]
-pre-release-hook = ["../../devtools/release_checks.sh"]
-pre-release-replacements = [
-    { file = "../../CHANGELOG.md", search = "## \\[Unreleased\\]", replace = "## [{{version}}] - {{date}}", exactly = 1 },
-    { file = "../../CHANGELOG.md", search = "(U|u)nreleased", replace = "{{version}}" },
-    { file = "../../CHANGELOG.md", search = "<!-- next-header -->", replace = "<!-- next-header -->\n\n## [Unreleased]", exactly = 1 },
-    { file = "../../CHANGELOG.md", search = "\\.\\.\\.HEAD", replace = "...{{tag_name}}", exactly = 1 },
-    { file = "../../CHANGELOG.md", search = "<!-- next-url -->\n", replace = "<!-- next-url -->\n\n[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/{{tag_name}}...HEAD", exactly = 1 },
-]
-
 [features]
 default = ["iterator", "staking"]
 # iterator allows us to iterate over all DB items in a given range
@@ -51,17 +41,14 @@ cosmwasm-std = { workspace = true, features = ["std"] }
 cosmwasm-crypto = { workspace = true }
 cosmwasm-vm-derive = { workspace = true }
 derivative = "2"
-derive_more = { version = "=1.0.0-beta.6", default-features = false, features = ["debug"] }
 hex = "0.4"
 rand_core = { version = "0.6", features = ["getrandom"] }
 schemars = { workspace = true }
 serde = { workspace = true }
-serde_json = "1.0.40"
+serde_json = { workspace = true }
 sha2 = "0.10.3"
-thiserror = "1.0.26"
-wasmer = { version = "=4.3.7", default-features = false, features = [
-    "singlepass",
-] }
+thiserror = { workspace = true }
+wasmer = { version = "=4.3.7", default-features = false, features = ["singlepass"] }
 wasmer-middlewares = "=4.3.7"
 wasmer-types = "=4.3.7"
 strum = { version = "0.26.2", default-features = false, features = ["derive"] }

@@ -3,29 +3,30 @@ version: '3'
 silent: true
 
 vars:
-  COSMWASM_CHECK_VERSION: 2.2.2
-  TOOLCHAIN: +1.88.0
+  COSMWASM_CHECK_VERSION: 2.2.1 # The last released version before 2.2.2
+  TOOLCHAIN: +1.82.0            # The last Rust compiler version without 'reference-types'.
+  TOOLCHAIN_CHECK: +1.82.0      # Toolchain for building cosmwasm-check tool
 
 tasks:
 
   all:
     desc: Runs all checks
     summary: |
-      Runs all viable checks for cosmwasm.
+      Runs all viable checks for cosmwasm repository.
       Execute this task before pushing any changes.
       This task takes a significant amount of time to complete.
     cmds:
-      - task: clean
+      - task: clean-all
+      - task: build
+      - task: test
+      - task: cov
+      - task: check-contracts
+      - task: update-schemas
 
   build:
     desc: Build all crates
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} build --workspace
-
-  build-cw-schema:
-    desc: Build cw-schema
-    cmds:
-      - cmd: cargo {{.TOOLCHAIN}} build -p cw-schema
 
   check-contracts:
     desc: Performs checks for all contracts
@@ -60,6 +61,12 @@ tasks:
       - task: clean
       - cmd: ./devtools/clean-contracts.sh
 
+  clippy:
+    desc: Runs linter
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} clippy --workspace --all-targets -- -D warnings
+      - cmd: cargo {{.TOOLCHAIN}} clippy --workspace --all-features --all-targets -- -D warnings
+
   cov:
     desc: Generates code coverage report for all crates in text format
     cmds:
@@ -82,61 +89,37 @@ tasks:
     desc: Generates code coverage report for cosmwasm-core in text format
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov -p cosmwasm-core --no-cfg-coverage
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-core --no-cfg-coverage
 
   cov-badge-cosmwasm-core:
     desc: Generates the detailed code coverage badge for cosmwasm-core
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cosmwasm-core --json --summary-only | coverio
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --no-cfg-coverage -p cosmwasm-core --json --summary-only | coverio
 
   cov-cosmwasm-crypto:
     desc: Generates code coverage report for cosmwasm-crypto in text format
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov -p cosmwasm-crypto --no-cfg-coverage
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-crypto --no-cfg-coverage
 
   cov-badge-cosmwasm-crypto:
     desc: Generates the detailed code coverage badge for cosmwasm-crypto
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cosmwasm-crypto --json --summary-only | coverio
-
-  cov-cw-schema:
-    desc: Generates code coverage report for cw-schema in text format
-    cmds:
-      - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov -p cw-schema --no-cfg-coverage
-
-  cov-badge-cw-schema:
-    desc: Generates the detailed code coverage badge for cw-schema
-    cmds:
-      - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cw-schema --json --summary-only | coverio
-
-  cov-cw-schema-derive:
-    desc: Generates code coverage report for cw-schema-derive in text format
-    cmds:
-      - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov -p cw-schema-derive --no-cfg-coverage
-
-  cov-badge-cw-schema-derive:
-    desc: Generates the detailed code coverage badge for cw-schema-derive
-    cmds:
-      - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cw-schema-derive --json --summary-only | coverio
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --no-cfg-coverage -p cosmwasm-crypto --json --summary-only | coverio
 
   cov-cosmwasm-derive:
     desc: Generates code coverage report for cosmwasm-derive in text format
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov -p cosmwasm-derive --no-cfg-coverage
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-derive --no-cfg-coverage
 
   cov-badge-cosmwasm-derive:
     desc: Generates the detailed code coverage badge for cosmwasm-derive
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cosmwasm-derive --json --summary-only | coverio
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --no-cfg-coverage -p cosmwasm-derive --json --summary-only | coverio
 
   cov-go-gen:
     desc: Generates code coverage report for go-gen in text format
@@ -154,70 +137,70 @@ tasks:
     desc: Generates code coverage report for cosmwasm-schema in text format
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov -p cosmwasm-schema --no-cfg-coverage
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-schema --no-cfg-coverage
 
   cov-badge-cosmwasm-schema:
     desc: Generates the detailed code coverage badge for cosmwasm-schema
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cosmwasm-schema --json --summary-only | coverio
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --no-cfg-coverage -p cosmwasm-schema --json --summary-only | coverio
 
   cov-cosmwasm-schema-derive:
     desc: Generates code coverage report for cosmwasm-schema-derive in text format
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov -p cosmwasm-schema-derive --no-cfg-coverage
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-schema-derive --no-cfg-coverage
 
   cov-badge-cosmwasm-schema-derive:
     desc: Generates the detailed code coverage badge for cosmwasm-schema-derive
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cosmwasm-schema-derive --json --summary-only | coverio
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --no-cfg-coverage -p cosmwasm-schema-derive --json --summary-only | coverio
 
   cov-cosmwasm-std:
     desc: Generates code coverage report for cosmwasm-std in text format
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov -p cosmwasm-std --no-cfg-coverage
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-std --no-cfg-coverage
 
   cov-badge-cosmwasm-std:
     desc: Generates the detailed code coverage badge for cosmwasm-std
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cosmwasm-std --json --summary-only | coverio
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --no-cfg-coverage -p cosmwasm-std --json --summary-only | coverio
 
   cov-cosmwasm-vm:
     desc: Generates code coverage report for cosmwasm-vm in text format
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov -p cosmwasm-vm --no-cfg-coverage
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-vm --no-cfg-coverage
 
   cov-badge-cosmwasm-vm:
     desc: Generates the detailed code coverage badge for cosmwasm-vm
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cosmwasm-vm --json --summary-only | coverio
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --no-cfg-coverage -p cosmwasm-vm --json --summary-only | coverio
 
   cov-cosmwasm-vm-derive:
     desc: Generates code coverage report for cosmwasm-vm-derive in text format
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov -p cosmwasm-vm-derive --no-cfg-coverage
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-vm-derive --no-cfg-coverage
 
   cov-badge-cosmwasm-vm-derive:
     desc: Generates the detailed code coverage badge for cosmwasm-vm-derive
     cmds:
       - cmd: cargo llvm-cov clean
-      - cmd: cargo +1.82.0 llvm-cov --no-cfg-coverage -p cosmwasm-vm-derive --json --summary-only | coverio
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --no-cfg-coverage -p cosmwasm-vm-derive --json --summary-only | coverio
 
   install-cosmwasm-check:
     desc: Installs cosmwasm-check tool (released version and currently developed version)
     cmds:
       # Install recently released cosmwasm-check and rename it to cosmwasm-check-release
-      - cmd: cargo {{.TOOLCHAIN}} install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
+      - cmd: cargo {{.TOOLCHAIN_CHECK}} install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
       - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-release
       # Install currently developed version of cosmwasm-check
-      - cmd: cargo {{.TOOLCHAIN}} install --path ./packages/check --locked --force
+      - cmd: cargo {{.TOOLCHAIN_CHECK}} install --path ./packages/check --force
 
   test:
     desc: Runs all tests
@@ -229,7 +212,7 @@ tasks:
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} test -p cosmwasm-core
 
-  test-cw-schema:
-    desc: Runs tests for cw-schema
+  update-schemas:
+    desc: Updates schemas for all contracts
     cmds:
-      - cmd: cargo {{.TOOLCHAIN}} test -p cw-schema
+      - cmd: ./devtools/update-schemas.sh

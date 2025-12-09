@@ -139,9 +139,8 @@ fn bench_instance(c: &mut Criterion) {
 fn bench_cache(c: &mut Criterion) {
     let mut group = c.benchmark_group("Cache");
 
-    let temp_dir = TempDir::new().unwrap();
     let options = CacheOptions::new(
-        temp_dir.path().to_path_buf(),
+        TempDir::new().unwrap().into_path(),
         capabilities_from_csv(DEFAULT_CAPABILITIES),
         MEMORY_CACHE_SIZE,
         DEFAULT_MEMORY_LIMIT,
@@ -195,10 +194,9 @@ fn bench_cache(c: &mut Criterion) {
         });
     }
 
-    let temp_dir = TempDir::new().unwrap();
     group.bench_function("instantiate from fs", |b| {
         let non_memcache = CacheOptions::new(
-            temp_dir.path().to_path_buf(),
+            TempDir::new().unwrap().into_path(),
             capabilities_from_csv(DEFAULT_CAPABILITIES),
             Size::new(0),
             DEFAULT_MEMORY_LIMIT,
@@ -218,10 +216,9 @@ fn bench_cache(c: &mut Criterion) {
         });
     });
 
-    let temp_dir = TempDir::new().unwrap();
     group.bench_function("instantiate from fs unchecked", |b| {
         let non_memcache = CacheOptions::new(
-            temp_dir.path().to_path_buf(),
+            TempDir::new().unwrap().into_path(),
             capabilities_from_csv(DEFAULT_CAPABILITIES),
             Size::new(0),
             DEFAULT_MEMORY_LIMIT,
@@ -286,10 +283,9 @@ fn bench_cache(c: &mut Criterion) {
 }
 
 fn bench_instance_threads(c: &mut Criterion) {
-    let temp_dir = TempDir::new().unwrap();
     c.bench_function("multi-threaded get_instance", |b| {
         let options = CacheOptions::new(
-            temp_dir.path().to_path_buf(),
+            TempDir::new().unwrap().into_path(),
             capabilities_from_csv(DEFAULT_CAPABILITIES),
             MEMORY_CACHE_SIZE,
             DEFAULT_MEMORY_LIMIT,
@@ -374,9 +370,8 @@ fn bench_instance_threads(c: &mut Criterion) {
 fn bench_combined(c: &mut Criterion) {
     let mut group = c.benchmark_group("Combined");
 
-    let temp_dir = TempDir::new().unwrap();
     let options = CacheOptions::new(
-        temp_dir.path().to_path_buf(),
+        TempDir::new().unwrap().into_path(),
         capabilities_from_csv("cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking"),
         MEMORY_CACHE_SIZE,
         DEFAULT_MEMORY_LIMIT,
