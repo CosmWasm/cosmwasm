@@ -67,10 +67,12 @@ pub use crate::errors::{
 };
 pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::IbcChannelOpenResponse;
+#[allow(deprecated)]
+pub use crate::ibc::IbcFee;
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAckCallbackMsg, IbcAcknowledgement, IbcBasicResponse,
     IbcCallbackRequest, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcFee, IbcMsg, IbcOrder, IbcPacket,
+    IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket,
     IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
     IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock, IbcTimeoutCallbackMsg,
     TransferMsgBuilder,
@@ -86,15 +88,16 @@ pub use crate::metadata::{DenomMetadata, DenomUnit};
 pub use crate::msgpack::{from_msgpack, to_msgpack_binary, to_msgpack_vec};
 pub use crate::never::Never;
 pub use crate::pagination::PageRequest;
+#[allow(deprecated)]
+pub use crate::query::FeeEnabledChannelResponse;
 pub use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, AllDenomMetadataResponse, AllValidatorsResponse,
     BalanceResponse, BankQuery, BondedDenomResponse, ChannelResponse, CodeInfoResponse,
     ContractInfoResponse, CustomQuery, DecCoin, Delegation, DelegationResponse,
     DelegationRewardsResponse, DelegationTotalRewardsResponse, DelegatorReward,
     DelegatorValidatorsResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
-    DistributionQuery, FeeEnabledChannelResponse, FullDelegation, GrpcQuery, IbcQuery,
-    ListChannelsResponse, PortIdResponse, QueryRequest, StakingQuery, SupplyResponse, Validator,
-    ValidatorResponse, WasmQuery,
+    DistributionQuery, FullDelegation, GrpcQuery, IbcQuery, ListChannelsResponse, PortIdResponse,
+    QueryRequest, StakingQuery, SupplyResponse, Validator, ValidatorResponse, WasmQuery,
 };
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 pub use crate::results::WeightedVoteOption;

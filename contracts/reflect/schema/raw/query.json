@@ -427,6 +427,7 @@
         },
         {
           "description": "Queries whether the given channel supports IBC fees. If port_id is omitted, it will default to the contract's own channel. (To save a PortId{} call)\n\nReturns a `FeeEnabledChannelResponse`.",
+          "deprecated": true,
           "type": "object",
           "required": [
             "fee_enabled_channel"

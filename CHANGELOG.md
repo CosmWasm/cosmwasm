@@ -8,6 +8,19 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+
+- cosmwasm-std: Fix deserialization of `DenomMetadata`. ([#2417])
+- cosmwasm-std: Deprecate `PayPacketFee`, `PayPacketFeeAsync`, `IbcFee`. IBC
+  fees have been removed from ibc-go in version 10. The mentioned struct and
+  enum fields are deprecated and will be removed in cosmwasm `3.0` ([#2431])
+- cosmwasm-std: Deprecate `FeeEnabledChannel` and `FeeEnabledChannelResponse`
+  ([#2481])
+
+[#2417]: https://github.com/CosmWasm/cosmwasm/pull/2417
+[#2431]: https://github.com/CosmWasm/cosmwasm/pull/2431
+[#2481]: https://github.com/CosmWasm/cosmwasm/pull/2481
+
 ## [2.2.2] - 2025-03-05
 
 ### Changed
@@ -16,6 +29,10 @@ and this project adheres to
   enabled. ([#2384])
 
 [#2384]: https://github.com/CosmWasm/cosmwasm/pull/2384
+
+## Fixed
+
+- cosmwasm-vm: Fix CWA-2025-003.
 
 ## [2.2.1] - 2025-02-04
 
