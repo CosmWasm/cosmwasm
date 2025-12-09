@@ -1,5 +1,6 @@
 # Security Policy
 
-This repository is maintained by Confio as part of the CosmWasm stack. Please
-see https://github.com/CosmWasm/advisories/blob/main/SECURITY.md for our
-security policy.
+This repository is part of the **CosmWasm** stack.
+Please see the [Advisories] for its security policy.
+
+[Advisories]: https://github.com/CosmWasm/advisories/blob/main/SECURITY.md

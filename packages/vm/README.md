@@ -15,7 +15,7 @@ version is communicated by the contract via a Wasm import. This is the current
 compatibility list:
 
 | cosmwasm-vm | Supported interface versions | cosmwasm-std |
-| ----------- | ---------------------------- | ------------ |
+|-------------|------------------------------|--------------|
 | 1.0         | `interface_version_8`        | 1.0          |
 | 0.16        | `interface_version_7`        | 0.16         |
 | 0.15        | `interface_version_6`        | 0.15         |
