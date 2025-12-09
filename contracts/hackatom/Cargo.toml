@@ -24,10 +24,7 @@ overflow-checks = true
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = [
-    "cosmwasm_2_2",
-    "std",
-] }
+cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["cosmwasm_2_2", "std"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 sha2 = "0.10"

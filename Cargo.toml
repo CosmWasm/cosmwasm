@@ -2,21 +2,21 @@
 members = ["packages/*"]
 exclude = ["contracts"]
 
-# Resolver has to be set explicitly in workspaces
-# due to https://github.com/rust-lang/cargo/issues/9956
 resolver = "2"
 
 [workspace.package]
-version = "2.2.2"
+version = "2.3.0-dev"
 
 [workspace.dependencies]
+cosmwasm-core = { path = "./packages/core" }
+cosmwasm-crypto = { path = "./packages/crypto" }
+cosmwasm-derive = { path = "./packages/derive" }
+cosmwasm-schema = { path = "./packages/schema" }
+cosmwasm-schema-derive = { path = "./packages/schema-derive" }
+cosmwasm-std = { path = "./packages/std", default-features = false }
+cosmwasm-vm = { path = "./packages/vm" }
+cosmwasm-vm-derive = { path = "./packages/vm-derive" }
 schemars = "0.8.4"
-serde = { version = "1.0.192", default-features = false, features = [
-    "alloc",
-    "derive",
-] }
-
-[workspace.metadata.release]
-shared-version = true
-tag-message = "chore: Release cosmwasm v{{version}}"
-tag-name = "v{{version}}"
+serde = { version = "1.0.192", default-features = false }
+serde_json = "1.0.140"
+thiserror = "1.0.26"
