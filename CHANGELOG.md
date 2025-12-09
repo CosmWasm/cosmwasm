@@ -1,42 +1,49 @@
 # CHANGELOG
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to
-[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-<!-- next-header -->
+### [Unreleased]
 
-## [Unreleased]
+(empty)
 
-## Fixed
+## [2.3.0] - 2025-12-09
 
-- cosmwasm-std: Fix deserialization of `DenomMetadata`. ([#2417])
-- cosmwasm-std: Deprecate `PayPacketFee`, `PayPacketFeeAsync`, `IbcFee`. IBC
-  fees have been removed from ibc-go in version 10. The mentioned struct and
-  enum fields are deprecated and will be removed in cosmwasm `3.0` ([#2431])
-- cosmwasm-std: Deprecate `FeeEnabledChannel` and `FeeEnabledChannelResponse`
-  ([#2481])
+### Fixed
+
+- cosmwasm-std: Fix deserialization of `DenomMetadata` ([#2417]).
+- cosmwasm-std: Deprecate `PayPacketFee`, `PayPacketFeeAsync`, `IbcFee`. IBC fees have been removed from ibc-go
+  in version 10. The mentioned struct and enum fields are deprecated and will be removed in cosmwasm `3.0` ([#2431]).
+- cosmwasm-std: Deprecate `FeeEnabledChannel` and `FeeEnabledChannelResponse` ([#2481]).
 
 [#2417]: https://github.com/CosmWasm/cosmwasm/pull/2417
 [#2431]: https://github.com/CosmWasm/cosmwasm/pull/2431
 [#2481]: https://github.com/CosmWasm/cosmwasm/pull/2481
 
+### Changed
+
+- Backported GitHub workflows and removed dependencies on external services ([#2568], [#2569], [#2570], [#2571], [#2572]).
+
+[#2568]: https://github.com/CosmWasm/cosmwasm/pull/2568
+[#2569]: https://github.com/CosmWasm/cosmwasm/pull/2569
+[#2570]: https://github.com/CosmWasm/cosmwasm/pull/2570
+[#2571]: https://github.com/CosmWasm/cosmwasm/pull/2571
+[#2572]: https://github.com/CosmWasm/cosmwasm/pull/2572
+
 ## [2.2.2] - 2025-03-05
 
 ### Changed
 
-- cosmwasm-std: Deprecate `abort` feature. The panic handler is now always
-  enabled. ([#2384])
+- cosmwasm-std: Deprecate `abort` feature. The panic handler is now always enabled ([#2384]).
 
 [#2384]: https://github.com/CosmWasm/cosmwasm/pull/2384
 
-## Fixed
+### Fixed
 
 - cosmwasm-vm: Fix CWA-2025-003.
 
 ## [2.2.1] - 2025-02-04
 
-## Added
+### Added
 
 - cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
   `From<Uint128> for u128`, `From<Int64> for i{64,128}`, and
@@ -145,8 +152,7 @@ and this project adheres to
 
 - cosmwasm-std: Fix CWA-2024-002
 - cosmwasm-std: Fix `Reply` deserialization on CosmWasm 1.x chains ([#2159])
-- cosmwasm-std: Updated `QueryRequest` enum to use the default generic parameter
-  `Empty`. ([#2165])
+- cosmwasm-std: Updated `QueryRequest` enum to use the default generic parameter `Empty` ([#2165])
 
 [#2159]: https://github.com/CosmWasm/cosmwasm/pull/2159
 [#2165]: https://github.com/CosmWasm/cosmwasm/pull/2165
@@ -1001,9 +1007,9 @@ and this project adheres to
 The CHANGELOG for versions before 1.0.0 was moved to
 [CHANGELOG-pre1.0.0.md](./CHANGELOG-pre1.0.0.md).
 
-<!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.3.0
 [2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...v2.2.0
@@ -1038,3 +1044,6 @@ The CHANGELOG for versions before 1.0.0 was moved to
 [1.1.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-rc.0...v1.0.0
+
+[Keep a Changelog]: https://keepachangelog.com/en/1.0.0/
+[Semantic Versioning]: https://semver.org/spec/v2.0.0.html
