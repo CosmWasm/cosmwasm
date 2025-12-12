@@ -6,7 +6,7 @@ on:
   pull_request:
 
 env:
-  TOOLCHAIN_STABLE: 1.82.0 # Toolchain for building packages in stable channel
+  TOOLCHAIN_STABLE: 1.81.0 # Toolchain for building packages in stable channel
 
 jobs:
   format:
