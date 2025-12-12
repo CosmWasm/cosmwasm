@@ -15,7 +15,7 @@ check_contract() {
     cd "$contract_dir" || exit 1
 
     msg "UPDATE SCHEMA" "$contract"
-    cargo +"$2" run --bin schema --locked
+    cargo +"$2" run --bin schema
   )
 }
 
