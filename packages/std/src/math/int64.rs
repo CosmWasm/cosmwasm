@@ -57,7 +57,7 @@ impl Int64 {
     pub const MAX: Int64 = Int64(i64::MAX);
     pub const MIN: Int64 = Int64(i64::MIN);
 
-    /// Creates a Int64(value).
+    /// Creates an Int64(value).
     ///
     /// This method is less flexible than `from` but can be called in a const context.
     #[inline]
@@ -66,13 +66,13 @@ impl Int64 {
         Self(value)
     }
 
-    /// Creates a Int64(0)
+    /// Creates an Int64(0)
     #[inline]
     pub const fn zero() -> Self {
         Int64(0)
     }
 
-    /// Creates a Int64(1)
+    /// Creates an Int64(1)
     #[inline]
     pub const fn one() -> Self {
         Self(1)
