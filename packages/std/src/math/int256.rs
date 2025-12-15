@@ -69,7 +69,7 @@ impl Int256 {
     pub const MAX: Int256 = Int256(I256::MAX);
     pub const MIN: Int256 = Int256(I256::MIN);
 
-    /// Creates a Int256(value).
+    /// Creates an Int256(value).
     ///
     /// This method is less flexible than `from` but can be called in a const context.
     ///
@@ -83,13 +83,13 @@ impl Int256 {
         Self::from_be_bytes(grow_be_int(value.to_be_bytes()))
     }
 
-    /// Creates a Int256(0)
+    /// Creates an Int256(0)
     #[inline]
     pub const fn zero() -> Self {
         Int256(I256::ZERO)
     }
 
-    /// Creates a Int256(1)
+    /// Creates an Int256(1)
     #[inline]
     pub const fn one() -> Self {
         Self(I256::ONE)

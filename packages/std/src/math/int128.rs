@@ -57,7 +57,7 @@ impl Int128 {
     pub const MAX: Int128 = Int128(i128::MAX);
     pub const MIN: Int128 = Int128(i128::MIN);
 
-    /// Creates a Int128(value).
+    /// Creates an Int128(value).
     ///
     /// This method is less flexible than `from` but can be called in a const context.
     #[inline]
@@ -66,13 +66,13 @@ impl Int128 {
         Self(value)
     }
 
-    /// Creates a Int128(0)
+    /// Creates an Int128(0)
     #[inline]
     pub const fn zero() -> Self {
         Int128(0)
     }
 
-    /// Creates a Int128(1)
+    /// Creates an Int128(1)
     #[inline]
     pub const fn one() -> Self {
         Self(1)
