@@ -31,3 +31,4 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
+backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0

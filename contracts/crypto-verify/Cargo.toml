@@ -35,4 +35,5 @@ base64ct = "=1.7.3" # This is only for fixing the Edition 2021 of base64ct crate
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
+backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0
 hex-literal = "0.4.1"

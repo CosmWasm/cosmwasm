@@ -207,6 +207,11 @@ tasks:
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} test --workspace
 
+  testn:
+    desc: Runs all tests using nextest
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} nextest run --workspace
+
   test-cosmwasm-core:
     desc: Runs tests for cosmwasm-core
     cmds:
