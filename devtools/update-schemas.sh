@@ -3,7 +3,7 @@
 set -o errexit -o nounset -o pipefail
 
 msg() {
-  echo -e "\e[1;34m$1\e[0m \e[1;32m$2\e[0m"
+  printf "\033[1;34m%s\033[0m \033[1;32m%s\033[0m\n" "$1" "$2"
 }
 
 check_contract() {
@@ -15,7 +15,7 @@ check_contract() {
     cd "$contract_dir" || exit 1
 
     msg "UPDATE SCHEMA" "$contract"
-    cargo +"$2" run --bin schema
+    cargo +"$2" run --bin schema --locked
   )
 }
 
