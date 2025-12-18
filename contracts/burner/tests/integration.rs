@@ -29,7 +29,7 @@ fn instantiate_fails() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InstantiateMsg {};
-    let info = mock_info("creator", &coins(1000, "earth"));
+    let info = mock_info("creator", coins(1000, "earth").as_slice());
     // we can just call .unwrap() to assert this was a success
     let res: ContractResult<Response> = instantiate(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
