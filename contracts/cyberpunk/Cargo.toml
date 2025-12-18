@@ -31,4 +31,5 @@ thiserror = "1.0.26"
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }
+backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0
 tempfile = "3.1.0"

@@ -1,25 +1,26 @@
 # CHANGELOG
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to
-[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-<!-- next-header -->
+### [Unreleased]
 
-## [Unreleased]
+(empty)
 
 ## [2.2.2] - 2025-03-05
 
 ### Changed
 
-- cosmwasm-std: Deprecate `abort` feature. The panic handler is now always
-  enabled. ([#2384])
+- cosmwasm-std: Deprecate `abort` feature. The panic handler is now always enabled ([#2384]).
 
 [#2384]: https://github.com/CosmWasm/cosmwasm/pull/2384
 
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2025-003.
+
 ## [2.2.1] - 2025-02-04
 
-## Added
+### Added
 
 - cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
   `From<Uint128> for u128`, `From<Int64> for i{64,128}`, and
@@ -984,7 +985,6 @@ and this project adheres to
 The CHANGELOG for versions before 1.0.0 was moved to
 [CHANGELOG-pre1.0.0.md](./CHANGELOG-pre1.0.0.md).
 
-<!-- next-url -->
 
 [unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...HEAD
 [2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
@@ -1021,3 +1021,6 @@ The CHANGELOG for versions before 1.0.0 was moved to
 [1.1.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-rc.0...v1.0.0
+
+[Keep a Changelog]: https://keepachangelog.com/en/1.0.0/
+[Semantic Versioning]: https://semver.org/spec/v2.0.0.html
