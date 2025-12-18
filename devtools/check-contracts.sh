@@ -45,7 +45,7 @@ check_contract() {
     git diff --quiet ./schema
 
     msg "cosmwasm-check (release)" "$contract"
-    cosmwasm-check-release "$wasm"
+    cosmwasm-check-released "$wasm"
 
     msg "cosmwasm-check (develop)" "$contract"
     cosmwasm-check "$wasm"
