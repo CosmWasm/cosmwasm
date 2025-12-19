@@ -3,9 +3,9 @@ version: '3'
 silent: true
 
 vars:
-  COSMWASM_CHECK_VERSION: 2.2.2 # The last released version before 2.2.3
-  TOOLCHAIN: +1.81.0            # The last Rust compiler version without 'reference-types'.
-  TOOLCHAIN_CHECK: +1.82.0      # Toolchain for building cosmwasm-check tool
+  COSMWASM_CHECK_VERSION: 2.2.2 # The last released version of cosmwasm-check tool before v2.2.3.
+  TOOLCHAIN: +1.81.0            # The last Rust toolchain without 'reference-types'.
+  TOOLCHAIN_CHECK: +1.82.0      # Rust toolchain for building cosmwasm-check tool.
 
 tasks:
 
@@ -200,7 +200,7 @@ tasks:
       - cmd: cargo {{.TOOLCHAIN_CHECK}} install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
       - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-released
       # Install currently developed version of cosmwasm-check
-      - cmd: cargo {{.TOOLCHAIN_CHECK}} install --path ./packages/check --force
+      - cmd: cargo {{.TOOLCHAIN_CHECK}} install --path ./packages/check --locked --force
 
   test:
     desc: Runs all tests

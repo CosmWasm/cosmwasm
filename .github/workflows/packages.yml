@@ -6,7 +6,7 @@ on:
   pull_request:
 
 env:
-  TOOLCHAIN_STABLE: 1.81.0 # Toolchain for building packages in stable channel
+  TOOLCHAIN_STABLE: 1.81.0 # Rust toolchain for building packages.
 
 jobs:
   format:
@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -66,7 +66,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -87,7 +87,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -108,7 +108,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -129,7 +129,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -150,7 +150,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -184,7 +184,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -214,7 +214,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -235,7 +235,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
