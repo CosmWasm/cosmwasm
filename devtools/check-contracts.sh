@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+set -o errexit -o nounset -o pipefail
+
+if [[ "${1:-}" == "parallel" ]]; then
+  parallel=1
+else
+  parallel=0
+fi
+
+msg() {
+  if (( !parallel )); then
+    printf "\033[1;34m%s\033[0m \033[1;32m%s\e[0m\n" "$1" "$2"
+  fi
+}
+
+check_contract() {
+  (
+    contract_dir=$1
+    contract="$(basename "$contract_dir" | tr - _)"
+    wasm="./target/wasm32-unknown-unknown/release/$contract.wasm"
+
+    msg "CHANGE DIRECTORY" "$contract_dir"
+    cd "$contract_dir" || exit 1
+
+    msg "CHECK FORMATTING" "$contract"
+    cargo +"$2" fmt -- --check
+
+    msg "RUN UNIT TESTS" "$contract"
+    cargo +"$2" test --lib --locked
+
+    msg "BUILD WASM" "$contract"
+    RUSTFLAGS="$3" cargo +"$2" build --release --lib --locked --target wasm32-unknown-unknown
+
+    msg "RUN LINTER" "$contract"
+    cargo +"$2" clippy --all-targets --tests --locked -- -D warnings
+
+    msg "RUN INTEGRATION TESTS" "$contract"
+    cargo +"$2" test --test integration --locked
+
+    msg "GENERATE SCHEMA" "$contract"
+    cargo +"$2" run --bin schema --locked
+
+    msg "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
+    git diff --quiet ./schema
+
+    msg "cosmwasm-check (release)" "$contract"
+    cosmwasm-check-released "$wasm"
+
+    msg "cosmwasm-check (develop)" "$contract"
+    cosmwasm-check "$wasm"
+  )
+}
+
+contracts_stable=(
+  contracts/burner
+  contracts/crypto-verify
+  contracts/cyberpunk
+  contracts/empty
+  contracts/hackatom
+  contracts/ibc-callbacks
+  contracts/ibc-reflect
+  contracts/ibc-reflect-send
+  contracts/nested-contracts
+  contracts/queue
+  contracts/reflect
+  contracts/staking
+  contracts/virus
+)
+
+contracts_nightly=(
+  contracts/floaty
+)
+
+toolchain_stable=1.81.0 # The last Rust compiler version without 'reference-types'.
+rustflags_stable=""
+
+toolchain_nightly=nightly-2024-07-21 # The last nightly version for 1.81.0
+rustflags_nightly="-C target-feature=+nontrapping-fptoint"
+
+if (( parallel )); then
+  for dir in "${contracts_stable[@]}"; do
+    check_contract "$dir" "$toolchain_stable" "$rustflags_stable" > /dev/null &
+  done
+  for dir in "${contracts_nightly[@]}"; do
+    check_contract "$dir" "$toolchain_nightly" "$rustflags_nightly" > /dev/null &
+  done
+  wait
+else
+  for dir in "${contracts_stable[@]}"; do
+    check_contract "$dir" "$toolchain_stable" "$rustflags_stable"
+  done
+  for dir in "${contracts_nightly[@]}"; do
+    check_contract "$dir" "$toolchain_nightly" "$rustflags_nightly"
+  done
+fi
