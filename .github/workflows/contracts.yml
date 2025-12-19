@@ -1,14 +1,16 @@
 name: contracts
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main" ]
   pull_request:
 
 env:
-  TOOLCHAIN_STABLE: 1.82.0              # Rust toolchain for building contracts in stable channel,
+  TOOLCHAIN_STABLE: 1.82.0              # Rust toolchain for building contracts in stable channel.
   TOOLCHAIN_NIGHTLY: nightly-2024-09-01 # Rust toolchain for building contracts in nightly channel for version 1.82.0.
   TOOLCHAIN_CHECK: 1.82.0               # Rust toolchain for building cosmwasm-check tool.
+  COSMWASM_CHECK_VERSION: 3.0.1         # Last released cosmwasm-check tool before version 3.0.2.
 
 jobs:
   stable:
@@ -41,7 +43,7 @@ jobs:
         working-directory: contracts/${{ matrix.dir }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -72,7 +74,7 @@ jobs:
         run: git diff --quiet ./schema
 
       - name: Upload WASM binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.dir }}-${{ runner.os }}
           path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
@@ -91,7 +93,7 @@ jobs:
         working-directory: ./contracts/${{ matrix.dir }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install Rust for compiling contracts
         uses: dtolnay/rust-toolchain@nightly
@@ -122,7 +124,7 @@ jobs:
         run: git diff --quiet ./schema
 
       - name: Upload WASM binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.dir }}-${{ runner.os }}
           path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
@@ -137,7 +139,7 @@ jobs:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install Rust for compiling cosmwasm-check
         uses: dtolnay/rust-toolchain@stable
@@ -145,84 +147,84 @@ jobs:
           toolchain: ${{ env.TOOLCHAIN_CHECK }}
 
       - name: Install recently released cosmwasm-check
-        run: cargo install cosmwasm-check@3.0.1 --force --locked
+        run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: burner-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: crypto-verify-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: cyberpunk-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: empty-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: floaty-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: hackatom-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: ibc2-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: ibc-callbacks-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: ibc-reflect-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: ibc-reflect-send-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: nested-contracts-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: queue-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: reflect-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: replier-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: staking-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: virus-${{ runner.os }}
           path: .
@@ -241,7 +243,7 @@ jobs:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install Rust for compiling cosmwasm-check
         uses: dtolnay/rust-toolchain@stable
@@ -251,82 +253,82 @@ jobs:
       - name: Install currently developed cosmwasm-check
         run: cargo install --path ./packages/check --force --locked
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: burner-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: crypto-verify-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: cyberpunk-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: empty-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: floaty-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: hackatom-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: ibc2-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: ibc-callbacks-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: ibc-reflect-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: ibc-reflect-send-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: nested-contracts-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: queue-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: reflect-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: replier-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: staking-${{ runner.os }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: virus-${{ runner.os }}
           path: .
