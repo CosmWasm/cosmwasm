@@ -344,11 +344,15 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-core"
-version = "2.3.0-dev"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63efd882086668c3bad621b5b897a0e058d0b5fae027c984e1a6230bf284ab85"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "2.3.0-dev"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0969e6f569f867725bf89e672058ae336e130c1fcf914def4f7c6c0380b2bc83"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -370,7 +374,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "2.3.0-dev"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0da0db99715fc86e6a5ad7be9c19d0d9e5a92179862b17cae7406b729a402c2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -379,7 +385,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.3.0-dev"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76b20ffffff7d2c2ad50be66cfc298cc3244fd9c0643b6ce552972de363651cb"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -390,7 +398,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "2.3.0-dev"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a9fff4b28679c2e27d7537c06dd49e864a52e3351eb8b706ddfaf034cbed82b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -399,7 +409,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "2.3.0-dev"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7791cf4d35da8f731ae904d5397011cb5c86ea0ef3ac0779b626baeacdb84f2"
 dependencies = [
  "base64",
  "bech32",
@@ -421,7 +433,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "2.3.0-dev"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "489a57cbbc02776e7a0be066255827a7eaed4b749c50c08b8367258da3b6f7c6"
 dependencies = [
  "bech32",
  "blake2",
@@ -449,7 +463,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm-derive"
-version = "2.3.0-dev"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "682193c1d5f34f7945362a275888c2150df70ef9a5bb475f4ebc210a9696fb3a"
 dependencies = [
  "blake2",
  "proc-macro2",

@@ -10,7 +10,7 @@ fi
 
 msg() {
   if (( !parallel )); then
-    echo -e "\e[1;34m$1\e[0m \e[1;32m$2\e[0m"
+    printf "\033[1;34m%s\033[0m \033[1;32m%s\e[0m\n" "$1" "$2"
   fi
 }
 
@@ -33,7 +33,7 @@ check_contract() {
     RUSTFLAGS="$3" cargo +"$2" build --release --lib --locked --target wasm32-unknown-unknown
 
     msg "RUN LINTER" "$contract"
-    cargo +"$2" clippy --all-targets --tests -- -D warnings
+    cargo +"$2" clippy --all-targets --tests --locked -- -D warnings
 
     msg "RUN INTEGRATION TESTS" "$contract"
     cargo +"$2" test --test integration --locked
@@ -45,7 +45,7 @@ check_contract() {
     git diff --quiet ./schema
 
     msg "cosmwasm-check (release)" "$contract"
-    cosmwasm-check-release "$wasm"
+    cosmwasm-check-released "$wasm"
 
     msg "cosmwasm-check (develop)" "$contract"
     cosmwasm-check "$wasm"
