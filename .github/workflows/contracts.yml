@@ -145,7 +145,7 @@ jobs:
           toolchain: ${{ env.TOOLCHAIN_CHECK }}
 
       - name: Install recently released cosmwasm-check
-        run: cargo install cosmwasm-check@3.0.1
+        run: cargo install cosmwasm-check@3.0.1 --force --locked
 
       - uses: actions/download-artifact@v4
         with:
@@ -249,7 +249,7 @@ jobs:
           toolchain: ${{ env.TOOLCHAIN_CHECK }}
 
       - name: Install currently developed cosmwasm-check
-        run: cargo install --path ./packages/check --force
+        run: cargo install --path ./packages/check --force --locked
 
       - uses: actions/download-artifact@v4
         with:
