@@ -21,11 +21,11 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std" }
+cosmwasm-schema = { version = "3.0.2" }
+cosmwasm-std = { version = "3.0.2" }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 rand_chacha = { version = "0.3.1", default-features = false }
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { version = "3.0.2", default-features = false, features = ["iterator"] }
