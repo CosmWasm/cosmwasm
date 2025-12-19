@@ -8,7 +8,7 @@ on:
 env:
   TOOLCHAIN_STABLE: 1.82.0              # Rust toolchain for building contracts in stable channel,
   TOOLCHAIN_NIGHTLY: nightly-2024-09-01 # Rust toolchain for building contracts in nightly channel for version 1.82.0.
-  TOOLCHAIN_CHECK: 1.88.0               # Rust toolchain for building cosmwasm-check tool.
+  TOOLCHAIN_CHECK: 1.82.0               # Rust toolchain for building cosmwasm-check tool.
 
 jobs:
   stable:
