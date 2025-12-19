@@ -37,7 +37,6 @@ pub fn remove_schemas(schemas_dir: &path::Path) -> Result<(), io::Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::ffi::OsStr;
     use std::path::Path;
 
     #[test]
@@ -60,6 +59,7 @@ mod tests {
         // invalid UTF-8
         #[cfg(any(unix, target_os = "redox"))]
         {
+            use std::ffi::OsStr;
             use std::os::unix::ffi::OsStrExt;
             let non_hidden = OsStr::from_bytes(&[0x66, 0x6f, 0x80, 0x6f]); // fo�o // spellchecker:disable-line
             assert!(!is_hidden(Path::new(non_hidden)));
@@ -89,6 +89,7 @@ mod tests {
         // invalid UTF-8
         #[cfg(any(unix, target_os = "redox"))]
         {
+            use std::ffi::OsStr;
             use std::os::unix::ffi::OsStrExt;
             let non_hidden = OsStr::from_bytes(&[0x66, 0x6f, 0x80, 0x6f]); // fo�o // spellchecker:disable-line
             assert!(!is_json(Path::new(non_hidden)));
