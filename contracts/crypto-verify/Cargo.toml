@@ -22,8 +22,8 @@ overflow-checks = true
 
 [dependencies]
 base64 = "0.22.0"
-cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", features = ["cosmwasm_2_1", "iterator"] }
+cosmwasm-schema = { version = "=2.2.3" }
+cosmwasm-std = { version = "=2.2.3", features = ["cosmwasm_2_1", "iterator"] }
 hex = "0.4"
 p256 = { version = "0.13.2", default-features = false, features = ["alloc", "ecdsa"] }
 rlp = "0.5"
@@ -34,6 +34,6 @@ sha3 = "0.10"
 base64ct = "=1.7.3" # This is only for fixing the Edition 2021 of base64ct crate.
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { version = "=2.2.3", default-features = false, features = ["iterator"] }
 backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0
 hex-literal = "0.4.1"
