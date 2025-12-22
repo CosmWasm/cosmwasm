@@ -10,7 +10,8 @@ pub const KEY_CONFIG: &[u8] = b"config";
 /// accounts is lookup of channel_id to reflect contract
 pub const PREFIX_ACCOUNTS: &[u8] = b"accounts";
 /// Upper bound for ranging over accounts
-const PREFIX_ACCOUNTS_UPPER_BOUND: &[u8] = b"accountt"; // spellchecker:disable-line
+// Use the next ASCII char after 's' to set an exclusive upper bound.
+const PREFIX_ACCOUNTS_UPPER_BOUND: &[u8] = b"account{";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Config {
