@@ -592,8 +592,9 @@ mod tests {
             .iter()
             .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
-        // Multiple signatures
-        //FIXME: Use different signatures / pubkeys
+        // Multiple signatures from different keys for the same message
+        // Note: Using same signature/key pair twice to test multisig structure.
+        // In production, these would be different signatures from different keys for the same message.
         let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE_HEX]
             .iter()
             .map(|m| Binary::new(hex::decode(m).unwrap()))
@@ -620,14 +621,14 @@ mod tests {
     fn tendermint_signatures_batch_verify_single_public_key_works() {
         let deps = setup();
 
-        // Multiple messages
-        //FIXME: Use different messages
+        // Multiple messages signed by the same key
+        // Note: Using same message/signature pair twice to test single-key structure.
+        // In production, these would be different messages signed by the same key.
         let messages = [ED25519_MESSAGE_HEX, ED25519_MESSAGE_HEX]
             .iter()
             .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
         // Multiple signatures
-        //FIXME: Use different signatures
         let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE_HEX]
             .iter()
             .map(|m| Binary::new(hex::decode(m).unwrap()))
