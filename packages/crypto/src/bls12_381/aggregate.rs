@@ -12,7 +12,7 @@ const G2_POINT_SIZE: usize = 96;
 pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], CryptoError> {
     if points.is_empty() {
         return Err(Aggregation::Empty.into());
-    } else if points.len() % G1_POINT_SIZE != 0 {
+    } else if !points.len().is_multiple_of(G1_POINT_SIZE) {
         return Err(Aggregation::NotMultiple {
             expected_multiple: G1_POINT_SIZE,
             remainder: points.len() % G1_POINT_SIZE,
@@ -54,7 +54,7 @@ pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], CryptoError> {
 pub fn bls12_381_aggregate_g2(points: &[u8]) -> Result<[u8; 96], CryptoError> {
     if points.is_empty() {
         return Err(Aggregation::Empty.into());
-    } else if points.len() % G2_POINT_SIZE != 0 {
+    } else if !points.len().is_multiple_of(G2_POINT_SIZE) {
         return Err(Aggregation::NotMultiple {
             expected_multiple: G2_POINT_SIZE,
             remainder: points.len() % G2_POINT_SIZE,

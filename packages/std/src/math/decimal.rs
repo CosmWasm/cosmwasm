@@ -338,7 +338,7 @@ impl Decimal {
             let mut y = Decimal::one();
 
             while n > 1 {
-                if n % 2 == 0 {
+                if n.is_multiple_of(2) {
                     x = x.checked_mul(x)?;
                     n /= 2;
                 } else {
