@@ -61,7 +61,7 @@ impl Event {
     }
 }
 
-/// An key value pair that is used in the context of event attributes in logs
+/// A key value pair that is used in the context of event attributes in logs
 #[derive(
     Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
 )]

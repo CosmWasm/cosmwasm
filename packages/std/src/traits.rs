@@ -212,8 +212,8 @@ pub trait Api: Any {
     ///
     /// e(p_1, q_1) × e(p_2, q_2) × … × e(p_n, q_n) = e(s, q)
     ///
-    /// The argument `ps` contain the points p_1, ..., p_n ∈ G1 as a concatenation of 48 byte elements.
-    /// The argument `qs` contain the points q_1, ..., q_n ∈ G2 as a concatenation of 96 byte elements.
+    /// The argument `ps` contains the points p_1, ..., p_n ∈ G1 as a concatenation of 48 byte elements.
+    /// The argument `qs` contains the points q_1, ..., q_n ∈ G2 as a concatenation of 96 byte elements.
     ///
     /// ## Examples
     ///

@@ -13,7 +13,7 @@ pub struct InstrumentedModule {
     pub module: CachedModule,
 }
 
-/// An pinned in memory module cache
+/// A pinned in memory module cache
 pub struct PinnedMemoryCache {
     modules: HashMap<Checksum, InstrumentedModule>,
 }
