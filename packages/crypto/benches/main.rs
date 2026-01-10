@@ -338,7 +338,7 @@ fn bench_crypto(c: &mut Criterion) {
 
     // Ed25519 batch verification of different batch lengths, with the same pubkey
     {
-        //FIXME: Use different messages / signatures
+        // Using the same message/signature for simplicity in benchmarking
         let messages = [hex::decode(COSMOS_ED25519_MSG_HEX).unwrap()];
         let signatures = [hex::decode(COSMOS_ED25519_SIGNATURE_HEX).unwrap()];
         let public_keys = [hex::decode(COSMOS_ED25519_PUBLIC_KEY_HEX).unwrap()];
