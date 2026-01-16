@@ -208,7 +208,7 @@ pub struct DebugInfo<'a> {
 //                            v                                                 v
 pub type DebugHandlerFn = dyn for<'a, 'b> FnMut(/* msg */ &'a str, DebugInfo<'b>);
 
-/// A environment that provides access to the ContextData.
+/// An environment that provides access to the ContextData.
 /// The environment is cloneable but clones access the same underlying data.
 pub struct Environment<A, S, Q> {
     pub memory: Option<Memory>,
