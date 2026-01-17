@@ -1,9 +1,10 @@
 # CosmWasm
 
-![component][component-badge]
+[![component][component-badge]][component-url]
 [![license][apache-badge]][apache-url]
 
 [component-badge]: https://img.shields.io/badge/CosmWasm-6343ae.svg
+[component-url]: https://cosmwasm.com
 [apache-badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
 [apache-url]: LICENSE
 [notice-url]: NOTICE
@@ -250,7 +251,7 @@ We also recommend you review our [documentation site](https://book.cosmwasm.com)
 which contains a few tutorials to guide you in building your first contracts.
 You can find past recordings of hackathon/conference workshops and presentations
 on our [YouTube channel](https://www.youtube.com/@CosmWasm), or
-[join our Discord server](https://chat.cosmwasm.com) to ask for help.
+[join our Telegram community](https://chat.cosmwasm.com) to ask for help.
 
 ## Minimum Supported Rust Version (MSRV)
 
