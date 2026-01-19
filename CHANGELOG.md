@@ -2,9 +2,9 @@
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-[Unreleased] changes
+### [Unreleased]
 
----
+(empty)
 
 ## [3.0.2] - 2025-08-26
 
