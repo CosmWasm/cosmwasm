@@ -223,6 +223,16 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2571]: https://github.com/CosmWasm/cosmwasm/pull/2571
 [#2572]: https://github.com/CosmWasm/cosmwasm/pull/2572
 
+## [2.2.3] - 2025-12-19
+
+### Changed
+
+- Backport GitHub actions to version 2.2.2 ([#2580]).
+- Unified maintainers/developers tools ([#2582]).
+
+[#2580]: https://github.com/CosmWasm/cosmwasm/pull/2580
+[#2582]: https://github.com/CosmWasm/cosmwasm/pull/2582
+
 ## [2.2.2] - 2025-03-05
 
 ### Changed
@@ -1398,6 +1408,7 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [3.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v3.0.0
 [2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.3.0
+[2.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.5...v2.2.0
