@@ -251,7 +251,7 @@ We also recommend you review our [documentation site](https://book.cosmwasm.com)
 which contains a few tutorials to guide you in building your first contracts.
 You can find past recordings of hackathon/conference workshops and presentations
 on our [YouTube channel](https://www.youtube.com/@CosmWasm), or
-[join our Telegram community](https://chat.cosmwasm.com) to ask for help.
+[join our Telegram community](https://t.me/+SGT2p3VszzSgUViP) to ask for help.
 
 ## Minimum Supported Rust Version (MSRV)
 
