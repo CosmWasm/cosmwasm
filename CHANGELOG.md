@@ -2,7 +2,7 @@
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-### [Unreleased]
+## [Unreleased]
 
 (empty)
 
@@ -88,7 +88,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
   match the contract address from `mock_env`. ([#2211])
 - cosmwasm-derive: Automatically detect whether the package is a dependency or
   the primary package, only expanding entrypoints for the primary package. This
-  effectively deprecates the usage of the `library` feature pattern. ([#2246])
+  effectively deprecates the usage of the `library` feature pattern.
+
+  Note: This feature does **NOT** interact well with workspaces due to a cargo
+  bug. If you have multiple contracts in a workspace, you might still want to
+  use the library feature ([#2246])
+
 - cosmwasm-std: Deprecate `BankQuery::AllBalances` and `IbcQuery::ListChannels`.
   Both are inherently problematic to use because the returned entries are
   unbounded. ([#2247])
@@ -107,6 +112,16 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2255]: https://github.com/CosmWasm/cosmwasm/pull/2255
 [#2260]: https://github.com/CosmWasm/cosmwasm/pull/2260
 [#2250]: https://github.com/CosmWasm/cosmwasm/pull/2250
+
+## [2.1.5] - 2024-12-10
+
+- cosmwasm-vm: Add `Cache::store_code`
+
+## [2.1.4] - 2024-09-23
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2024-007 and CWA-2024-008.
 
 ## [2.1.3] - 2024-08-08
 
@@ -139,8 +154,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cosmwasm-std: Fix CWA-2024-002
 - cosmwasm-std: Fix `Reply` deserialization on CosmWasm 1.x chains ([#2159])
-- cosmwasm-std: Updated `QueryRequest` enum to use the default generic parameter
-  `Empty`. ([#2165])
+- cosmwasm-std: Updated `QueryRequest` enum to use the default generic parameter `Empty` ([#2165])
 
 [#2159]: https://github.com/CosmWasm/cosmwasm/pull/2159
 [#2165]: https://github.com/CosmWasm/cosmwasm/pull/2165
@@ -235,6 +249,78 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2153]: https://github.com/CosmWasm/cosmwasm/pull/2153
 [#2160]: https://github.com/CosmWasm/cosmwasm/pull/2160
 [#2182]: https://github.com/CosmWasm/cosmwasm/pull/2182
+
+## [2.0.8] - 2024-12-10
+
+- cosmwasm-vm: Add `Cache::store_code`
+
+## [2.0.7] - 2024-09-23
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2024-007 and CWA-2024-008.
+
+## [2.0.6] - 2024-08-08
+
+### Fixed
+
+- cosmwasm-vm: Problem with caching related to CWA-2024-004. Please upgrade
+  directly to this version instead of the previous one.
+
+## [2.0.5] - 2024-08-08
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2024-004
+
+## [2.0.4] - 2024-06-03
+
+### Fixed
+
+- cosmwasm-std: Fix `Reply` deserialization on CosmWasm 1.x chains ([#2158])
+
+[#2158]: https://github.com/CosmWasm/cosmwasm/pull/2158
+
+### Changed
+
+- cosmwasm-std: Add message_info and deprecate mock_info ([#2160])
+
+[#2160]: https://github.com/CosmWasm/cosmwasm/pull/2160
+
+## [2.0.3] - 2024-05-10
+
+### Changed
+
+- cosmwasm-std: Deprecate "compact" serialization of `Binary`, `HexBinary`,
+  `Checksum` ([#2128])
+
+[#2128]: https://github.com/CosmWasm/cosmwasm/pull/2128
+
+## [2.0.2] - 2024-04-24
+
+### Fixed
+
+- cosmwasm-std: Fix CWA-2024-002
+
+### Added
+
+- cosmwasm-std: Implement `&T + T` and `&T op &T` for `Uint64`, `Uint128`,
+  `Uint256` and `Uint512`; improve panic message for `Uint64::add` and
+  `Uint512::add` ([#2092])
+- cosmwasm-std: Add `Uint{64,128,256,512}::strict_add` and `::strict_sub` which
+  are like the `Add`/`Sub` implementations but `const`. ([#2098], [#2107])
+
+[#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
+[#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
+[#2107]: https://github.com/CosmWasm/cosmwasm/pull/2107
+
+### Changed
+
+- cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
+  `Uint64::strict_add`/`::strict_sub` and document overflows. ([#2098], [#2107])
+
+[#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
+[#2107]: https://github.com/CosmWasm/cosmwasm/pull/2107
 
 ## [2.0.1] - 2024-04-03
 
@@ -401,6 +487,111 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#1942]: https://github.com/CosmWasm/cosmwasm/pull/1942
 [#1952]: https://github.com/CosmWasm/cosmwasm/pull/1952
 [#1953]: https://github.com/CosmWasm/cosmwasm/pull/1953
+
+## [1.5.9] - 2024-12-10
+
+### Added
+
+- cosmwasm-vm: Add `Cache::store_code`
+
+## [1.5.8] - 2024-09-23
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2024-007 and CWA-2024-008.
+
+## [1.5.7] - 2024-08-08
+
+### Fixed
+
+- cosmwasm-vm: Problem with caching related to CWA-2024-004. Please upgrade
+  directly to this version instead of the previous one.
+
+## [1.5.6] - 2024-08-08
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2024-004
+
+### Changed
+
+- cosmwasm-std: Backport PR that changed the version pinned dependency
+  `k256 = { version = "=0.13.1", features = ["ecdsa"] }` to the open version
+  range ^0.13.3 by avoiding a normalization of the public key in
+  `secp256k1_recover_pubkey`. ([#2014], [#2198])
+
+[#2014]: https://github.com/CosmWasm/cosmwasm/pull/2014
+[#2198]: https://github.com/CosmWasm/cosmwasm/pull/2198
+
+## [1.5.5] - 2024-05-10
+
+### Changed
+
+- cosmwasm-std: Deprecate "compact" serialization of `Binary`, `HexBinary`
+  ([#2126])
+
+[#2126]: https://github.com/CosmWasm/cosmwasm/pull/2126
+
+## [1.5.4]
+
+### Fixed
+
+- cosmwasm-std: Fix CWA-2024-002
+
+### Added
+
+- cosmwasm-std: Implement `&T + T` and `&T op &T` for `Uint64`, `Uint128`,
+  `Uint256` and `Uint512`; improve panic message for `Uint64::add` and
+  `Uint512::add` ([#2092])
+- cosmwasm-std: Add `Uint{64,128,256,512}::strict_add` and `::strict_sub` which
+  are like the `Add`/`Sub` implementations but `const`. ([#2098], [#2107])
+
+[#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
+[#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
+[#2107]: https://github.com/CosmWasm/cosmwasm/pull/2107
+
+### Changed
+
+- cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
+  `Uint64::strict_add`/`::strict_sub` and document overflows. ([#2098], [#2107])
+
+[#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
+[#2107]: https://github.com/CosmWasm/cosmwasm/pull/2107
+
+### Fixed
+
+- cosmwasm-std: Correctly deallocate vectors that were turned into a `Region`
+  via `release_buffer` ([#2062])
+
+[#2062]: https://github.com/CosmWasm/cosmwasm/pull/2062
+
+## [1.5.3]
+
+### Changed
+
+- cosmwasm-vm: Read `Region` from Wasm memory as bytes and convert to `Region`
+  afterwards ([#2005])
+
+[#2005]: https://github.com/CosmWasm/cosmwasm/pull/2005
+
+## [1.5.2] - 2024-01-15
+
+### Fixed
+
+- cosmwasm-vm: Fix memory increase issue (1.3 -> 1.4 regression) by avoiding the
+  use of a long running Wasmer Engine. ([#1978])
+
+[#1978]: https://github.com/CosmWasm/cosmwasm/issues/1978
+
+## [1.5.1] - 2024-01-10
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2023-004.
+
+### Added
+
+- cosmwasm-vm: Add constructor `CacheOptions::new`
 
 ## [1.5.0] - 2023-10-31
 
@@ -992,21 +1183,39 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ---
 
-The CHANGELOG for versions before 1.0.0 was moved to
-[CHANGELOG-pre1.0.0.md](./CHANGELOG-pre1.0.0.md).
+The CHANGELOG for versions before **1.0.0** was moved to
+[CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.3...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.3...HEAD
 [2.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v2.2.1
-[2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...v2.2.0
+[2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.5...v2.2.0
+[2.1.5]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.4...v2.1.5
+[2.1.4]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.0...v2.1.1
-[2.1.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...v2.1.0
+[2.1.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.8...v2.1.0
+[2.0.8]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.7...v2.0.8
+[2.0.7]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.6...v2.0.7
+[2.0.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.5...v2.0.6
+[2.0.5]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.4...v2.0.5
+[2.0.4]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.3...v2.0.4
+[2.0.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.2...v2.0.3
+[2.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0...v2.0.1
-[2.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.0...v2.0.0
+[2.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.9...v2.0.0
+[1.5.9]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.8...v1.5.9
+[1.5.8]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.7...v1.5.8
+[1.5.7]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.6...v1.5.7
+[1.5.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.5...v1.5.6
+[1.5.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.4...v1.5.5
+[1.5.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.3...v1.5.4
+[1.5.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.2...v1.5.3
+[1.5.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.1...v1.5.2
+[1.5.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0
