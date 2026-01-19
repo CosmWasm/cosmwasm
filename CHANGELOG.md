@@ -2,7 +2,7 @@
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-### [Unreleased]
+## [Unreleased]
 
 (empty)
 
@@ -199,6 +199,29 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2495]: https://github.com/CosmWasm/cosmwasm/pull/2495
 [#2500]: https://github.com/CosmWasm/cosmwasm/pull/2500
 [#2501]: https://github.com/CosmWasm/cosmwasm/pull/2501
+
+## [2.3.0] - 2025-12-09
+
+### Fixed
+
+- cosmwasm-std: Fix deserialization of `DenomMetadata` ([#2417]).
+- cosmwasm-std: Deprecate `PayPacketFee`, `PayPacketFeeAsync`, `IbcFee`. IBC fees have been removed from ibc-go
+  in version 10. The mentioned struct and enum fields are deprecated and will be removed in cosmwasm `3.0` ([#2431]).
+- cosmwasm-std: Deprecate `FeeEnabledChannel` and `FeeEnabledChannelResponse` ([#2481]).
+
+[#2417]: https://github.com/CosmWasm/cosmwasm/pull/2417
+[#2431]: https://github.com/CosmWasm/cosmwasm/pull/2431
+[#2481]: https://github.com/CosmWasm/cosmwasm/pull/2481
+
+### Changed
+
+- Backported GitHub workflows and removed dependencies on external services ([#2568], [#2569], [#2570], [#2571], [#2572]).
+
+[#2568]: https://github.com/CosmWasm/cosmwasm/pull/2568
+[#2569]: https://github.com/CosmWasm/cosmwasm/pull/2569
+[#2570]: https://github.com/CosmWasm/cosmwasm/pull/2570
+[#2571]: https://github.com/CosmWasm/cosmwasm/pull/2571
+[#2572]: https://github.com/CosmWasm/cosmwasm/pull/2572
 
 ## [2.2.0] - 2024-12-17
 
@@ -1346,6 +1369,7 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [3.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v3.0.0
+[2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.3.0
 [2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.5...v2.2.0
 [2.1.5]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...v2.1.4
