@@ -3,7 +3,7 @@
 [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)
 
 This is an abstraction layer around the wasmer VM to expose just what we need to
-run cosmwasm contracts in a high-level manner. This is intended both for
+run CosmWasm contracts in a high-level manner. This is intended both for
 efficient writing of unit tests, as well as a public API to run contracts in eg.
 [wasmvm](https://github.com/CosmWasm/wasmvm). As such it includes all glue code
 needed for typical actions, like fs caching.

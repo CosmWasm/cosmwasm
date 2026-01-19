@@ -190,7 +190,7 @@ This code is compiled into Wasm bytecode as part of the smart contract.
 
 - [cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template) - A
   starter-pack to get you quickly building your custom contract compatible with
-  the cosmwasm system.
+  the CosmWasm system.
 - [cosmwasm-plus](https://github.com/CosmWasm/cosmwasm-plus) - Some sample
   contracts for use and inspiration. These provide usable primitives and
   interfaces for many use cases, such as fungible tokens, NFTs, multisigs,
@@ -251,7 +251,7 @@ We also recommend you review our [documentation site](https://book.cosmwasm.com)
 which contains a few tutorials to guide you in building your first contracts.
 You can find past recordings of hackathon/conference workshops and presentations
 on our [YouTube channel](https://www.youtube.com/@CosmWasm), or
-[join our Telegram community](https://chat.cosmwasm.com) to ask for help.
+[join our Telegram community](https://t.me/+SGT2p3VszzSgUViP) to ask for help.
 
 ## Minimum Supported Rust Version (MSRV)
 
