@@ -223,6 +223,35 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2571]: https://github.com/CosmWasm/cosmwasm/pull/2571
 [#2572]: https://github.com/CosmWasm/cosmwasm/pull/2572
 
+## [2.2.2] - 2025-03-05
+
+### Changed
+
+- cosmwasm-std: Deprecate `abort` feature. The panic handler is now always enabled ([#2384]).
+
+[#2384]: https://github.com/CosmWasm/cosmwasm/pull/2384
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2025-003.
+
+## [2.2.1] - 2025-02-04
+
+### Added
+
+- cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
+  `From<Uint128> for u128`, `From<Int64> for i{64,128}`, and
+  `From<Int128> for i128` ([#2268])
+- cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
+  `Uint64::from_{be,le}_bytes`. ([#2269])
+
+[#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
+[#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2025-002.
+
 ## [2.2.0] - 2024-12-17
 
 ### Added
@@ -1370,6 +1399,8 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [3.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v3.0.0
 [2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.3.0
+[2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
+[2.2.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.5...v2.2.0
 [2.1.5]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...v2.1.4
