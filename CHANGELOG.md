@@ -4,11 +4,80 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
-(empty)
+### Changed
+
+- cosmwasm repository: Fixed typos ([#2602])
+- cosmwasm repository: Updated Telegram link ([#2601])
+- cosmwasm repository: docs(README): fix the community link to Telegram and add a link to the CosmWasm icon ([#2597]) 
+- cosmwasm repository: Updated MIGRATING.md ([#2595])                                         
+- cosmwasm repository: Update MIGRATING.md for version 3.0.x ([#2594])
+- cosmwasm repository: chore: fix some typos ([#2591])                                        
+- cosmwasm repository: core: assert BLS12-381 generator length invariants ([#2586])           
+- cosmwasm repository: Improved development scripts ([#2581])                                 
+- cosmwasm repository: Fix typos ([#2579])
+- cosmwasm repository: Update GitHub actions to the newest versions ([#2578])
+- cosmwasm repository: Update CHANGELOG.md for v3.0.2 ([#2577])
+- cosmwasm repository: Fix articles in `Int` type comments ([#2576])                          
+- cosmwasm repository: CI: migrate workflows to checkout v6 ([#2564])                         
+- cosmwasm repository: chore: fix some comments ([#2562])                                     
+- cosmwasm repository: doc: fix  typos ([#2561])                                              
+- cosmwasm repository: docs: fix minor grammar ([#2560])                                      
+- cosmwasm repository: chore: fix some typos and inaccuracies ([#2559])                       
+- cosmwasm repository: Fix typo ([#2558])                                                    
+- cosmwasm repository: chore: fix typo in README.md ([#2556])                                 
+- cosmwasm repository: ci: upgrade GitHub Action to download-artifact@v5 ([#2555])            
+- cosmwasm repository: docs: fix typos ([#2554])                                              
+- cosmwasm repository: chore: fix minor typos ([#2551])                                       
+- cosmwasm repository: chore: fix minor typos ([#2550])                                       
+- cosmwasm repository: Correct minor grammar mistakes ([#2549])                               
+- cosmwasm repository: docs: fix typo ([#2547])                                               
+- cosmwasm repository: Moved MSRV.md to Wiki ([#2546])                                        
+- cosmwasm repository: Moved CHECKS.md content to Wiki ([#2545])                              
+- cosmwasm repository: Updated schemas ([#2544])                                              
+- cosmwasm repository: chore: fix typos in function names ([#2542])                               
+- cosmwasm repository: fix: grammar issues in contracts and IBC code comments ([#2541])           
+- cosmwasm repository: chore: Remove duplicate words to make the comments more readable ([#2540]) 
+
+### Fixed
+
+- cosmwasm-check: cargo install cosmwasm-check fails to compile ([#2536])
+
+[#2602]: https://github.com/CosmWasm/cosmwasm/pull/2602
+[#2601]: https://github.com/CosmWasm/cosmwasm/pull/2601
+[#2597]: https://github.com/CosmWasm/cosmwasm/pull/2597
+[#2595]: https://github.com/CosmWasm/cosmwasm/pull/2595
+[#2594]: https://github.com/CosmWasm/cosmwasm/issues/2594
+[#2591]: https://github.com/CosmWasm/cosmwasm/pull/2591
+[#2586]: https://github.com/CosmWasm/cosmwasm/pull/2586
+[#2581]: https://github.com/CosmWasm/cosmwasm/pull/2581
+[#2579]: https://github.com/CosmWasm/cosmwasm/issues/2579
+[#2578]: https://github.com/CosmWasm/cosmwasm/issues/2578
+[#2577]: https://github.com/CosmWasm/cosmwasm/issues/2577
+[#2576]: https://github.com/CosmWasm/cosmwasm/pull/2576
+[#2564]: https://github.com/CosmWasm/cosmwasm/pull/2564
+[#2562]: https://github.com/CosmWasm/cosmwasm/pull/2562
+[#2561]: https://github.com/CosmWasm/cosmwasm/pull/2561
+[#2560]: https://github.com/CosmWasm/cosmwasm/pull/2560
+[#2559]: https://github.com/CosmWasm/cosmwasm/pull/2559
+[#2558]: https://github.com/CosmWasm/cosmwasm/pull/2558
+[#2556]: https://github.com/CosmWasm/cosmwasm/pull/2556
+[#2555]: https://github.com/CosmWasm/cosmwasm/pull/2555
+[#2554]: https://github.com/CosmWasm/cosmwasm/pull/2554
+[#2551]: https://github.com/CosmWasm/cosmwasm/pull/2551
+[#2550]: https://github.com/CosmWasm/cosmwasm/pull/2550
+[#2549]: https://github.com/CosmWasm/cosmwasm/pull/2549
+[#2547]: https://github.com/CosmWasm/cosmwasm/pull/2547
+[#2546]: https://github.com/CosmWasm/cosmwasm/pull/2546
+[#2545]: https://github.com/CosmWasm/cosmwasm/pull/2545
+[#2544]: https://github.com/CosmWasm/cosmwasm/pull/2544
+[#2542]: https://github.com/CosmWasm/cosmwasm/pull/2542
+[#2541]: https://github.com/CosmWasm/cosmwasm/pull/2541
+[#2540]: https://github.com/CosmWasm/cosmwasm/pull/2540
+[#2536]: https://github.com/CosmWasm/cosmwasm/issues/2536
 
 ## [3.0.2] - 2025-08-26
 
-## Changed
+### Changed
 
 - cosmwasm repository: Add and fix crate-level documentation for all CosmWasm crates ([#2510])
 - cosmwasm repository: Minor maintenance fixes ([#2514])
@@ -46,7 +115,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [3.0.1] - 2025-06-26
 
-## Added
+### Added
 
 - cosmwasm-std: Add missing export for `ValidatorMetadata` ([#2511])
 
@@ -54,7 +123,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [3.0.0] - 2025-06-23
 
-## Added
+### Added
 
 - cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
   `From<Uint128> for u128`, `From<Int64> for i{64,128}`, and
@@ -87,7 +156,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
   proc-macro ([#2495])
 - cosmwasm-schema: Generate new cw-schemas alongside JSON schemas ([#2495])
 
-## Changed
+### Changed
 
 - cosmwasm-std: Deprecate `abort` feature. The panic handler is now always
   enabled. ([#2337])
@@ -150,7 +219,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cosmwasm-std: Redesigned `StdError` to be more flexible and less immutable
   ([#2500])
 
-## Fixed
+### Fixed
 
 - cosmwasm-schema: The schema export now doesn't overwrite existing
   `additionalProperties` values anymore ([#2310])
