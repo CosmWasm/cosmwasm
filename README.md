@@ -190,7 +190,7 @@ This code is compiled into Wasm bytecode as part of the smart contract.
 
 - [cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template) - A
   starter-pack to get you quickly building your custom contract compatible with
-  the cosmwasm system.
+  the CosmWasm system.
 - [cosmwasm-plus](https://github.com/CosmWasm/cosmwasm-plus) - Some sample
   contracts for use and inspiration. These provide usable primitives and
   interfaces for many use cases, such as fungible tokens, NFTs, multisigs,

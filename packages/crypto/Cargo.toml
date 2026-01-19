@@ -3,7 +3,7 @@ name = "cosmwasm-crypto"
 version = { workspace = true }
 authors = ["Mauro Lacy <maurolacy@users.noreply.github.com>"]
 edition = "2021"
-description = "Crypto bindings for cosmwasm contracts"
+description = "Crypto bindings for CosmWasm contracts"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/crypto"
 license = "Apache-2.0"
 
