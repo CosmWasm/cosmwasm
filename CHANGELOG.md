@@ -1,13 +1,10 @@
 # CHANGELOG
 
-[Keep a Changelog]: https://keepachangelog.com/en/1.0.0
-[Semantic Versioning]: https://semver.org/spec/v2.0.0.html
-
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-[Unreleased] changes
+## [Unreleased]
 
----
+(empty)
 
 ## [3.0.2] - 2025-08-26
 
@@ -203,6 +200,68 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2500]: https://github.com/CosmWasm/cosmwasm/pull/2500
 [#2501]: https://github.com/CosmWasm/cosmwasm/pull/2501
 
+## [2.3.0] - 2025-12-09
+
+### Fixed
+
+- cosmwasm-std: Fix deserialization of `DenomMetadata` ([#2417]).
+- cosmwasm-std: Deprecate `PayPacketFee`, `PayPacketFeeAsync`, `IbcFee`. IBC fees have been removed from ibc-go
+  in version 10. The mentioned struct and enum fields are deprecated and will be removed in cosmwasm `3.0` ([#2431]).
+- cosmwasm-std: Deprecate `FeeEnabledChannel` and `FeeEnabledChannelResponse` ([#2481]).
+
+[#2417]: https://github.com/CosmWasm/cosmwasm/pull/2417
+[#2431]: https://github.com/CosmWasm/cosmwasm/pull/2431
+[#2481]: https://github.com/CosmWasm/cosmwasm/pull/2481
+
+### Changed
+
+- Backported GitHub workflows and removed dependencies on external services ([#2568], [#2569], [#2570], [#2571], [#2572]).
+
+[#2568]: https://github.com/CosmWasm/cosmwasm/pull/2568
+[#2569]: https://github.com/CosmWasm/cosmwasm/pull/2569
+[#2570]: https://github.com/CosmWasm/cosmwasm/pull/2570
+[#2571]: https://github.com/CosmWasm/cosmwasm/pull/2571
+[#2572]: https://github.com/CosmWasm/cosmwasm/pull/2572
+
+## [2.2.3] - 2025-12-19
+
+### Changed
+
+- Backport GitHub actions to version 2.2.2 ([#2580]).
+- Unified maintainers/developers tools ([#2582]).
+
+[#2580]: https://github.com/CosmWasm/cosmwasm/pull/2580
+[#2582]: https://github.com/CosmWasm/cosmwasm/pull/2582
+
+## [2.2.2] - 2025-03-05
+
+### Changed
+
+- cosmwasm-std: Deprecate `abort` feature. The panic handler is now always enabled ([#2384]).
+
+[#2384]: https://github.com/CosmWasm/cosmwasm/pull/2384
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2025-003.
+
+## [2.2.1] - 2025-02-04
+
+### Added
+
+- cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
+  `From<Uint128> for u128`, `From<Int64> for i{64,128}`, and
+  `From<Int128> for i128` ([#2268])
+- cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
+  `Uint64::from_{be,le}_bytes`. ([#2269])
+
+[#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
+[#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2025-002.
+
 ## [2.2.0] - 2024-12-17
 
 ### Added
@@ -312,8 +371,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cosmwasm-std: Fix CWA-2024-002
 - cosmwasm-std: Fix `Reply` deserialization on CosmWasm 1.x chains ([#2159])
-- cosmwasm-std: Updated `QueryRequest` enum to use the default generic parameter
-  `Empty`. ([#2165])
+- cosmwasm-std: Updated `QueryRequest` enum to use the default generic parameter `Empty` ([#2165])
 
 [#2159]: https://github.com/CosmWasm/cosmwasm/pull/2159
 [#2165]: https://github.com/CosmWasm/cosmwasm/pull/2165
@@ -1349,6 +1407,10 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [3.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v3.0.0
+[2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.3.0
+[2.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.2.3
+[2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
+[2.2.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.5...v2.2.0
 [2.1.5]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...v2.1.4
@@ -1399,3 +1461,6 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [1.1.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-rc.0...v1.0.0
+
+[Keep a Changelog]: https://keepachangelog.com/en/1.0.0/
+[Semantic Versioning]: https://semver.org/spec/v2.0.0.html
