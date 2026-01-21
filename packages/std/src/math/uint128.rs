@@ -114,6 +114,16 @@ impl Uint128 {
         self.0.checked_ilog2().unwrap()
     }
 
+    /// Returns the base 10 logarithm of the number, rounded down.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if `self` is zero.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub fn ilog10(self) -> u32 {
+        self.0.checked_ilog10().unwrap()
+    }
+
     /// Returns `self * numerator / denominator`.
     ///
     /// Due to the nature of the integer division involved, the result is always floored.
@@ -1560,4 +1570,15 @@ mod tests {
             })),
         );
     }
+
+    #[test]
+    fn ilog10_works() {
+        assert_eq!(Uint128::one().ilog10(), 0);
+        assert_eq!(Uint128::new(10).ilog10(), 1);
+        assert_eq!(Uint128::new(100).ilog10(), 2);
+        assert_eq!(Uint128::new(999).ilog10(), 2);
+        assert_eq!(Uint128::new(1000).ilog10(), 3);
+        assert_eq!(Uint128::MAX.ilog10(), 38);
+    }
+
 }
