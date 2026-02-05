@@ -2,7 +2,7 @@
 name = "go-gen"
 authors = ["Christoph Otter <chris@confio.gmbh>"]
 version = "0.1.0"
-edition = "2021"
+edition = { workspace = true }
 publish = false
 
 [package.metadata.release]

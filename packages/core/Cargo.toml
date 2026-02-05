@@ -1,8 +1,8 @@
 [package]
 name = "cosmwasm-core"
 version = { workspace = true }
-edition = "2021"
 description = "Components of cosmwasm-std that can be used in no_std environments"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/core"
+edition = { workspace = true }
 license = "Apache-2.0"
 readme = "README.md"

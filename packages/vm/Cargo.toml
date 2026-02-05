@@ -2,9 +2,9 @@
 name = "cosmwasm-vm"
 version = { workspace = true }
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
-edition = "2021"
 description = "VM bindings to run CosmWasm contracts"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm"
+edition = { workspace = true }
 license = "Apache-2.0"
 
 [package.metadata.release]
