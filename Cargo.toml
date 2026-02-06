@@ -6,9 +6,9 @@ resolver = "2"
 
 [workspace.package]
 version = "3.0.3-dev"
-repository = "https://github.com/CosmWasm/cosmwasm"
 edition = "2021"
 license = "Apache-2.0"
+repository = "https://github.com/CosmWasm/cosmwasm"
 
 [workspace.dependencies]
 cosmwasm-core = { path = "packages/core" }
