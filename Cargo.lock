@@ -716,6 +716,7 @@ dependencies = [
  "paste",
  "proptest",
  "rand_core",
+ "rmp",
  "rmp-serde",
  "schemars",
  "serde",
