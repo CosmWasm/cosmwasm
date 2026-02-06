@@ -2,10 +2,10 @@
 name = "cosmwasm-check"
 version = { workspace = true }
 authors = ["Mauro Lacy <mauro@lacy.com.es>"]
-edition = "2021"
 description = "A CLI tool for verifying CosmWasm smart contracts"
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/check"
-license = "Apache-2.0"
+repository = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
 
 [dependencies]
 anyhow = "1.0.57"

@@ -1,10 +1,10 @@
 [package]
 name = "cosmwasm-vm-derive"
-edition = "2021"
 version = { workspace = true }
 description = "Derive macros for cosmwasm-vm. For internal use only. No stability guarantees."
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/std"
-license = "Apache-2.0"
+repository = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
 
 [lib]
 proc-macro = true

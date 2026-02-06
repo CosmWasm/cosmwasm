@@ -3,7 +3,7 @@ version: '3'
 silent: true
 
 vars:
-  COSMWASM_CHECK_VERSION: 2.2.2 # The last released version of cosmwasm-check tool before v2.2.3.
+  COSMWASM_CHECK_VERSION: 2.2.3 # The last released version of cosmwasm-check tool before v2.2.5.
   TOOLCHAIN: +1.81.0            # The last Rust toolchain without 'reference-types'.
   TOOLCHAIN_CHECK: +1.82.0      # Rust toolchain for building cosmwasm-check tool.
 
