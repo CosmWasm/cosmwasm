@@ -2,10 +2,10 @@
 name = "cosmwasm-crypto"
 version = { workspace = true }
 authors = ["Mauro Lacy <maurolacy@users.noreply.github.com>"]
-edition = "2021"
 description = "Crypto bindings for CosmWasm contracts"
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/crypto"
-license = "Apache-2.0"
+repository = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
 
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
