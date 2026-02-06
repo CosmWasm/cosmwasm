@@ -552,7 +552,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-check"
-version = "2.2.4-rc.0"
+version = "2.2.4"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -566,7 +566,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-core"
-version = "2.2.4-rc.0"
+version = "2.2.4"
 
 [[package]]
 name = "cosmwasm-core"
@@ -576,7 +576,7 @@ checksum = "63efd882086668c3bad621b5b897a0e058d0b5fae027c984e1a6230bf284ab85"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "2.2.4-rc.0"
+version = "2.2.4"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -632,7 +632,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "2.2.4-rc.0"
+version = "2.2.4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -652,7 +652,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.2.4-rc.0"
+version = "2.2.4"
 dependencies = [
  "anyhow",
  "cosmwasm-schema-derive 2.3.0",
@@ -679,7 +679,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "2.2.4-rc.0"
+version = "2.2.4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -699,7 +699,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "2.2.4-rc.0"
+version = "2.2.4"
 dependencies = [
  "base64 0.22.1",
  "bech32",
@@ -752,7 +752,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "2.2.4-rc.0"
+version = "2.2.4"
 dependencies = [
  "bech32",
  "blake2",
@@ -822,7 +822,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm-derive"
-version = "2.2.4-rc.0"
+version = "2.2.4"
 dependencies = [
  "blake2",
  "proc-macro2",
@@ -1378,7 +1378,7 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "go-gen"
-version = "2.2.4-rc.0"
+version = "2.2.4"
 dependencies = [
  "Inflector",
  "anyhow",
