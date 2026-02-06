@@ -755,6 +755,7 @@ dependencies = [
 name = "cosmwasm-vm"
 version = "2.2.4"
 dependencies = [
+ "backtrace",
  "bech32",
  "blake2",
  "bytes",
@@ -771,6 +772,7 @@ dependencies = [
  "glob",
  "hex",
  "hex-literal",
+ "indexmap 2.2.6",
  "leb128",
  "rand",
  "rand_core",

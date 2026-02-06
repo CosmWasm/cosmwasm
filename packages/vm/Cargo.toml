@@ -55,6 +55,8 @@ strum = { version = "0.26.2", default-features = false, features = ["derive"] }
 # For heap profiling. Only used in the "heap_profiling" example. This has to be a non-dev dependency
 # because cargo currently does not support optional dev-dependencies.
 dhat = { version = "0.3.3", optional = true }
+backtrace = "=0.3.73"
+indexmap = "=2.2.6"
 
 # Dependencies that we do not use ourself. We add those entries
 # to bump the min version of them.
