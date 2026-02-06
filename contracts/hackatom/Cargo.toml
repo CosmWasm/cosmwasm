@@ -21,13 +21,13 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { version = "=2.2.3" }
-cosmwasm-std = { version = "=2.2.3", default-features = false, features = ["cosmwasm_2_2", "std"] }
+cosmwasm-schema = { version = "=2.2.4-rc.0" }
+cosmwasm-std = { version = "=2.2.4-rc.0", default-features = false, features = ["cosmwasm_2_2", "std"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 sha2 = "0.10"
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=2.2.3", default-features = false }
+cosmwasm-vm = { version = "=2.2.4-rc.0", default-features = false }
 backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0
