@@ -24,12 +24,12 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { version = "=2.2.4" }
-cosmwasm-std = { version = "=2.2.4", default-features = false, features = ["cosmwasm_2_2", "staking", "stargate", "std"] }
+cosmwasm-schema = { version = "=2.2.5" }
+cosmwasm-std = { version = "=2.2.5", default-features = false, features = ["cosmwasm_2_2", "staking", "stargate", "std"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=2.2.4", default-features = false, features = ["stargate"] }
-backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0
+cosmwasm-vm = { version = "=2.2.5", default-features = false, features = ["stargate"] }
+backtrace = "=0.3.73" # This fixes the last version that compiles with 1.81.0

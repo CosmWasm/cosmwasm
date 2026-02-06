@@ -21,12 +21,12 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { version = "=2.2.4" }
-cosmwasm-std = { version = "=2.2.4", default-features = false, features = ["cosmwasm_1_3", "std"] }
+cosmwasm-schema = { version = "=2.2.5" }
+cosmwasm-std = { version = "=2.2.5", default-features = false, features = ["cosmwasm_1_3", "std"] }
 rust-argon2 = "2.1"
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=2.2.4", default-features = false }
-backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0
+cosmwasm-vm = { version = "=2.2.5", default-features = false }
+backtrace = "=0.3.73" # This fixes the last version that compiles with 1.81.0
 tempfile = "3.1.0"
