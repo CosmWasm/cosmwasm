@@ -28,8 +28,8 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-schema = { version = "=2.2.4-rc.0" }
-cosmwasm-std = { version = "=2.2.4-rc.0", features = ["cosmwasm_1_4", "cosmwasm_2_0"] }
+cosmwasm-schema = { version = "2.2.4-rc.0" }
+cosmwasm-std = { version = "2.2.4-rc.0", features = ["cosmwasm_1_4", "cosmwasm_2_0"] }
 cw-storage-plus = "2.0.0"
 cw2 = "2.0.0"
 schemars = "0.8.16"
