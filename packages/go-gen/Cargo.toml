@@ -7,9 +7,6 @@ edition = { workspace = true }
 license = { workspace = true }
 publish = false
 
-[package.metadata.release]
-release = false
-
 [dependencies]
 cosmwasm-std = { workspace = true, default-features = true, features = ["cosmwasm_3_0", "staking", "stargate"] }
 cosmwasm-schema = { workspace = true }
