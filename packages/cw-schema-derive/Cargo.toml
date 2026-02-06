@@ -3,9 +3,9 @@ name = "cw-schema-derive"
 version = { workspace = true }
 authors = ["Aumetra Weisman <aumetra@cryptolab.net>"]
 description = "Derive macros for cw-schema"
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/cw-schema-derive"
+repository = { workspace = true }
 edition = { workspace = true }
-license = "Apache-2.0"
+license = { workspace = true }
 
 [lib]
 proc-macro = true

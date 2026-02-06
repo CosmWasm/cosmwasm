@@ -3,9 +3,9 @@ name = "cw-schema"
 version = { workspace = true }
 authors = ["Aumetra Weisman <aumetra@cryptolab.net>"]
 description = "A dependency for CosmWasm contracts to generate schema files for their messages."
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/cw-schema"
+repository = { workspace = true }
 edition = { workspace = true }
-license = "Apache-2.0"
+license = { workspace = true }
 
 [dependencies]
 cw-schema-derive = { workspace = true }

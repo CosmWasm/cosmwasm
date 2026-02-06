@@ -2,9 +2,9 @@
 name = "cosmwasm-vm-derive"
 version = { workspace = true }
 description = "Derive macros for cosmwasm-vm. For internal use only. No stability guarantees."
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/std"
+repository = { workspace = true }
 edition = { workspace = true }
-license = "Apache-2.0"
+license = { workspace = true }
 
 [lib]
 proc-macro = true

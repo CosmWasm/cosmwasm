@@ -6,9 +6,9 @@ authors = [
     "Simon Warta <webmaster128@users.noreply.github.com>",
 ]
 description = "A dev-dependency for CosmWasm contracts to generate JSON Schema files."
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/schema"
+repository = { workspace = true }
 edition = { workspace = true }
-license = "Apache-2.0"
+license = { workspace = true }
 
 [dependencies]
 cosmwasm-schema-derive = { workspace = true }

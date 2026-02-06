@@ -3,9 +3,9 @@ name = "cosmwasm-schema-derive"
 version = { workspace = true }
 authors = ["Tomasz Kurcz <tom@confio.gmbh>"]
 description = "Derive macros for cosmwasm-schema"
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/schema"
+repository = { workspace = true }
 edition = { workspace = true }
-license = "Apache-2.0"
+license = { workspace = true }
 
 [dependencies]
 proc-macro2 = "1"
