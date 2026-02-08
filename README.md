@@ -561,7 +561,24 @@ You may want to compare how long the contract takes to run inside the Wasm VM
 compared to in native rust code, especially for computationally intensive code,
 like hashing or signature verification.
 
-**TODO** add instructions
+This repository uses [Criterion](https://github.com/bheisler/criterion.rs) for benchmarking.
+Benchmarks are available in the `packages/vm` and `packages/crypto` crates.
+
+To run all benchmarks:
+
+```sh
+cargo bench
+```
+
+To run benchmarks for a specific package:
+
+```sh
+cargo bench -p cosmwasm-vm
+cargo bench -p cosmwasm-crypto
+```
+
+Benchmark results will be saved in `target/criterion/` and an HTML report will be
+generated for detailed analysis.
 
 ## Developing
 
