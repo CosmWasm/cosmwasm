@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 (empty)
 
+## [2.2.6] - 2026-02-08
+
+### Changed
+
+- Removed technical debt ([#2608])
+- Aligned CHANGELOG with the version on main branch ([#2599])
+
+[#2608]: https://github.com/CosmWasm/cosmwasm/pull/2608
+[#2599]: https://github.com/CosmWasm/cosmwasm/pull/2599
+
+## 2.2.4, 2.2.5 - yanked
+
+- Versions yanked because of broken dependencies.
+
 ## [2.2.3] - 2025-12-19
 
 ### Changed
@@ -1187,7 +1201,8 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.3...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.6...HEAD
+[2.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.3...v2.2.6
 [2.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v2.2.1
