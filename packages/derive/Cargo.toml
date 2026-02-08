@@ -2,10 +2,10 @@
 name = "cosmwasm-derive"
 version = { workspace = true }
 authors = ["Simon Warta <webmaster128@users.noreply.github.com>"]
-edition = "2021"
 description = "A package for auto-generated code used for CosmWasm contract development. This is shipped as part of cosmwasm-std. Do not use directly."
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/derive"
-license = "Apache-2.0"
+repository = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
 readme = "README.md"
 
 [lib]

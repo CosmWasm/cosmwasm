@@ -2,10 +2,10 @@
 name = "cosmwasm-std"
 version = { workspace = true }
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
-edition = "2021"
 description = "Standard library for Wasm based smart contracts on Cosmos blockchains"
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/std"
-license = "Apache-2.0"
+repository = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
 readme = "README.md"
 
 [package.metadata.docs.rs]
