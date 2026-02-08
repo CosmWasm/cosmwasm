@@ -23,11 +23,11 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { version = "=2.3.0" }
-cosmwasm-std = { version = "=2.3.0", default-features = false, features = ["staking", "std"] }
+cosmwasm-schema = { version = "=2.3.1" }
+cosmwasm-std = { version = "=2.3.1", default-features = false, features = ["staking", "std"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = "0.8.2"
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=2.3.0", default-features = false, features = ["staking"] }
+cosmwasm-vm = { version = "=2.3.1", default-features = false, features = ["staking"] }

@@ -24,8 +24,8 @@ overflow-checks = true
 
 [dependencies]
 base64 = "0.22.0"
-cosmwasm-schema = { version = "=2.3.0" }
-cosmwasm-std = { version = "=2.3.0", features = ["cosmwasm_2_1", "iterator"] }
+cosmwasm-schema = { version = "=2.3.1" }
+cosmwasm-std = { version = "=2.3.1", features = ["cosmwasm_2_1", "iterator"] }
 hex = "0.4"
 p256 = { version = "0.13.2", default-features = false, features = ["alloc", "ecdsa"] }
 rlp = "0.5"
@@ -35,5 +35,5 @@ sha2 = "0.10"
 sha3 = "0.10"
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=2.3.0", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { version = "=2.3.1", default-features = false, features = ["iterator"] }
 hex-literal = "0.4.1"
