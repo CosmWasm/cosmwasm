@@ -44,7 +44,7 @@ to "jailbreak" or access other element of the database.
 If you look closely, you will see every function definition in `exports` accepts
 a fixed number of arguments of type `i32` and returns one result of type `i32`
 (or `void`). With such limitations, how can one pass in a `struct` to the
-contract, or even a serialized byte array (eg. json blob). And how can we return
+contract, or even a serialized byte array (e.g. JSON blob). And how can we return
 a string back?
 
 There is one more way in which the runtime can interact with a smart contract
@@ -72,7 +72,7 @@ pub extern "C" fn deallocate(pointer: *mut c_void, capacity: usize) {
 `allocate` heap allocates `size` bytes and tells the wasm alloc library not to
 clear it (forget), after which it returns the pointer (integer offset) to the
 caller. The caller can now safely write up to `size` bytes to the given offset,
-eg. `copy(data, vm.Memory[offset:offset+size])`. Of course, this passes the
+e.g. `copy(data, vm.Memory[offset:offset+size])`. Of course, this passes the
 responsibility of freeing the memory from the wasm code to the caller, so make
 sure to call `deallocate()` on the memory reference after the function call
 finishes.
