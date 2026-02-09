@@ -59,7 +59,7 @@ pub trait Storage {
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
-    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
+    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, no matter of the order.
     #[cfg(feature = "iterator")]
     #[allow(unused_variables)]
     fn range<'a>(
@@ -76,7 +76,7 @@ pub trait Storage {
     /// Allows iteration over a set of keys, either forwards or backwards.
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
-    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
+    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, no matter of the order.
     ///
     /// The default implementation uses [`Storage::range`] and discards the values. More efficient
     /// implementations might be possible depending on the storage.
@@ -93,7 +93,7 @@ pub trait Storage {
     /// Allows iteration over a set of values, either forwards or backwards.
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
-    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
+    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, no matter of the order.
     ///
     /// The default implementation uses [`Storage::range`] and discards the keys. More efficient implementations
     /// might be possible depending on the storage.
@@ -212,8 +212,8 @@ pub trait Api: Any {
     ///
     /// e(p_1, q_1) × e(p_2, q_2) × … × e(p_n, q_n) = e(s, q)
     ///
-    /// The argument `ps` contain the points p_1, ..., p_n ∈ G1 as a concatenation of 48 byte elements.
-    /// The argument `qs` contain the points q_1, ..., q_n ∈ G2 as a concatenation of 96 byte elements.
+    /// The argument `ps` contains the points p_1, ..., p_n ∈ G1 as a concatenation of 48 byte elements.
+    /// The argument `qs` contains the points q_1, ..., q_n ∈ G2 as a concatenation of 96 byte elements.
     ///
     /// ## Examples
     ///

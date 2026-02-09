@@ -207,7 +207,7 @@ fn check_wasm_exports(module: &ParsedWasm, logs: Logger) -> VmResult<()> {
 
 /// Checks if the import requirements of the contract are satisfied.
 /// When this is not the case, we either have an incompatibility between contract and VM
-/// or a error in the contract.
+/// or an error in the contract.
 fn check_wasm_imports(
     module: &ParsedWasm,
     supported_imports: &[&str],

@@ -82,7 +82,7 @@ fn bench_instance(c: &mut Criterion) {
         });
     });
 
-    group.bench_function("execute execute (release)", |b| {
+    group.bench_function("execute (release)", |b| {
         let backend = mock_backend(&[]);
         let much_gas: InstanceOptions = InstanceOptions {
             gas_limit: HIGH_GAS_LIMIT,
@@ -108,7 +108,7 @@ fn bench_instance(c: &mut Criterion) {
         });
     });
 
-    group.bench_function("execute execute (argon2)", |b| {
+    group.bench_function("execute (argon2)", |b| {
         let backend = mock_backend(&[]);
         let much_gas: InstanceOptions = InstanceOptions {
             gas_limit: HIGH_GAS_LIMIT,
@@ -134,7 +134,7 @@ fn bench_instance(c: &mut Criterion) {
         println!("Gas used: {gas_used}");
     });
 
-    group.bench_function("execute execute (infinite loop)", |b| {
+    group.bench_function("execute (infinite loop)", |b| {
         let backend = mock_backend(&[]);
         let medium_gas: InstanceOptions = InstanceOptions {
             gas_limit: MEDIUM_GAS_LIMIT,

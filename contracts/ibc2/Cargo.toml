@@ -21,8 +21,8 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { version = "3.0.2" }
-cosmwasm-std = { version = "3.0.2", features = ["ibc2"] }
+cosmwasm-schema = { version = "3.0.3" }
+cosmwasm-std = { version = "3.0.3", features = ["ibc2"] }
 schemars = "0.8.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.26"

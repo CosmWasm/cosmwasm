@@ -1806,7 +1806,7 @@
                 ],
                 "properties": {
                   "address": {
-                    "description": "The validator's address (e.g. (e.g. cosmosvaloper1...))",
+                    "description": "The validator's address (e.g. cosmosvaloper1...)",
                     "type": "string"
                   }
                 },
@@ -2046,7 +2046,7 @@
       "additionalProperties": false,
       "definitions": {
         "Attribute": {
-          "description": "An key value pair that is used in the context of event attributes in logs",
+          "description": "A key value pair that is used in the context of event attributes in logs",
           "type": "object",
           "required": [
             "key",

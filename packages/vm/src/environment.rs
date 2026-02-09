@@ -208,7 +208,7 @@ pub struct DebugInfo<'a> {
 //                            v                                                 v
 pub type DebugHandlerFn = dyn for<'a, 'b> FnMut(/* msg */ &'a str, DebugInfo<'b>);
 
-/// A environment that provides access to the ContextData.
+/// An environment that provides access to the ContextData.
 /// The environment is cloneable but clones access the same underlying data.
 pub struct Environment<A, S, Q> {
     pub memory: Option<Memory>,
@@ -452,7 +452,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
 
     /// Decreases gas left by the given amount.
     /// If the amount exceeds the available gas, the remaining gas is set to 0 and
-    /// an VmError::GasDepletion error is returned.
+    /// a VmError::GasDepletion error is returned.
     #[allow(unused)] // used in tests
     pub fn decrease_gas_left(&self, store: &mut impl AsStoreMut, amount: u64) -> VmResult<()> {
         self.with_wasmer_instance(|instance| {

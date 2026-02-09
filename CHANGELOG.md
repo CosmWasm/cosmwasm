@@ -1,17 +1,108 @@
 # CHANGELOG
 
-[Keep a Changelog]: https://keepachangelog.com/en/1.0.0
-[Semantic Versioning]: https://semver.org/spec/v2.0.0.html
-
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-[Unreleased] changes
+## [Unreleased]
 
----
+(empty)
+
+## [3.0.3] - 2025-02-09
+
+### Added
+
+- Add benchmarking instructions to README ([#2606])
+
+### Changed
+
+- Prepared version v3.0.3 ([#2610])
+- Update MIGRATING.md for version 3.0.x ([#2594])
+- Update GitHub actions to the newest versions ([#2578])
+- Update CHANGELOG.md for v3.0.2 ([#2577])
+- Updated CHANGELOG with unreleased issues and PRs ([#2603])
+- Updated Telegram link ([#2601])
+- Updated CHANGELOG ([#2598])
+- Updated MIGRATING.md ([#2595])
+- core: assert BLS12-381 generator length invariants ([#2586])
+- Unified Rust toolchain versions ([#2585])
+- Unification of developers tools ([#2583])
+- Improved development scripts ([#2581])
+- CI: migrate workflows to checkout v6 ([#2564])
+- ci: upgrade GitHub Action to download-artifact@v5 ([#2555])
+- Moved MSRV.md to Wiki ([#2546])
+- Moved CHECKS.md content to Wiki ([#2545])
+- Updated schemas ([#2544])
+- Unified GH actions versions. ([0xcda1f71])
+
+### Fixed
+
+- Correct minor grammar mistakes ([#2549])
+- chore: Remove duplicate words to make the comments more readable ([#2540])
+- docs(README): fix the community link to Telegram and add a link to the CosmWasm icon ([#2597])
+- cargo install cosmwasm-check fails to compile ([#2536])
+- Fix typos ([#2579])
+- chore: fix some comments ([#2562])
+- Fixed workspace settings ([#2605])
+- Fixed typos. ([#2602])
+- Fix typos and redundant naming ([#2596])
+- chore: fix some typos ([#2591])
+- Fix articles in `Int` type comments ([#2576])
+- Fix typo ([#2558])
+- chore: fix typo in README.md ([#2556])
+- docs: fix typos ([#2554])
+- chore: fix minor typos ([#2551])
+- chore: fix minor typos ([#2550])
+- docs: fix typo ([#2547])
+- chore: fix typos in function names ([#2542])
+- fix: grammar issues in contracts and IBC code comments ([#2541])
+- doc: fix  typos ([#2561])
+- docs: fix minor grammar ([#2560])
+- chore: fix some typos and inaccuracies ([#2559])
+
+[#2594]: https://github.com/CosmWasm/cosmwasm/issues/2594
+[#2579]: https://github.com/CosmWasm/cosmwasm/issues/2579
+[#2578]: https://github.com/CosmWasm/cosmwasm/issues/2578
+[#2577]: https://github.com/CosmWasm/cosmwasm/issues/2577
+[#2536]: https://github.com/CosmWasm/cosmwasm/issues/2536
+[#2610]: https://github.com/CosmWasm/cosmwasm/pull/2610
+[#2606]: https://github.com/CosmWasm/cosmwasm/pull/2606
+[#2605]: https://github.com/CosmWasm/cosmwasm/pull/2605
+[#2603]: https://github.com/CosmWasm/cosmwasm/pull/2603
+[#2602]: https://github.com/CosmWasm/cosmwasm/pull/2602
+[#2601]: https://github.com/CosmWasm/cosmwasm/pull/2601
+[#2598]: https://github.com/CosmWasm/cosmwasm/pull/2598
+[#2597]: https://github.com/CosmWasm/cosmwasm/pull/2597
+[#2596]: https://github.com/CosmWasm/cosmwasm/pull/2596
+[#2595]: https://github.com/CosmWasm/cosmwasm/pull/2595
+[#2591]: https://github.com/CosmWasm/cosmwasm/pull/2591
+[#2586]: https://github.com/CosmWasm/cosmwasm/pull/2586
+[#2585]: https://github.com/CosmWasm/cosmwasm/pull/2585
+[#2583]: https://github.com/CosmWasm/cosmwasm/pull/2583
+[#2581]: https://github.com/CosmWasm/cosmwasm/pull/2581
+[#2576]: https://github.com/CosmWasm/cosmwasm/pull/2576
+[#2564]: https://github.com/CosmWasm/cosmwasm/pull/2564
+[#2562]: https://github.com/CosmWasm/cosmwasm/pull/2562
+[#2561]: https://github.com/CosmWasm/cosmwasm/pull/2561
+[#2560]: https://github.com/CosmWasm/cosmwasm/pull/2560
+[#2559]: https://github.com/CosmWasm/cosmwasm/pull/2559
+[#2558]: https://github.com/CosmWasm/cosmwasm/pull/2558
+[#2556]: https://github.com/CosmWasm/cosmwasm/pull/2556
+[#2555]: https://github.com/CosmWasm/cosmwasm/pull/2555
+[#2554]: https://github.com/CosmWasm/cosmwasm/pull/2554
+[#2551]: https://github.com/CosmWasm/cosmwasm/pull/2551
+[#2550]: https://github.com/CosmWasm/cosmwasm/pull/2550
+[#2549]: https://github.com/CosmWasm/cosmwasm/pull/2549
+[#2547]: https://github.com/CosmWasm/cosmwasm/pull/2547
+[#2546]: https://github.com/CosmWasm/cosmwasm/pull/2546
+[#2545]: https://github.com/CosmWasm/cosmwasm/pull/2545
+[#2544]: https://github.com/CosmWasm/cosmwasm/pull/2544
+[#2542]: https://github.com/CosmWasm/cosmwasm/pull/2542
+[#2541]: https://github.com/CosmWasm/cosmwasm/pull/2541
+[#2540]: https://github.com/CosmWasm/cosmwasm/pull/2540
+[0xcda1f71]: https://github.com/CosmWasm/cosmwasm/commit/cda1f714869d8f1fb93a272be2d375fedc8374cd
 
 ## [3.0.2] - 2025-08-26
 
-## Changed
+### Changed
 
 - cosmwasm repository: Add and fix crate-level documentation for all CosmWasm crates ([#2510])
 - cosmwasm repository: Minor maintenance fixes ([#2514])
@@ -49,7 +140,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [3.0.1] - 2025-06-26
 
-## Added
+### Added
 
 - cosmwasm-std: Add missing export for `ValidatorMetadata` ([#2511])
 
@@ -57,7 +148,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [3.0.0] - 2025-06-23
 
-## Added
+### Added
 
 - cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
   `From<Uint128> for u128`, `From<Int64> for i{64,128}`, and
@@ -90,7 +181,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
   proc-macro ([#2495])
 - cosmwasm-schema: Generate new cw-schemas alongside JSON schemas ([#2495])
 
-## Changed
+### Changed
 
 - cosmwasm-std: Deprecate `abort` feature. The panic handler is now always
   enabled. ([#2337])
@@ -153,7 +244,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cosmwasm-std: Redesigned `StdError` to be more flexible and less immutable
   ([#2500])
 
-## Fixed
+### Fixed
 
 - cosmwasm-schema: The schema export now doesn't overwrite existing
   `additionalProperties` values anymore ([#2310])
@@ -202,6 +293,94 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2495]: https://github.com/CosmWasm/cosmwasm/pull/2495
 [#2500]: https://github.com/CosmWasm/cosmwasm/pull/2500
 [#2501]: https://github.com/CosmWasm/cosmwasm/pull/2501
+
+## [2.3.1] - 2026-02-09
+
+### Changed
+
+- Removed technical debt ([#2609])
+- Aligned CHANGELOG with the version on main branch ([#2600])
+- Unified maintenance tools. ([0xfd51861])
+
+[#2609]: https://github.com/CosmWasm/cosmwasm/pull/2609
+[#2600]: https://github.com/CosmWasm/cosmwasm/pull/2600
+[0xfd51861]: https://github.com/CosmWasm/cosmwasm/commit/fd51861d5ea11c37eba4434d9c6601253c1e43ca
+
+## [2.3.0] - 2025-12-09
+
+### Fixed
+
+- cosmwasm-std: Fix deserialization of `DenomMetadata` ([#2417]).
+- cosmwasm-std: Deprecate `PayPacketFee`, `PayPacketFeeAsync`, `IbcFee`. IBC fees have been removed from ibc-go
+  in version 10. The mentioned struct and enum fields are deprecated and will be removed in cosmwasm `3.0` ([#2431]).
+- cosmwasm-std: Deprecate `FeeEnabledChannel` and `FeeEnabledChannelResponse` ([#2481]).
+
+[#2417]: https://github.com/CosmWasm/cosmwasm/pull/2417
+[#2431]: https://github.com/CosmWasm/cosmwasm/pull/2431
+[#2481]: https://github.com/CosmWasm/cosmwasm/pull/2481
+
+### Changed
+
+- Backported GitHub workflows and removed dependencies on external services ([#2568], [#2569], [#2570], [#2571], [#2572]).
+
+[#2568]: https://github.com/CosmWasm/cosmwasm/pull/2568
+[#2569]: https://github.com/CosmWasm/cosmwasm/pull/2569
+[#2570]: https://github.com/CosmWasm/cosmwasm/pull/2570
+[#2571]: https://github.com/CosmWasm/cosmwasm/pull/2571
+[#2572]: https://github.com/CosmWasm/cosmwasm/pull/2572
+
+## [2.2.6] - 2026-02-08
+
+### Changed
+
+- Removed technical debt ([#2608])
+- Aligned CHANGELOG with the version on main branch ([#2599])
+
+[#2608]: https://github.com/CosmWasm/cosmwasm/pull/2608
+[#2599]: https://github.com/CosmWasm/cosmwasm/pull/2599
+
+## 2.2.4, 2.2.5 - yanked
+
+- Versions yanked because of broken dependencies.
+
+## [2.2.3] - 2025-12-19
+
+### Changed
+
+- Backport GitHub actions to version 2.2.2 ([#2580]).
+- Unified maintainers/developers tools ([#2582]).
+
+[#2580]: https://github.com/CosmWasm/cosmwasm/pull/2580
+[#2582]: https://github.com/CosmWasm/cosmwasm/pull/2582
+
+## [2.2.2] - 2025-03-05
+
+### Changed
+
+- cosmwasm-std: Deprecate `abort` feature. The panic handler is now always enabled ([#2384]).
+
+[#2384]: https://github.com/CosmWasm/cosmwasm/pull/2384
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2025-003.
+
+## [2.2.1] - 2025-02-04
+
+### Added
+
+- cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
+  `From<Uint128> for u128`, `From<Int64> for i{64,128}`, and
+  `From<Int128> for i128` ([#2268])
+- cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
+  `Uint64::from_{be,le}_bytes`. ([#2269])
+
+[#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
+[#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2025-002.
 
 ## [2.2.0] - 2024-12-17
 
@@ -312,8 +491,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cosmwasm-std: Fix CWA-2024-002
 - cosmwasm-std: Fix `Reply` deserialization on CosmWasm 1.x chains ([#2159])
-- cosmwasm-std: Updated `QueryRequest` enum to use the default generic parameter
-  `Empty`. ([#2165])
+- cosmwasm-std: Updated `QueryRequest` enum to use the default generic parameter `Empty` ([#2165])
 
 [#2159]: https://github.com/CosmWasm/cosmwasm/pull/2159
 [#2165]: https://github.com/CosmWasm/cosmwasm/pull/2165
@@ -1345,10 +1523,17 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.2...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.3...HEAD
+[3.0.3]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v3.0.0
+[2.3.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.0...v2.3.1
+[2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.3.0
+[2.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.3...v2.2.6
+[2.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.2.3
+[2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
+[2.2.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.5...v2.2.0
 [2.1.5]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...v2.1.4
@@ -1399,3 +1584,6 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [1.1.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-rc.0...v1.0.0
+
+[Keep a Changelog]: https://keepachangelog.com/en/1.0.0/
+[Semantic Versioning]: https://semver.org/spec/v2.0.0.html

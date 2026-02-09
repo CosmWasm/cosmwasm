@@ -70,7 +70,7 @@ impl Int512 {
     pub const MAX: Int512 = Int512(I512::MAX);
     pub const MIN: Int512 = Int512(I512::MIN);
 
-    /// Creates a Int512(value).
+    /// Creates an Int512(value).
     ///
     /// This method is less flexible than `from` but can be called in a const context.
     ///
@@ -84,13 +84,13 @@ impl Int512 {
         Self::from_be_bytes(grow_be_int(value.to_be_bytes()))
     }
 
-    /// Creates a Int512(0)
+    /// Creates an Int512(0)
     #[inline]
     pub const fn zero() -> Self {
         Int512(I512::ZERO)
     }
 
-    /// Creates a Int512(1)
+    /// Creates an Int512(1)
     #[inline]
     pub const fn one() -> Self {
         Self(I512::ONE)

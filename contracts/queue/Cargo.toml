@@ -24,11 +24,11 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { version = "3.0.2" }
+cosmwasm-schema = { version = "3.0.3" }
 # cosmwasm_1_4 is enabled here for more efficient `range_keys` and `range_values`
-cosmwasm-std = { version = "3.0.2", features = ["cosmwasm_1_4", "iterator"] }
+cosmwasm-std = { version = "3.0.3", features = ["cosmwasm_1_4", "iterator"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-cosmwasm-vm = { version = "3.0.2", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { version = "3.0.3", default-features = false, features = ["iterator"] }

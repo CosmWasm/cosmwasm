@@ -29,7 +29,7 @@ cargo generate --git https://github.com/confio/cosmwasm-template.git --name YOUR
 ```
 
 You will now have a new folder called `YOUR_NAME_HERE` (I hope you changed that
-to something else) containing a simple working contract and build system that
+to something else) containing a simple working contract and a build system that
 you can customize.
 
 ## Create a Repo
@@ -49,7 +49,7 @@ git push -u origin main
 
 ## CI Support
 
-We have templates for both github actions and Circle CI in the generated
+We have templates for both GitHub actions and Circle CI in the generated
 project, so you can get up and running with CI right away. One note is that the
 CI runs all `cargo` commands with `--locked` to ensure it uses the exact same
 versions as you have locally. This also means you must have an up-to-date

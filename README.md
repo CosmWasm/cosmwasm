@@ -1,9 +1,10 @@
 # CosmWasm
 
-![component][component-badge]
+[![component][component-badge]][component-url]
 [![license][apache-badge]][apache-url]
 
 [component-badge]: https://img.shields.io/badge/CosmWasm-6343ae.svg
+[component-url]: https://cosmwasm.com
 [apache-badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
 [apache-url]: LICENSE
 [notice-url]: NOTICE
@@ -119,37 +120,37 @@ config:
 
 graph BT
     A("`**cosmwasm-core**
-        3.0.1`")
+        3.0.2`")
  
     B("`**cosmwasm-std**
-        3.0.1`")
+        3.0.2`")
  
     C("`**cosmwasm-crypto**
-        3.0.1`")
+        3.0.2`")
         
     D("`**cosmwasm-vm**
-        3.0.1`")
+        3.0.2`")
         
     E("`**cosmwasm-vm-derive**
-        3.0.1`")
+        3.0.2`")
         
     F("`**cosmwasm-derive**
-        3.0.1`")    
+        3.0.2`")    
         
     G("`**cosmwasm-schema**
-        3.0.1`")
+        3.0.2`")
 
     H("`**cosmwasm-schema-derive**
-        3.0.1`")
+        3.0.2`")
         
     I("`**cosmwasm-check**
-        3.0.1`")
+        3.0.2`")
         
     J("`**cw-schema**
-        3.0.1`")
+        3.0.2`")
 
     K("`**cw-schema-derive**
-        3.0.1`")
+        3.0.2`")
         
     A --> B
     A --> C
@@ -189,7 +190,7 @@ This code is compiled into Wasm bytecode as part of the smart contract.
 
 - [cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template) - A
   starter-pack to get you quickly building your custom contract compatible with
-  the cosmwasm system.
+  the CosmWasm system.
 - [cosmwasm-plus](https://github.com/CosmWasm/cosmwasm-plus) - Some sample
   contracts for use and inspiration. These provide usable primitives and
   interfaces for many use cases, such as fungible tokens, NFTs, multisigs,
@@ -250,11 +251,13 @@ We also recommend you review our [documentation site](https://book.cosmwasm.com)
 which contains a few tutorials to guide you in building your first contracts.
 You can find past recordings of hackathon/conference workshops and presentations
 on our [YouTube channel](https://www.youtube.com/@CosmWasm), or
-[join our Discord server](https://chat.cosmwasm.com) to ask for help.
+[join our Telegram community](https://t.me/+SGT2p3VszzSgUViP) to ask for help.
 
 ## Minimum Supported Rust Version (MSRV)
 
-See [Minimum Supported Rust Version (MSRV)](./docs/MSRV.md).
+See [Minimum Supported Rust Version (MSRV)] on Wiki.
+
+[Minimum Supported Rust Version (MSRV)]: https://github.com/CosmWasm/cosmwasm/wiki/Minimum-Supported-Rust-Version-(MSRV)
 
 ## API entry points
 
@@ -277,7 +280,7 @@ extern "C" fn interface_version_8() -> () {}
 extern "C" fn allocate(size: usize) -> u32;
 extern "C" fn deallocate(pointer: u32);
 
-// creates an initial state of a contract with a configuration send in the argument msg_ptr
+// creates an initial state of a contract with a configuration sent in the argument msg_ptr
 extern "C" fn instantiate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
@@ -374,7 +377,7 @@ extern "C" {
     /// greater than 1 in case of error.
     fn ed25519_batch_verify(messages_ptr: u32, signatures_ptr: u32, public_keys_ptr: u32) -> u32;
 
-    /// Writes a debug message (UFT-8 encoded) to the host for debugging purposes.
+    /// Writes a debug message (UTF-8 encoded) to the host for debugging purposes.
     /// The host is free to log or process this in any way it considers appropriate.
     /// In production environments it is expected that those messages are discarded.
     fn debug(source_ptr: u32);
@@ -558,7 +561,24 @@ You may want to compare how long the contract takes to run inside the Wasm VM
 compared to in native rust code, especially for computationally intensive code,
 like hashing or signature verification.
 
-**TODO** add instructions
+This repository uses [Criterion](https://github.com/bheisler/criterion.rs) for benchmarking.
+Benchmarks are available in the `packages/vm` and `packages/crypto` crates.
+
+To run all benchmarks:
+
+```sh
+cargo bench
+```
+
+To run benchmarks for a specific package:
+
+```sh
+cargo bench -p cosmwasm-vm
+cargo bench -p cosmwasm-crypto
+```
+
+Benchmark results will be saved in `target/criterion/` and an HTML report will be
+generated for detailed analysis.
 
 ## Developing
 
