@@ -3,21 +3,23 @@ version: '3'
 silent: true
 
 vars:
-  COSMWASM_CHECK_VERSION: 3.0.2
-  TOOLCHAIN: +1.82.0
+  COSMWASM_CHECK_VERSION: 3.0.2 # The last released version of cosmwasm-check tool before 3.0.3.
+  TOOLCHAIN: +1.82.0            # Rust toolchain for building packages.
+  TOOLCHAIN_CHECK: +1.82.0      # Rust toolchain for building cosmwasm-check tool.
 
 tasks:
 
   all:
     desc: Runs all checks
     summary: |
-      Runs all viable checks for cosmwasm.
+      Runs all viable checks for cosmwasm repository.
       Execute this task before pushing any changes.
       This task takes a significant amount of time to complete.
     cmds:
       - task: clean-all
       - task: build
       - task: test
+      - task: cov
       - task: check-contracts
       - task: update-schemas
 
@@ -63,6 +65,12 @@ tasks:
     cmds:
       - task: clean
       - cmd: ./devtools/clean-contracts.sh
+
+  clippy:
+    desc: Runs linter
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} clippy --workspace --all-targets -- -D warnings
+      - cmd: cargo {{.TOOLCHAIN}} clippy --workspace --all-features --all-targets -- -D warnings
 
   cov:
     desc: Generates code coverage report for all crates in text format
@@ -218,10 +226,10 @@ tasks:
     desc: Installs cosmwasm-check tool (released version and currently developed version)
     cmds:
       # Install recently released cosmwasm-check and rename it to cosmwasm-check-released
-      - cmd: cargo {{.TOOLCHAIN}} install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
+      - cmd: cargo {{.TOOLCHAIN_CHECK}} install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
       - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-released
       # Install currently developed version of cosmwasm-check
-      - cmd: cargo {{.TOOLCHAIN}} install --path ./packages/check --locked --force
+      - cmd: cargo {{.TOOLCHAIN_CHECK}} install --path ./packages/check --locked --force
 
   test:
     desc: Runs all tests
