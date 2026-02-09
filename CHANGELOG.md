@@ -4,55 +4,80 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+(empty)
+
+## [3.0.3] - 2025-02-09
+
+### Added
+
+- Add benchmarking instructions to README ([#2606])
+
 ### Changed
 
-- cosmwasm repository: Fixed typos ([#2602])
-- cosmwasm repository: Updated Telegram link ([#2601])
-- cosmwasm repository: docs(README): fix the community link to Telegram and add a link to the CosmWasm icon ([#2597]) 
-- cosmwasm repository: Updated MIGRATING.md ([#2595])                                         
-- cosmwasm repository: Update MIGRATING.md for version 3.0.x ([#2594])
-- cosmwasm repository: chore: fix some typos ([#2591])                                        
-- cosmwasm repository: core: assert BLS12-381 generator length invariants ([#2586])           
-- cosmwasm repository: Improved development scripts ([#2581])                                 
-- cosmwasm repository: Fix typos ([#2579])
-- cosmwasm repository: Update GitHub actions to the newest versions ([#2578])
-- cosmwasm repository: Update CHANGELOG.md for v3.0.2 ([#2577])
-- cosmwasm repository: Fix articles in `Int` type comments ([#2576])                          
-- cosmwasm repository: CI: migrate workflows to checkout v6 ([#2564])                         
-- cosmwasm repository: chore: fix some comments ([#2562])                                     
-- cosmwasm repository: doc: fix  typos ([#2561])                                              
-- cosmwasm repository: docs: fix minor grammar ([#2560])                                      
-- cosmwasm repository: chore: fix some typos and inaccuracies ([#2559])                       
-- cosmwasm repository: Fix typo ([#2558])                                                    
-- cosmwasm repository: chore: fix typo in README.md ([#2556])                                 
-- cosmwasm repository: ci: upgrade GitHub Action to download-artifact@v5 ([#2555])            
-- cosmwasm repository: docs: fix typos ([#2554])                                              
-- cosmwasm repository: chore: fix minor typos ([#2551])                                       
-- cosmwasm repository: chore: fix minor typos ([#2550])                                       
-- cosmwasm repository: Correct minor grammar mistakes ([#2549])                               
-- cosmwasm repository: docs: fix typo ([#2547])                                               
-- cosmwasm repository: Moved MSRV.md to Wiki ([#2546])                                        
-- cosmwasm repository: Moved CHECKS.md content to Wiki ([#2545])                              
-- cosmwasm repository: Updated schemas ([#2544])                                              
-- cosmwasm repository: chore: fix typos in function names ([#2542])                               
-- cosmwasm repository: fix: grammar issues in contracts and IBC code comments ([#2541])           
-- cosmwasm repository: chore: Remove duplicate words to make the comments more readable ([#2540]) 
+- Prepared version v3.0.3 ([#2610])
+- Update MIGRATING.md for version 3.0.x ([#2594])
+- Update GitHub actions to the newest versions ([#2578])
+- Update CHANGELOG.md for v3.0.2 ([#2577])
+- Updated CHANGELOG with unreleased issues and PRs ([#2603])
+- Updated Telegram link ([#2601])
+- Updated CHANGELOG ([#2598])
+- Updated MIGRATING.md ([#2595])
+- core: assert BLS12-381 generator length invariants ([#2586])
+- Unified Rust toolchain versions ([#2585])
+- Unification of developers tools ([#2583])
+- Improved development scripts ([#2581])
+- CI: migrate workflows to checkout v6 ([#2564])
+- ci: upgrade GitHub Action to download-artifact@v5 ([#2555])
+- Moved MSRV.md to Wiki ([#2546])
+- Moved CHECKS.md content to Wiki ([#2545])
+- Updated schemas ([#2544])
+- Unified GH actions versions. ([0xcda1f71])
 
 ### Fixed
 
-- cosmwasm-check: cargo install cosmwasm-check fails to compile ([#2536])
+- Correct minor grammar mistakes ([#2549])
+- chore: Remove duplicate words to make the comments more readable ([#2540])
+- docs(README): fix the community link to Telegram and add a link to the CosmWasm icon ([#2597])
+- cargo install cosmwasm-check fails to compile ([#2536])
+- Fix typos ([#2579])
+- chore: fix some comments ([#2562])
+- Fixed workspace settings ([#2605])
+- Fixed typos. ([#2602])
+- Fix typos and redundant naming ([#2596])
+- chore: fix some typos ([#2591])
+- Fix articles in `Int` type comments ([#2576])
+- Fix typo ([#2558])
+- chore: fix typo in README.md ([#2556])
+- docs: fix typos ([#2554])
+- chore: fix minor typos ([#2551])
+- chore: fix minor typos ([#2550])
+- docs: fix typo ([#2547])
+- chore: fix typos in function names ([#2542])
+- fix: grammar issues in contracts and IBC code comments ([#2541])
+- doc: fix  typos ([#2561])
+- docs: fix minor grammar ([#2560])
+- chore: fix some typos and inaccuracies ([#2559])
 
-[#2602]: https://github.com/CosmWasm/cosmwasm/pull/2602
-[#2601]: https://github.com/CosmWasm/cosmwasm/pull/2601
-[#2597]: https://github.com/CosmWasm/cosmwasm/pull/2597
-[#2595]: https://github.com/CosmWasm/cosmwasm/pull/2595
 [#2594]: https://github.com/CosmWasm/cosmwasm/issues/2594
-[#2591]: https://github.com/CosmWasm/cosmwasm/pull/2591
-[#2586]: https://github.com/CosmWasm/cosmwasm/pull/2586
-[#2581]: https://github.com/CosmWasm/cosmwasm/pull/2581
 [#2579]: https://github.com/CosmWasm/cosmwasm/issues/2579
 [#2578]: https://github.com/CosmWasm/cosmwasm/issues/2578
 [#2577]: https://github.com/CosmWasm/cosmwasm/issues/2577
+[#2536]: https://github.com/CosmWasm/cosmwasm/issues/2536
+[#2610]: https://github.com/CosmWasm/cosmwasm/pull/2610
+[#2606]: https://github.com/CosmWasm/cosmwasm/pull/2606
+[#2605]: https://github.com/CosmWasm/cosmwasm/pull/2605
+[#2603]: https://github.com/CosmWasm/cosmwasm/pull/2603
+[#2602]: https://github.com/CosmWasm/cosmwasm/pull/2602
+[#2601]: https://github.com/CosmWasm/cosmwasm/pull/2601
+[#2598]: https://github.com/CosmWasm/cosmwasm/pull/2598
+[#2597]: https://github.com/CosmWasm/cosmwasm/pull/2597
+[#2596]: https://github.com/CosmWasm/cosmwasm/pull/2596
+[#2595]: https://github.com/CosmWasm/cosmwasm/pull/2595
+[#2591]: https://github.com/CosmWasm/cosmwasm/pull/2591
+[#2586]: https://github.com/CosmWasm/cosmwasm/pull/2586
+[#2585]: https://github.com/CosmWasm/cosmwasm/pull/2585
+[#2583]: https://github.com/CosmWasm/cosmwasm/pull/2583
+[#2581]: https://github.com/CosmWasm/cosmwasm/pull/2581
 [#2576]: https://github.com/CosmWasm/cosmwasm/pull/2576
 [#2564]: https://github.com/CosmWasm/cosmwasm/pull/2564
 [#2562]: https://github.com/CosmWasm/cosmwasm/pull/2562
@@ -73,7 +98,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2542]: https://github.com/CosmWasm/cosmwasm/pull/2542
 [#2541]: https://github.com/CosmWasm/cosmwasm/pull/2541
 [#2540]: https://github.com/CosmWasm/cosmwasm/pull/2540
-[#2536]: https://github.com/CosmWasm/cosmwasm/issues/2536
+[0xcda1f71]: https://github.com/CosmWasm/cosmwasm/commit/cda1f714869d8f1fb93a272be2d375fedc8374cd
 
 ## [3.0.2] - 2025-08-26
 
@@ -269,6 +294,18 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2500]: https://github.com/CosmWasm/cosmwasm/pull/2500
 [#2501]: https://github.com/CosmWasm/cosmwasm/pull/2501
 
+## [2.3.1] - 2026-02-09
+
+### Changed
+
+- Removed technical debt ([#2609])
+- Aligned CHANGELOG with the version on main branch ([#2600])
+- Unified maintenance tools. ([0xfd51861])
+
+[#2609]: https://github.com/CosmWasm/cosmwasm/pull/2609
+[#2600]: https://github.com/CosmWasm/cosmwasm/pull/2600
+[0xfd51861]: https://github.com/CosmWasm/cosmwasm/commit/fd51861d5ea11c37eba4434d9c6601253c1e43ca
+
 ## [2.3.0] - 2025-12-09
 
 ### Fixed
@@ -291,6 +328,20 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2570]: https://github.com/CosmWasm/cosmwasm/pull/2570
 [#2571]: https://github.com/CosmWasm/cosmwasm/pull/2571
 [#2572]: https://github.com/CosmWasm/cosmwasm/pull/2572
+
+## [2.2.6] - 2026-02-08
+
+### Changed
+
+- Removed technical debt ([#2608])
+- Aligned CHANGELOG with the version on main branch ([#2599])
+
+[#2608]: https://github.com/CosmWasm/cosmwasm/pull/2608
+[#2599]: https://github.com/CosmWasm/cosmwasm/pull/2599
+
+## 2.2.4, 2.2.5 - yanked
+
+- Versions yanked because of broken dependencies.
 
 ## [2.2.3] - 2025-12-19
 
@@ -1472,11 +1523,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.2...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.3...HEAD
+[3.0.3]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v3.0.0
+[2.3.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.3.0
+[2.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.3...v2.2.6
 [2.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v2.2.1
