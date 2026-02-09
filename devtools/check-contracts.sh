@@ -27,7 +27,7 @@ check_contract() {
     cargo +"$2" fmt -- --check
 
     msg "RUN UNIT TESTS" "$contract"
-    cargo +"$2" test --lib --locked
+    cargo +"$2" test --lib
 
     msg "BUILD WASM" "$contract"
     RUSTFLAGS="$3" cargo +"$2" build --release --lib --locked --target wasm32-unknown-unknown

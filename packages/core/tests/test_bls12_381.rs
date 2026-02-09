@@ -28,4 +28,15 @@ fn ensure_generators() {
             209, 119, 11, 172, 3, 38, 168, 5, 187, 239, 212, 128, 86, 200, 193, 33, 189, 184,
         ]
     );
+    assert_eq!(
+        BLS12_381_G1_GENERATOR.len(),
+        BLS12_381_G1_POINT_LEN,
+        "G1 generator length must match BLS12_381_G1_POINT_LEN"
+    );
+
+    assert_eq!(
+        BLS12_381_G2_GENERATOR.len(),
+        BLS12_381_G2_POINT_LEN,
+        "G2 generator length must match BLS12_381_G2_POINT_LEN"
+    );
 }

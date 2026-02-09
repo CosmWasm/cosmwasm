@@ -442,7 +442,7 @@ impl SignedDecimal {
         SignedDecimal::checked_from_ratio(self.numerator(), other.numerator())
     }
 
-    /// Computes `self % other`, returning an `DivideByZeroError` if `other == 0`.
+    /// Computes `self % other`, returning a `DivideByZeroError` if `other == 0`.
     pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_rem(other.0)
