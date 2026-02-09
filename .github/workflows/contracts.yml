@@ -7,9 +7,10 @@ on:
   pull_request:
 
 env:
-  TOOLCHAIN_STABLE: 1.82.0 # Rust toolchain for building contracts in stable channel.
-  TOOLCHAIN_NIGHTLY: nightly-2024-09-01 # Rust toolchain for building contracts in nightly channel.
-  TOOLCHAIN_CHECK: 1.82.0 # Rust toolchain for building cosmwasm-check tool.
+  TOOLCHAIN_STABLE: 1.82.0              # Rust toolchain for building contracts in stable channel.
+  TOOLCHAIN_NIGHTLY: nightly-2024-09-01 # Rust toolchain for building contracts in nightly channel for version 1.82.0.
+  TOOLCHAIN_CHECK: 1.82.0               # Rust toolchain for building cosmwasm-check tool.
+  COSMWASM_CHECK_VERSION: 3.0.1         # Last released cosmwasm-check tool before version 3.0.2.
 
 jobs:
   stable:
@@ -146,7 +147,7 @@ jobs:
           toolchain: ${{ env.TOOLCHAIN_CHECK }}
 
       - name: Install recently released cosmwasm-check
-        run: cargo install cosmwasm-check@3.0.2 --locked --force
+        run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
 
       - uses: actions/download-artifact@v7
         with:
@@ -250,7 +251,7 @@ jobs:
           toolchain: ${{ env.TOOLCHAIN_CHECK }}
 
       - name: Install currently developed cosmwasm-check
-        run: cargo install --path ./packages/check --locked --force
+        run: cargo install --path ./packages/check --force --locked
 
       - uses: actions/download-artifact@v7
         with:

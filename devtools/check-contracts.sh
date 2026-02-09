@@ -77,7 +77,7 @@ contracts_nightly=(
 toolchain_stable=1.82.0
 rustflags_stable=""
 
-toolchain_nightly=nightly-2024-09-01
+toolchain_nightly=nightly-2024-09-01 # The last nightly version for 1.82.0
 rustflags_nightly="-C target-feature=+nontrapping-fptoint"
 
 if (( parallel )); then
