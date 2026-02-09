@@ -524,7 +524,7 @@ pub fn ibc_packet_ack(
 
 The
 [`IbcAcknowledgement` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.15.0/packages/std/src/ibc.rs#L195-L200)
-contains both the original packet that was sent as well as the acknowledgement
+contains both the original packet that was sent and the acknowledgement
 bytes returned from executing the remote contract. You can use the
 `original_packet` to
 [map it the proper handler](https://github.com/CosmWasm/cosmwasm/blob/378b029707ebaed4505b3666c620bed69ff9a682/contracts/ibc-reflect-send/src/ibc.rs#L111-L136)
@@ -544,7 +544,7 @@ On success, you will want to commit the pending state. For some contracts like
 commit any more state. On other contracts, you may want to store the data
 returned as part of the acknowledgement (like
 [storing the remote address after calling "WhoAmI"](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/contracts/ibc-reflect-send/src/ibc.rs#L157-L192)
-in our simple `ibc-reflect` example.
+in our simple `ibc-reflect` example).
 
 On error, you will want to revert any state that was pending based on the
 packet. For example, in ics20, if the
@@ -575,14 +575,14 @@ pub fn ibc_packet_timeout(
 ```
 
 It is generally handled just like the error case in `ibc_packet_ack`, reverting
-the state change from sending the packet (eg. if we send tokens over ICS20, both
+the state change from sending the packet (e.g. if we send tokens over ICS20, both
 [an ack failure](https://github.com/CosmWasm/cw-plus/blob/v0.10.0/contracts/cw20-ics20/src/ibc.rs#L248)
-as well as
+and
 [a timeout](https://github.com/CosmWasm/cw-plus/blob/v0.10.0/contracts/cw20-ics20/src/ibc.rs#L261)
-will return those tokens to the original sender. In fact they both dispatch to
+will return those tokens to the original sender. In fact, they both dispatch to
 the same `on_packet_failure` function).
 
 Note that like `ibc_packet_ack`, we get the original packet we sent, which must
-contain all information needed to revert itself. Thus the ICS20 packet contains
+contain all information needed to revert itself. Thus, the ICS20 packet contains
 the original sender address, even though that is unimportant in the receiving
 chain.
