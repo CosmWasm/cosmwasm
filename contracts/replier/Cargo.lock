@@ -214,11 +214,15 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 
 [[package]]
 name = "cosmwasm-core"
-version = "3.0.3-dev"
+version = "3.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db63edc649d80b32bb3382f8cdd39740816ce225e83ae7229391850a76a537cf"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "3.0.3-dev"
+version = "3.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "256eeced6d6177e34fd3ff1187952f8b4c5dc09fd069f6269b445c385592deb7"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -241,7 +245,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "3.0.3-dev"
+version = "3.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11cf7db4817b387c8ad4e07c1b1cec1dac53e91324ce174beef258536dfa60ed"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -250,7 +256,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "3.0.3-dev"
+version = "3.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e2ae3a4dd5fcabc94f43cc7118a5d7412d4f9ac2a08776e7be0bc0397aa37e6"
 dependencies = [
  "cosmwasm-schema-derive",
  "cw-schema",
@@ -262,7 +270,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "3.0.3-dev"
+version = "3.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2a6db938b5221e6deae1e7bf8fde7bcf7cbe4bb4e1072f7a52d52ac7cc358d0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -271,7 +281,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "3.0.3-dev"
+version = "3.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7d7187327e22ec54a2f3bddaabb131b29dbb209444039c0fa2ec0b03d4ea5a4"
 dependencies = [
  "base64",
  "bech32",
@@ -377,7 +389,9 @@ dependencies = [
 
 [[package]]
 name = "cw-schema"
-version = "3.0.3-dev"
+version = "3.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e935e168587bcae72adedbe366cdffd945cbc42d8c428330b841781a752abfa7"
 dependencies = [
  "cw-schema-derive",
  "indexmap",
@@ -390,7 +404,9 @@ dependencies = [
 
 [[package]]
 name = "cw-schema-derive"
-version = "3.0.3-dev"
+version = "3.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fdaabb8bd8955e28b12872a1fa5c4c8b6173ac5a93c4d364bcc7d857811fa967"
 dependencies = [
  "heck",
  "itertools",
