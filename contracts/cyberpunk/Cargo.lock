@@ -368,15 +368,15 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-core"
-version = "2.3.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ecad6f7c351157f19134710b1de451014474fbf1f6a5054beafb645496f2f56"
+checksum = "f96ba2dd3c228d9e04a901307502096f56e5a547980a30656118503773a25c7c"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "2.3.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfc9a129376206804c35c562c2d8f582629d69a773a378886578f86b5466f29b"
+checksum = "cc2040bedb37918da4701f83dd8635749d99d7baa6c0129f290f503dcde90e5c"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -398,9 +398,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "2.3.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b36c6e9f163cb67c11de5a8b178a578d2089be09c527509ac4ee1647566df94"
+checksum = "82e8c609b837282a093d87f45099f648b5c2f36203c6223f67883f13c3c1453a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -409,9 +409,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.3.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16d9216088e3109684f5d17fa900f01bb75000c3f7c06cbba2d3ff03d04855f8"
+checksum = "61d8debcf3b9cb23ed4c42a8c17fa224a422312d09f123816cc844c18c59246c"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -422,9 +422,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "2.3.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "093b13c7bc1dc6c8ef61a8103e2cbc6641c41e4e0f10147cd95b8db0ec771ebb"
+checksum = "9efbbf2d78ec255fdae93ae363cc67490878fe5682f1266e4951321cd20888ef"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -433,9 +433,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "2.3.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "389d6b293023bb18f464cc707525469704837e0e10a2a98ce3540bdb8d64dc23"
+checksum = "80d40d789c6d5d9b560927712c836237a3f29ea75fb09ef8718d4036bf2b8965"
 dependencies = [
  "base64 0.22.1",
  "bech32",
@@ -457,9 +457,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "2.3.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "646919f1baa608bc02b0170d889f030e500d7a5f9ddd101163452814b05abe9b"
+checksum = "1ff4c1fcd5f2e9ab33e4d137205dcd8a3bb36172d14415cb315c915cfa4c0bee"
 dependencies = [
  "bech32",
  "blake2",
@@ -487,9 +487,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm-derive"
-version = "2.3.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2e6be435c7b57cdc7255c08114091d99c373898c75c84878b8f862eb3111809"
+checksum = "0e1e5f19b7a199b64582107e5bcb02238cf0a55c3f7c0b4d916f79e10cde6ef5"
 dependencies = [
  "blake2",
  "proc-macro2",
