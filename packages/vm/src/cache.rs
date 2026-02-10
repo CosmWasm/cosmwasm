@@ -409,36 +409,25 @@ where
     }
 
     /// Synchronizes the set of pinned modules with the provided `checksums`.
-    ///
-    /// This function compares the currently pinned modules with the ones
-    /// specified by `checksums`, pinning or unpinning modules as needed.
-    /// When the function returns, only the modules whose checksums appear
-    /// in `checksums` will remain pinned.
     pub fn sync_pinned_codes(&self, checksums: &[Checksum]) -> VmResult<()> {
         let mut add: Vec<Checksum> = vec![];
         let mut del: Vec<Checksum> = vec![];
         {
-            // Locking the cache must be done in this additional code block, to make sure
-            // that this cache will be unlocked before calling `pin` and `unpin` functions.
             let cache = self.inner.lock().unwrap();
-            // Check if any modules should be unpinned.
             for (checksum, _) in cache.pinned_memory_cache.iter() {
                 if !checksums.contains(checksum) {
                     del.push(*checksum);
                 }
             }
-            // Check if any modules should be pinned.
             for checksum in checksums {
                 if !cache.pinned_memory_cache.has(checksum) {
                     add.push(*checksum);
                 }
             }
         }
-        // Pin additional modules as needed.
         for checksum in &add {
             self.pin(checksum)?;
         }
-        // Unpin additional modules as needed.
         for checksum in &del {
             self.unpin(checksum)?;
         }
