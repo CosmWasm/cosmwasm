@@ -1,5 +1,7 @@
-This file was updated and moved to:
+This file was updated and moved to the following chapters in the official [documentation]:
 
-- [Semantics](https://docs.cosmwasm.com/core/architecture/semantics)
-- [Transactions](https://docs.cosmwasm.com/core/architecture/transactions)
-- [Reply](https://docs.cosmwasm.com/core/entrypoints/reply)
+- [Semantics](https://cosmwasm.github.io/core/architecture/semantics)
+- [Transactions](https://cosmwasm.github.io/core/architecture/transactions)
+- [Reply](https://cosmwasm.github.io/core/entrypoints/reply)
+
+[documentation]: https://cosmwasm.github.io
