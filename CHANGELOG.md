@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 (empty)
 
+## [2.2.7] - 2026-02-11
+
+- Prepared version v2.2.7 ([#2611])
+
+[#2611]: https://github.com/CosmWasm/cosmwasm/pull/2611
+
 ## [2.2.6] - 2026-02-08
 
 ### Changed
@@ -1201,7 +1207,8 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.6...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.7...HEAD
+[2.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.6...v2.2.7
 [2.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.3...v2.2.6
 [2.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
