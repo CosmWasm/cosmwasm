@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 (empty)
 
+## [2.3.2] - 2026-02-11
+
+- Prepared version v2.3.2 ([#2612])
+
+[#2612]: https://github.com/CosmWasm/cosmwasm/pull/2612
+
 ## [2.3.1] - 2026-02-09
 
 ### Changed
@@ -17,6 +23,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2609]: https://github.com/CosmWasm/cosmwasm/pull/2609
 [#2600]: https://github.com/CosmWasm/cosmwasm/pull/2600
 [0xfd51861]: https://github.com/CosmWasm/cosmwasm/commit/fd51861d5ea11c37eba4434d9c6601253c1e43ca
+
+## [2.2.7] - 2026-02-11
+
+- Prepared version v2.2.7 ([#2611])
+
+[#2611]: https://github.com/CosmWasm/cosmwasm/pull/2611
 
 ## [2.2.6] - 2026-02-08
 
@@ -1236,9 +1248,11 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.1...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.2...HEAD
+[2.3.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.3.0
+[2.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.6...v2.2.7
 [2.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.3...v2.2.6
 [2.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2

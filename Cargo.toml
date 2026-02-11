@@ -5,21 +5,21 @@ exclude = ["contracts"]
 resolver = "2"
 
 [workspace.package]
-version = "2.3.1"
+version = "2.3.2"
 edition = "2021"
 license = "Apache-2.0"
 repository = "https://github.com/CosmWasm/cosmwasm"
 
 [workspace.dependencies]
-cosmwasm-core = { version = "=2.3.1" }
-cosmwasm-crypto = { version = "=2.3.1" }
-cosmwasm-derive = { version = "=2.3.1" }
-cosmwasm-schema = { version = "=2.3.1" }
-cosmwasm-schema-derive = { version = "=2.3.1" }
-cosmwasm-std = { version = "=2.3.1", default-features = false }
-cosmwasm-vm = { version = "=2.3.1" }
-cosmwasm-vm-derive = { version = "=2.3.1" }
-cosmwasm-check = { version = "=2.3.1" }
+cosmwasm-core = { version = "=2.3.2" }
+cosmwasm-crypto = { version = "=2.3.2" }
+cosmwasm-derive = { version = "=2.3.2" }
+cosmwasm-schema = { version = "=2.3.2" }
+cosmwasm-schema-derive = { version = "=2.3.2" }
+cosmwasm-std = { version = "=2.3.2", default-features = false }
+cosmwasm-vm = { version = "=2.3.2" }
+cosmwasm-vm-derive = { version = "=2.3.2" }
+cosmwasm-check = { version = "=2.3.2" }
 schemars = "0.8.4"
 serde = { version = "1.0.192", default-features = false }
 serde_json = "1.0.140"
