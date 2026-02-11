@@ -1208,7 +1208,7 @@ The CHANGELOG for versions before **1.0.0** was moved to
 
 
 [Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.7...HEAD
-[2.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.6...v2.2.7
+[2.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.6...v2.2.7
 [2.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.3...v2.2.6
 [2.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
