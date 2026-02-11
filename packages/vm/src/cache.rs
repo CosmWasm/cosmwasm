@@ -408,6 +408,32 @@ where
             .remove(checksum)
     }
 
+    /// Synchronizes the set of pinned modules with the provided `checksums`.
+    pub fn sync_pinned_codes(&self, checksums: &[Checksum]) -> VmResult<()> {
+        let mut add: Vec<Checksum> = vec![];
+        let mut del: Vec<Checksum> = vec![];
+        {
+            let cache = self.inner.lock().unwrap();
+            for (checksum, _) in cache.pinned_memory_cache.iter() {
+                if !checksums.contains(checksum) {
+                    del.push(*checksum);
+                }
+            }
+            for checksum in checksums {
+                if !cache.pinned_memory_cache.has(checksum) {
+                    add.push(*checksum);
+                }
+            }
+        }
+        for checksum in &add {
+            self.pin(checksum)?;
+        }
+        for checksum in &del {
+            self.unpin(checksum)?;
+        }
+        Ok(())
+    }
+
     /// Returns an Instance tied to a previously saved Wasm.
     ///
     /// It takes a module from cache or Wasm code and instantiates it.
