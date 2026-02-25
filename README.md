@@ -120,37 +120,37 @@ config:
 
 graph BT
     A("`**cosmwasm-core**
-        3.0.2`")
+        3.0.4`")
  
     B("`**cosmwasm-std**
-        3.0.2`")
+        3.0.4`")
  
     C("`**cosmwasm-crypto**
-        3.0.2`")
+        3.0.4`")
         
     D("`**cosmwasm-vm**
-        3.0.2`")
+        3.0.4`")
         
     E("`**cosmwasm-vm-derive**
-        3.0.2`")
+        3.0.4`")
         
     F("`**cosmwasm-derive**
-        3.0.2`")    
+        3.0.4`")    
         
     G("`**cosmwasm-schema**
-        3.0.2`")
+        3.0.4`")
 
     H("`**cosmwasm-schema-derive**
-        3.0.2`")
+        3.0.4`")
         
     I("`**cosmwasm-check**
-        3.0.2`")
+        3.0.4`")
         
     J("`**cw-schema**
-        3.0.2`")
+        3.0.4`")
 
     K("`**cw-schema-derive**
-        3.0.2`")
+        3.0.4`")
         
     A --> B
     A --> C
