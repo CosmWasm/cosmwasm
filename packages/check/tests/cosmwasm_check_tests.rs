@@ -1,13 +1,13 @@
-use assert_cmd::prelude::*;
+use assert_cmd::{cargo_bin, Command};
 use cosmwasm_std::{to_json_string, to_json_vec, StdResult};
 use cosmwasm_vm::WasmLimits;
 use predicates::prelude::*;
-use std::{io::Write, process::Command};
+use std::io::Write;
 use tempfile::NamedTempFile;
 
 #[test]
 fn valid_contract_check() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("cosmwasm-check")?;
+    let mut cmd = Command::new(cargo_bin!());
 
     cmd.arg("../vm/testdata/hackatom.wasm");
     cmd.assert()
@@ -19,7 +19,7 @@ fn valid_contract_check() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn contract_check_verbose() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("cosmwasm-check")?;
+    let mut cmd = Command::new(cargo_bin!());
 
     cmd.arg("../vm/testdata/empty.wasm").arg("--verbose");
     cmd.assert()
@@ -32,7 +32,7 @@ fn contract_check_verbose() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn empty_contract_check() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("cosmwasm-check")?;
+    let mut cmd = Command::new(cargo_bin!());
 
     cmd.arg("../vm/testdata/empty.wasm");
     cmd.assert()
@@ -44,7 +44,7 @@ fn empty_contract_check() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn invalid_contract_check() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("cosmwasm-check")?;
+    let mut cmd = Command::new(cargo_bin!());
 
     cmd.arg("../vm/testdata/corrupted.wasm");
     cmd.assert()
@@ -56,7 +56,7 @@ fn invalid_contract_check() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn valid_contract_check_float_operator() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("cosmwasm-check")?;
+    let mut cmd = Command::new(cargo_bin!());
 
     cmd.arg("../vm/testdata/floaty.wasm");
     cmd.assert()
@@ -68,7 +68,7 @@ fn valid_contract_check_float_operator() -> Result<(), Box<dyn std::error::Error
 
 #[test]
 fn several_contracts_check() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("cosmwasm-check")?;
+    let mut cmd = Command::new(cargo_bin!());
 
     cmd.arg("../vm/testdata/hackatom.wasm")
         .arg("../vm/testdata/corrupted.wasm");
@@ -83,7 +83,7 @@ fn several_contracts_check() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn custom_capabilities_check() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("cosmwasm-check")?;
+    let mut cmd = Command::new(cargo_bin!());
 
     cmd.arg("--available-capabilities")
         .arg("iterator,osmosis,friendship,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1,cosmwasm_2_2")
@@ -100,7 +100,7 @@ fn custom_capabilities_check() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn wasm_limits_string_check() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("cosmwasm-check")?;
+    let mut cmd = Command::new(cargo_bin!());
 
     let mut limits = WasmLimits::default();
     limits.initial_memory_limit_pages = Some(10);
@@ -117,7 +117,7 @@ fn wasm_limits_string_check() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn wasm_limits_file_check() -> StdResult<()> {
-    let mut cmd = Command::cargo_bin("cosmwasm-check")?;
+    let mut cmd = Command::new(cargo_bin!());
 
     let mut limits = WasmLimits::default();
     limits.max_functions = Some(15);
