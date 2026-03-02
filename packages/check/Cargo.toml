@@ -15,6 +15,6 @@ cosmwasm-vm = { workspace = true }
 cosmwasm-std = { workspace = true, default-features = true }
 
 [dev-dependencies]
-assert_cmd = "2.0.12"
+assert_cmd = "2.1.2"
 predicates = "3"
 tempfile = "3.1.0"
