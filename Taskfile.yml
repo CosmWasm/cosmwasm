@@ -78,6 +78,12 @@ tasks:
       - cmd: cargo llvm-cov clean
       - cmd: cargo {{.TOOLCHAIN}} llvm-cov --workspace --no-cfg-coverage
 
+  cov-html:
+    desc: Generates code coverage report for all crates in HTML format
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --workspace --no-cfg-coverage --html
+
   cov-cosmwasm-check:
     desc: Generates code coverage report for cosmwasm-check in text format
     cmds:
@@ -236,10 +242,20 @@ tasks:
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} test --workspace
 
+  test-cosmwasm-check:
+    desc: Runs all tests for cosmwasm-check
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} test -p cosmwasm-check
+
   testn:
     desc: Runs all tests using nextest
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} nextest run --workspace
+
+  testn-cosmwasm-check:
+    desc: Runs all tests for cosmwasm-check using nextest
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} nextest run -p cosmwasm-check
 
   test-cosmwasm-core:
     desc: Runs tests for cosmwasm-core
