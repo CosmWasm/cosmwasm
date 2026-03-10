@@ -52,23 +52,26 @@ jobs:
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
+      - name: Clean
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} clean
+
       - name: Check formatting
-        run: cargo fmt -- --check
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} fmt -- --check
 
       - name: Run unit tests
-        run: cargo test --lib --locked
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} test --lib --locked
 
       - name: Build WASM binary
-        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} build --release --lib --locked --target wasm32-unknown-unknown
 
       - name: Run linter
-        run: cargo clippy --all-targets --tests -- -D warnings
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} clippy --all-targets --tests -- -D warnings
 
       - name: Run integration tests
-        run: cargo test --test integration --locked
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} test --test integration --locked
 
       - name: Run schema generator
-        run: cargo run --bin schema --locked
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} run --bin schema --locked
 
       - name: Ensure schemas are up-to-date
         run: git diff --quiet ./schema
