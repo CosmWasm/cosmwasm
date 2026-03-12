@@ -1,6 +1,6 @@
 # Ibc Reflect Contract
 
-This is a simple contract to demonstrate using contracts using IBC messages. The
+This is a simple contract to demonstrate contracts using IBC messages. The
 first case we build is to simulate the `reflect` contract on another chain. That
 is, you can send a message over IBC to the `reflect` contract, and it will
 "reflect" that message on the remote chain as if it sent it.
