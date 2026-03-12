@@ -269,7 +269,7 @@ impl Api for MockApi {
 }
 
 impl MockApi {
-    /// Returns [MockApi] with Bech32 prefix set to provided value.
+    /// Returns [MockApi] with the Bech32 prefix set to the provided value.
     ///
     /// Bech32 prefix must not be empty.
     ///
@@ -289,7 +289,7 @@ impl MockApi {
         self
     }
 
-    /// Returns an address built from provided input string.
+    /// Returns an address built from the provided input string.
     ///
     /// # Example
     ///
@@ -306,7 +306,7 @@ impl MockApi {
     /// # Panics
     ///
     /// This function panics when generating a valid address is not possible,
-    /// especially when Bech32 prefix set in function [with_prefix](Self::with_prefix) is empty.
+    /// especially when the Bech32 prefix set by [with_prefix](Self::with_prefix) is empty.
     ///
     pub fn addr_make(&self, input: &str) -> Addr {
         let digest = Sha256::digest(input);
