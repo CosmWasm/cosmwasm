@@ -12,7 +12,7 @@ Adjust the query / response type you want to generate in `src/main.rs` and run:
 ## Limitations
 
 Only basic structs and enums are supported. Tuples and enum variants with 0 or
-more than 1 parameters don't work, for example.
+more than 1 parameter don't work, for example.
 
 ## License
 
