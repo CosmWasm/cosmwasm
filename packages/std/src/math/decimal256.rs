@@ -323,7 +323,7 @@ impl Decimal256 {
             let mut y = Decimal256::one();
 
             while n > 1 {
-                if n % 2 == 0 {
+                if n.is_multiple_of(2) {
                     x = x.checked_mul(x)?;
                     n /= 2;
                 } else {
@@ -2111,11 +2111,11 @@ mod tests {
         );
         assert!(matches!(
             Decimal256::MAX.checked_div(Decimal256::zero()),
-            Err(CheckedFromRatioError::DivideByZero { .. })
+            Err(CheckedFromRatioError::DivideByZero)
         ));
         assert!(matches!(
             Decimal256::MAX.checked_div(Decimal256::percent(1)),
-            Err(CheckedFromRatioError::Overflow { .. })
+            Err(CheckedFromRatioError::Overflow)
         ));
 
         // checked rem

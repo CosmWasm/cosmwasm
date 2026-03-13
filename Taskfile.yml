@@ -4,8 +4,8 @@ silent: true
 
 vars:
   COSMWASM_CHECK_VERSION: 2.3.0 # The last released version of cosmwasm-check tool before v2.3.1.
-  TOOLCHAIN: +1.81.0            # The last Rust toolchain without 'reference-types'.
-  TOOLCHAIN_CHECK: +1.82.0      # Rust toolchain for building cosmwasm-check tool
+  TOOLCHAIN: +1.94.0            # The last Rust toolchain without 'reference-types'.
+  TOOLCHAIN_CHECK: +1.94.0      # Rust toolchain for building cosmwasm-check tool
 
 tasks:
 
@@ -17,6 +17,7 @@ tasks:
       This task takes a significant amount of time to complete.
     cmds:
       - task: clean-all
+      - task: clippy
       - task: build
       - task: test
       - task: cov
@@ -72,6 +73,12 @@ tasks:
     cmds:
       - cmd: cargo llvm-cov clean
       - cmd: cargo {{.TOOLCHAIN}} llvm-cov --workspace --no-cfg-coverage
+
+  cov-html:
+    desc: Generates code coverage report for all crates in HTML format
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --workspace --no-cfg-coverage --html
 
   cov-cosmwasm-check:
     desc: Generates code coverage report for cosmwasm-check in text format
@@ -197,8 +204,8 @@ tasks:
     desc: Installs cosmwasm-check tool (released version and currently developed version)
     cmds:
       # Install recently released cosmwasm-check and rename it to cosmwasm-check-released
-      - cmd: cargo {{.TOOLCHAIN_CHECK}} install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
-      - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-released
+      # - cmd: cargo {{.TOOLCHAIN_CHECK}} install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
+      # - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-released
       # Install currently developed version of cosmwasm-check
       - cmd: cargo {{.TOOLCHAIN_CHECK}} install --path ./packages/check --locked --force
 
@@ -207,10 +214,20 @@ tasks:
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} test --workspace
 
+  test-cosmwasm-check:
+    desc: Runs all tests for cosmwasm-check
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} test -p cosmwasm-check
+
   testn:
     desc: Runs all tests using nextest
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} nextest run --workspace
+
+  testn-cosmwasm-check:
+    desc: Runs all tests for cosmwasm-check using nextest
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} nextest run -p cosmwasm-check
 
   test-cosmwasm-core:
     desc: Runs tests for cosmwasm-core

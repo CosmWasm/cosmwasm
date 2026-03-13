@@ -39,8 +39,8 @@ contracts_nightly=(
   contracts/floaty
 )
 
-toolchain_stable=1.81.0 # The last Rust compiler version without 'reference-types'.
-toolchain_nightly=nightly-2024-07-21 # The last nightly version for 1.81.0
+toolchain_stable=1.94.0
+toolchain_nightly=nightly-2026-01-18
 
 for dir in "${contracts_stable[@]}"; do
   check_contract "$dir" "$toolchain_stable"

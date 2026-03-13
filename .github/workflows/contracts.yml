@@ -7,10 +7,10 @@ on:
   pull_request:
 
 env:
-  TOOLCHAIN_STABLE: 1.81.0              # Rust toolchain for building contracts in stable channel.
-  TOOLCHAIN_NIGHTLY: nightly-2024-07-21 # Rust toolchain for building contracts in nightly channel for version 1.81.0.
-  TOOLCHAIN_CHECK: 1.82.0               # Rust toolchain for building cosmwasm-check tool.
-  COSMWASM_CHECK_VERSION: 2.2.3         # Last released cosmwasm-check tool before version 2.3.0.
+  TOOLCHAIN_STABLE: 1.94.0              # Rust toolchain for building contracts in stable channel.
+  TOOLCHAIN_NIGHTLY: nightly-2026-01-18 # Rust toolchain for building contracts in nightly channel for version 1.94.0.
+  TOOLCHAIN_CHECK: 1.94.0               # Rust toolchain for building cosmwasm-check tool.
+  COSMWASM_CHECK_VERSION: 3.0.4         # Last released cosmwasm-check tool before version 3.0.5.
 
 jobs:
   stable:
@@ -50,23 +50,26 @@ jobs:
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
+      - name: Clean
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} clean
+
       - name: Check formatting
-        run: cargo fmt -- --check
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} fmt -- --check
 
       - name: Run unit tests
-        run: cargo test --lib --locked
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} test --lib --locked
 
       - name: Build WASM binary
-        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} build --release --lib --locked --target wasm32-unknown-unknown
 
       - name: Run linter
-        run: cargo clippy --all-targets --tests -- -D warnings
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} clippy --all-targets --tests -- -D warnings
 
       - name: Run integration tests
-        run: cargo test --test integration --locked
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} test --test integration --locked
 
       - name: Run schema generator
-        run: cargo run --bin schema --locked
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} run --bin schema --locked
 
       - name: Ensure schemas are up-to-date
         run: git diff --quiet ./schema
@@ -145,7 +148,8 @@ jobs:
           toolchain: ${{ env.TOOLCHAIN_CHECK }}
 
       - name: Install recently released cosmwasm-check
-        run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
+        #run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
+        run: cargo install --path ./packages/check --force --locked
 
       - uses: actions/download-artifact@v7
         with:

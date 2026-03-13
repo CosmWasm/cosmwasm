@@ -3,7 +3,7 @@
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use cosmwasm_std::{Api, StdResult};
 use p256::{ecdsa::Signature, elliptic_curve::sec1::FromEncodedPoint, EncodedPoint, PublicKey};
-use sha2::{digest::generic_array::GenericArray, Digest, Sha256};
+use sha2::{Digest, Sha256};
 
 #[allow(clippy::too_many_arguments)]
 pub fn verify(

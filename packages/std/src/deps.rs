@@ -123,11 +123,10 @@ mod tests {
     #[derive(Clone, Serialize, Deserialize)]
     struct MyQuery;
     impl CustomQuery for MyQuery {}
+    impl CustomQuery for u64 {}
 
     #[test]
     fn deps_implements_copy() {
-        impl CustomQuery for u64 {}
-
         // With C: Copy
         let owned = OwnedDeps::<_, _, _, u64> {
             storage: MockStorage::default(),

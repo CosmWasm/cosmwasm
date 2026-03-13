@@ -414,7 +414,7 @@ impl SignedDecimal256 {
             let mut y = SignedDecimal256::one();
 
             while n > 1 {
-                if n % 2 == 0 {
+                if n.is_multiple_of(2) {
                     x = x.checked_mul(x)?;
                     n /= 2;
                 } else {
@@ -2762,11 +2762,11 @@ mod tests {
         );
         assert!(matches!(
             SignedDecimal256::MAX.checked_div(SignedDecimal256::zero()),
-            Err(CheckedFromRatioError::DivideByZero {})
+            Err(CheckedFromRatioError::DivideByZero)
         ));
         assert!(matches!(
             SignedDecimal256::MAX.checked_div(SignedDecimal256::percent(1)),
-            Err(CheckedFromRatioError::Overflow {})
+            Err(CheckedFromRatioError::Overflow)
         ));
         assert_eq!(
             SignedDecimal256::percent(-88)
