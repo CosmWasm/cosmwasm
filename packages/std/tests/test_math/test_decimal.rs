@@ -1,6 +1,7 @@
 use cosmwasm_std::{
     CheckedFromRatioError, Decimal, Decimal256, DecimalRangeExceeded, DivideByZeroError, Fraction,
-    OverflowError, OverflowOperation, RoundUpOverflowError, SignedDecimal, Uint128, Uint256,
+    Int128, Int256, OverflowError, OverflowOperation, RoundUpOverflowError, SignedDecimal,
+    SignedDecimal256, Uint128, Uint256,
 };
 use std::str::FromStr;
 
@@ -68,6 +69,29 @@ fn decimal_from_decimal256_works() {
     assert_eq!(Decimal::try_from(Decimal256::one()), Ok(Decimal::one()));
     assert_eq!(
         Decimal::try_from(Decimal256::percent(50)),
+        Ok(Decimal::percent(50))
+    );
+}
+
+#[test]
+fn decimal_from_signed_decimal256_works() {
+    let too_big = SignedDecimal256::new(Int256::from(Int128::MAX) * Int256::from(Int128::MAX));
+    assert_eq!(Decimal::try_from(too_big), Err(DecimalRangeExceeded));
+
+    let just_right =
+        SignedDecimal256::new(Int256::new(i128::MAX) + Int256::new(i128::MAX) + Int256::one());
+    assert_eq!(Decimal::try_from(just_right), Ok(Decimal::MAX));
+
+    assert_eq!(
+        Decimal::try_from(SignedDecimal256::zero()),
+        Ok(Decimal::zero())
+    );
+    assert_eq!(
+        Decimal::try_from(SignedDecimal256::one()),
+        Ok(Decimal::one())
+    );
+    assert_eq!(
+        Decimal::try_from(SignedDecimal256::percent(50)),
         Ok(Decimal::percent(50))
     );
 }
@@ -1416,4 +1440,33 @@ fn decimal_implements_debug() {
         let expected = format!("Decimal({s})");
         assert_eq!(format!("{decimal:?}"), expected);
     }
+}
+
+#[test]
+fn serialize_decimal_to_string() {
+    let d = Decimal::from_str("123.45").unwrap();
+    let json_string = serde_json::to_string(&d).unwrap();
+    assert_eq!(r#""123.45""#, json_string);
+}
+
+#[test]
+fn deserialize_decimal_from_string() {
+    let json_string = r#""123.45""#;
+    let d: Decimal = serde_json::from_str(json_string).unwrap();
+    assert_eq!(d, Decimal::from_str("123.45").unwrap());
+}
+
+#[test]
+fn deserialize_invalid_decimal() {
+    let json_string = r#""123,45""#;
+    let result: Result<Decimal, _> = serde_json::from_str(json_string);
+    let err = result.unwrap_err();
+    assert!(err.to_string().contains("invalid digit"));
+}
+
+#[test]
+fn deserialize_wrong_type_triggers_expectation() {
+    let json_decimal = "123.45";
+    let err = serde_json::from_str::<Decimal>(json_decimal).unwrap_err();
+    assert!(err.to_string().contains("expected string-encoded decimal"));
 }

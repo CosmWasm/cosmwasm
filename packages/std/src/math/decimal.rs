@@ -404,34 +404,22 @@ impl Decimal {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_add(self, other: Self) -> Self {
-        match self.checked_add(other) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
+        self.checked_add(other).unwrap_or(Self::MAX)
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_sub(self, other: Self) -> Self {
-        match self.checked_sub(other) {
-            Ok(value) => value,
-            Err(_) => Self::zero(),
-        }
+        self.checked_sub(other).unwrap_or_else(|_| Self::zero())
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_mul(self, other: Self) -> Self {
-        match self.checked_mul(other) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
+        self.checked_mul(other).unwrap_or(Self::MAX)
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_pow(self, exp: u32) -> Self {
-        match self.checked_pow(exp) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
+        self.checked_pow(exp).unwrap_or(Self::MAX)
     }
 
     /// Converts this decimal to an unsigned integer by truncating
@@ -782,7 +770,7 @@ impl de::Visitor<'_> for DecimalVisitor {
     type Value = Decimal;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("string-encoded decimal")
+        formatter.write_str("expected string-encoded decimal")
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
