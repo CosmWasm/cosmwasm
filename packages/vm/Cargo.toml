@@ -46,9 +46,10 @@ serde_json = "1.0.140"
 sha2 = "0.10.3"
 thiserror = "1.0.26"
 # We pin wasmer to a specific version because the layout of cached modules can change between patch versions.
-wasmer = { version = "=5.0.6", default-features = false, features = ["singlepass"] }
-wasmer-middlewares = "=5.0.6"
-wasmer-types = "=5.0.6"
+#wasmer = { version = "=5.0.6", default-features = false, features = ["singlepass"] }
+#wasmer-middlewares = "=5.0.6"
+#wasmer-types = "=5.0.6"
+
 strum = { version = "0.26.2", default-features = false, features = ["derive"] }
 # For heap profiling. Only used in the "heap_profiling" example. This has to be a non-dev dependency
 # because cargo currently does not support optional dev-dependencies.
@@ -58,10 +59,9 @@ dhat = { version = "0.3.3", optional = true }
 tracing = "0.1.32"
 
 # Wasmer git/local (used for quick local debugging or patching)
-# wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c", default-features = false, features = ["singlepass"] }
-# wasmer-middlewares = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c" }
-# wasmer = { path = "../../../wasmer/lib/api", default-features = false, features = ["singlepass"] }
-# wasmer-middlewares = { path = "../../../wasmer/lib/middlewares" }
+wasmer = { git = "https://github.com/DariuszDepta/wasmer.git", branch = "backport-probestack-to-5-0-6", default-features = false, features = ["singlepass"], version = "5.0.7" }
+wasmer-middlewares = { git = "https://github.com/DariuszDepta/wasmer.git", branch = "backport-probestack-to-5-0-6", version = "5.0.7" }
+wasmer-types = { git = "https://github.com/DariuszDepta/wasmer.git", branch = "backport-probestack-to-5-0-6", version = "5.0.7" }
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }

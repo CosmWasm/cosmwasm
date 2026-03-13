@@ -82,19 +82,6 @@ struct AggregateVerifyFile {
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
-struct BatchVerifyInput {
-    pubkeys: Vec<String>,
-    messages: Vec<String>,
-    signatures: Vec<String>,
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-struct BatchVerifyFile {
-    input: BatchVerifyInput,
-    output: bool,
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
 struct FastAggregateVerifyInput {
     pubkeys: Vec<String>,
     message: String,

@@ -318,12 +318,6 @@ mod tests {
     use core::str;
     use std::string;
 
-    #[derive(Debug, thiserror::Error)]
-    enum AssertThiserrorWorks {
-        #[error(transparent)]
-        Std(#[from] StdError),
-    }
-
     #[test]
     fn implements_debug() {
         let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub));
