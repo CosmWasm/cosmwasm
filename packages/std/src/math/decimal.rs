@@ -385,7 +385,7 @@ impl Decimal {
         // 9 is the max precision (DECIMAL_PLACES / 2)
         let precision_guess = (38 - atomics.ilog10()) / 2;
         let precision = core::cmp::min(precision_guess, Self::DECIMAL_PLACES / 2);
-        
+
         // The estimate using ilog10 might determine a precision that causes overflow for
         // high mantissas (e.g. 4e36). In that case, we need to lower the precision by 1.
         // We know that precision-1 is always safe because it reduces the exponent by 2.

@@ -1580,5 +1580,4 @@ mod tests {
         assert_eq!(Uint128::new(1000).ilog10(), 3);
         assert_eq!(Uint128::MAX.ilog10(), 38);
     }
-
 }
