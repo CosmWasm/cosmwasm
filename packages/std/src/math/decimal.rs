@@ -810,6 +810,7 @@ impl de::Visitor<'_> for DecimalVisitor {
 mod tests {
     use super::*;
 
+    use crate::{Int128, Int256};
     use alloc::vec::Vec;
 
     fn dec(input: &str) -> Decimal {
@@ -871,6 +872,29 @@ mod tests {
         assert_eq!(Decimal::try_from(Decimal256::one()), Ok(Decimal::one()));
         assert_eq!(
             Decimal::try_from(Decimal256::percent(50)),
+            Ok(Decimal::percent(50))
+        );
+    }
+
+    #[test]
+    fn decimal_from_signed_decimal256_works() {
+        let too_big = SignedDecimal256::new(Int256::from(Int128::MAX) * Int256::from(Int128::MAX));
+        assert_eq!(Decimal::try_from(too_big), Err(DecimalRangeExceeded));
+
+        let just_right =
+            SignedDecimal256::new(Int256::new(i128::MAX) + Int256::new(i128::MAX) + Int256::one());
+        assert_eq!(Decimal::try_from(just_right), Ok(Decimal::MAX));
+
+        assert_eq!(
+            Decimal::try_from(SignedDecimal256::zero()),
+            Ok(Decimal::zero())
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal256::one()),
+            Ok(Decimal::one())
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal256::percent(50)),
             Ok(Decimal::percent(50))
         );
     }
@@ -1664,6 +1688,7 @@ mod tests {
 
     #[test]
     fn decimal_uint128_sqrt() {
+        assert_eq!(Decimal::percent(0).sqrt(), Decimal::percent(0));
         assert_eq!(Decimal::percent(900).sqrt(), Decimal::percent(300));
 
         assert!(Decimal::percent(316) < Decimal::percent(1000).sqrt());
@@ -1775,6 +1800,17 @@ mod tests {
     fn decimal_checked_pow_overflow() {
         assert_eq!(
             Decimal::MAX.checked_pow(2),
+            Err(OverflowError::new(OverflowOperation::Pow))
+        );
+        assert_eq!(
+            Decimal::MAX.checked_pow(3),
+            Err(OverflowError::new(OverflowOperation::Pow))
+        );
+        assert_eq!(
+            Decimal::new(Uint128::new(
+                Decimal::DECIMAL_FRACTIONAL.u128() * 1_000_000_000
+            ))
+            .checked_pow(15),
             Err(OverflowError::new(OverflowOperation::Pow))
         );
     }
@@ -2216,5 +2252,97 @@ mod tests {
             let expected = format!("Decimal({s})");
             assert_eq!(format!("{decimal:?}"), expected);
         }
+    }
+
+    #[test]
+    fn serialize_decimal_to_string() {
+        let d = Decimal::from_str("123.45").unwrap();
+        let json_string = serde_json::to_string(&d).unwrap();
+        assert_eq!(r#""123.45""#, json_string);
+    }
+
+    #[test]
+    fn deserialize_decimal_from_string() {
+        let json_string = r#""123.45""#;
+        let d: Decimal = serde_json::from_str(json_string).unwrap();
+        assert_eq!(d, Decimal::from_str("123.45").unwrap());
+    }
+
+    #[test]
+    fn deserialize_invalid_decimal() {
+        let json_string = r#""123,45""#;
+        let result: Result<Decimal, _> = serde_json::from_str(json_string);
+        let err = result.unwrap_err();
+        assert!(err.to_string().contains("invalid digit"));
+    }
+
+    #[test]
+    fn deserialize_wrong_type_triggers_expectation() {
+        let json_decimal = "123.45";
+        let err = serde_json::from_str::<Decimal>(json_decimal).unwrap_err();
+        assert!(err.to_string().contains("expected string-encoded decimal"));
+    }
+
+    #[test]
+    fn failing_writer_should_work() {
+        enum When {
+            Always,
+            OnDecimal,
+            AfterDecimal,
+        }
+        struct FailingWriter {
+            when: When,
+            consumed_decimal: bool,
+        }
+
+        impl FailingWriter {
+            fn new(when: When) -> Self {
+                Self {
+                    when,
+                    consumed_decimal: false,
+                }
+            }
+        }
+        impl Write for FailingWriter {
+            fn write_str(&mut self, s: &str) -> std::fmt::Result {
+                match self.when {
+                    When::Always => return Err(std::fmt::Error),
+                    When::OnDecimal => {
+                        if s == "." {
+                            return Err(std::fmt::Error);
+                        }
+                    }
+                    When::AfterDecimal => {
+                        if self.consumed_decimal {
+                            return Err(std::fmt::Error);
+                        }
+                        if s == "." {
+                            self.consumed_decimal = true;
+                        }
+                    }
+                }
+                Ok(())
+            }
+        }
+        write!(
+            &mut FailingWriter::new(When::Always),
+            "{}",
+            Decimal::from_str("123.456").unwrap()
+        )
+        .unwrap_err();
+
+        write!(
+            &mut FailingWriter::new(When::OnDecimal),
+            "{}",
+            Decimal::from_str("123.456").unwrap()
+        )
+        .unwrap_err();
+
+        write!(
+            &mut FailingWriter::new(When::AfterDecimal),
+            "{}",
+            Decimal::from_str("123.456").unwrap()
+        )
+        .unwrap_err();
     }
 }
