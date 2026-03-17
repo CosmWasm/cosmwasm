@@ -886,8 +886,8 @@ fn decimal_uint128_div_assign_by_zero() {
 
 #[test]
 fn decimal_uint128_sqrt() {
+    assert_eq!(Decimal::percent(0).sqrt(), Decimal::percent(0));
     assert_eq!(Decimal::percent(900).sqrt(), Decimal::percent(300));
-
     assert!(Decimal::percent(316) < Decimal::percent(1000).sqrt());
     assert!(Decimal::percent(1000).sqrt() < Decimal::percent(317));
 }
