@@ -3,6 +3,7 @@ use cosmwasm_std::{
     Int128, Int256, OverflowError, OverflowOperation, RoundUpOverflowError, SignedDecimal,
     SignedDecimal256, Uint128, Uint256,
 };
+use std::fmt::Write;
 use std::str::FromStr;
 
 const DECIMAL_FRACTIONAL: Uint128 = Uint128::new(1_000_000_000_000_000_000u128); // 1*10^18
@@ -998,6 +999,14 @@ fn decimal_checked_pow_overflow() {
         Decimal::MAX.checked_pow(2),
         Err(OverflowError::new(OverflowOperation::Pow))
     );
+    assert_eq!(
+        Decimal::MAX.checked_pow(3),
+        Err(OverflowError::new(OverflowOperation::Pow))
+    );
+    assert_eq!(
+        Decimal::new(Uint128::new(DECIMAL_FRACTIONAL.u128() * 1_000_000_000)).checked_pow(15),
+        Err(OverflowError::new(OverflowOperation::Pow))
+    );
 }
 
 #[test]
@@ -1469,4 +1478,67 @@ fn deserialize_wrong_type_triggers_expectation() {
     let json_decimal = "123.45";
     let err = serde_json::from_str::<Decimal>(json_decimal).unwrap_err();
     assert!(err.to_string().contains("expected string-encoded decimal"));
+}
+
+#[test]
+fn failing_writer_should_work() {
+    enum When {
+        Always,
+        OnDecimal,
+        AfterDecimal,
+    }
+    struct FailingWriter {
+        when: When,
+        consumed_decimal: bool,
+    }
+
+    impl FailingWriter {
+        fn new(when: When) -> Self {
+            Self {
+                when,
+                consumed_decimal: false,
+            }
+        }
+    }
+    impl Write for FailingWriter {
+        fn write_str(&mut self, s: &str) -> std::fmt::Result {
+            match self.when {
+                When::Always => return Err(std::fmt::Error),
+                When::OnDecimal => {
+                    if s == "." {
+                        return Err(std::fmt::Error);
+                    }
+                }
+                When::AfterDecimal => {
+                    if self.consumed_decimal {
+                        return Err(std::fmt::Error);
+                    }
+                    if s == "." {
+                        self.consumed_decimal = true;
+                    }
+                }
+            }
+            Ok(())
+        }
+    }
+    write!(
+        &mut FailingWriter::new(When::Always),
+        "{}",
+        Decimal::from_str("123.456").unwrap()
+    )
+    .unwrap_err();
+
+    write!(
+        &mut FailingWriter::new(When::OnDecimal),
+        "{}",
+        Decimal::from_str("123.456").unwrap()
+    )
+    .unwrap_err();
+
+    write!(
+        &mut FailingWriter::new(When::AfterDecimal),
+        "{}",
+        Decimal::from_str("123.456").unwrap()
+    )
+    .unwrap_err();
 }
