@@ -384,14 +384,24 @@ impl Decimal256 {
         // Algorithm described in https://hackmd.io/@webmaster128/SJThlukj_
         // We start with the highest precision possible and lower it until
         // there's no overflow.
-        //
-        // TODO: This could be made more efficient once log10 is in:
-        // https://github.com/rust-lang/rust/issues/70887
-        // The max precision is something like `18 - log10(self.0) / 2`.
-        (0..=Self::DECIMAL_PLACES / 2)
-            .rev()
-            .find_map(|i| self.sqrt_with_precision(i))
-            // The last step (i = 0) is guaranteed to succeed because `isqrt(Uint256::MAX) * 10^9` does not overflow
+        // The max precision is bounded by `Uint256::MAX`, so we can estimate it from `ilog10`.
+        // We can optimize the previous loop by using `ilog10` to directly calculate the precision.
+        let atomics = self.0;
+        if atomics.is_zero() {
+            // value is 0, so we can use any precision, let's use the max one
+            return self.sqrt_with_precision(Self::DECIMAL_PLACES / 2).unwrap();
+        }
+
+        // 77 is the max `ilog10` value for Uint256
+        // 9 is the max precision (DECIMAL_PLACES / 2)
+        let precision_guess = (77 - atomics.ilog10()) / 2;
+        let precision = core::cmp::min(precision_guess, Self::DECIMAL_PLACES / 2);
+
+        // The estimate using ilog10 might determine a precision that causes overflow for
+        // high mantissas (e.g. 4e75). In that case, we need to lower the precision by 1.
+        // We know that precision-1 is always safe because it reduces the exponent by 2.
+        self.sqrt_with_precision(precision)
+            .or_else(|| self.sqrt_with_precision(precision - 1))
             .unwrap()
     }
 
