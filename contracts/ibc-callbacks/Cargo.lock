@@ -2611,9 +2611,8 @@ checksum = "af190c94f2773fdb3729c55b007a722abb5384da03bc0986df4c289bf5567e96"
 
 [[package]]
 name = "wasmer"
-version = "5.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b104b9437e9100943fb01880cc210ebe250cc4aa2f7e121f068033a76d29cc4"
+version = "5.0.7"
+source = "git+https://github.com/DariuszDepta/wasmer.git?branch=backport-probestack-to-5-0-6#243309b20d94b032e3c5ad87b23bb78ba76d7c79"
 dependencies = [
  "bindgen",
  "bytes",
@@ -2642,9 +2641,8 @@ dependencies = [
 
 [[package]]
 name = "wasmer-compiler"
-version = "5.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9dd5c640b9e6dcc64bcad987b3133e19f1c9919a8e0c732eb11a33f650bbf54"
+version = "5.0.7"
+source = "git+https://github.com/DariuszDepta/wasmer.git?branch=backport-probestack-to-5-0-6#243309b20d94b032e3c5ad87b23bb78ba76d7c79"
 dependencies = [
  "backtrace",
  "bytes",
@@ -2672,9 +2670,8 @@ dependencies = [
 
 [[package]]
 name = "wasmer-compiler-singlepass"
-version = "5.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b95cad6ba04afeb3a339529e880c3290f8516bc6324c3082155a79f00129f5a1"
+version = "5.0.7"
+source = "git+https://github.com/DariuszDepta/wasmer.git?branch=backport-probestack-to-5-0-6#243309b20d94b032e3c5ad87b23bb78ba76d7c79"
 dependencies = [
  "byteorder",
  "dynasm",
@@ -2690,9 +2687,8 @@ dependencies = [
 
 [[package]]
 name = "wasmer-derive"
-version = "5.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b4c4970530327054e6effa876eadfd57079866c7429e31fde2568d6354ec61d"
+version = "5.0.7"
+source = "git+https://github.com/DariuszDepta/wasmer.git?branch=backport-probestack-to-5-0-6#243309b20d94b032e3c5ad87b23bb78ba76d7c79"
 dependencies = [
  "proc-macro-error2",
  "proc-macro2",
@@ -2702,9 +2698,8 @@ dependencies = [
 
 [[package]]
 name = "wasmer-middlewares"
-version = "5.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "111eee5478867554d4496f89f472499fe90469f7473dbf90e466c1deb5505293"
+version = "5.0.7"
+source = "git+https://github.com/DariuszDepta/wasmer.git?branch=backport-probestack-to-5-0-6#243309b20d94b032e3c5ad87b23bb78ba76d7c79"
 dependencies = [
  "wasmer",
  "wasmer-types",
@@ -2713,9 +2708,8 @@ dependencies = [
 
 [[package]]
 name = "wasmer-types"
-version = "5.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "554f389473d61915754b1873c5ef392a1a75b55c7d616e2a78f67c1af45785ae"
+version = "5.0.7"
+source = "git+https://github.com/DariuszDepta/wasmer.git?branch=backport-probestack-to-5-0-6#243309b20d94b032e3c5ad87b23bb78ba76d7c79"
 dependencies = [
  "bytecheck 0.6.12",
  "enum-iterator",
@@ -2733,9 +2727,8 @@ dependencies = [
 
 [[package]]
 name = "wasmer-vm"
-version = "5.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20b3f40e1e18d6cd040d6d1ea32affbf2f64ff059eff3b85614bccb8ff95c59b"
+version = "5.0.7"
+source = "git+https://github.com/DariuszDepta/wasmer.git?branch=backport-probestack-to-5-0-6#243309b20d94b032e3c5ad87b23bb78ba76d7c79"
 dependencies = [
  "backtrace",
  "cc",
