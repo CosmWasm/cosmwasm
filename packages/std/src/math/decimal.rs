@@ -184,13 +184,13 @@ impl Decimal {
             Ordering::Equal => Self(atomics),
             Ordering::Greater => {
                 let digits = decimal_places - (Self::DECIMAL_PLACES); // No overflow because decimal_places > DECIMAL_PLACES
-                if let Ok(factor) = TEN.checked_pow(digits) {
-                    Self(atomics.checked_div(factor).unwrap()) // Safe because factor cannot be zero
-                } else {
-                    // In this case `factor` exceeds the Uint128 range.
-                    // Any Uint128 `x` divided by `factor` with `factor > Uint128::MAX` is 0.
-                    // Try e.g. Python3: `(2**128-1) // 2**128`
+                if atomics.is_zero() || digits > atomics.ilog10() {
+                    // In this case `10^digits > atomics`, so the division truncates to zero.
                     Self(Uint128::zero())
+                } else {
+                    // `digits <= ilog10(atomics)` guarantees `10^digits` fits in Uint128.
+                    let factor = TEN.checked_pow(digits).unwrap();
+                    Self(atomics.checked_div(factor).unwrap()) // Safe because factor cannot be zero
                 }
             }
         })

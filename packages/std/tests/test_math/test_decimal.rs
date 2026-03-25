@@ -208,6 +208,10 @@ fn decimal_from_atomics_works() {
         Decimal::from_atomics(u128::MAX, u32::MAX).unwrap(),
         Decimal::from_str("0.000000000000000000").unwrap()
     );
+    assert_eq!(
+        Decimal::from_atomics(0u128, u32::MAX).unwrap(),
+        Decimal::zero()
+    );
 
     // Can be used with max value
     let max = Decimal::MAX;
