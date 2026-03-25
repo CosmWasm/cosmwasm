@@ -195,19 +195,22 @@ tasks:
   cov-cosmwasm-std:
     desc: Generates code coverage report for cosmwasm-std in text format
     cmds:
-      - cmd: cargo llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov clean
       - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-std --no-cfg-coverage
 
   cov-cosmwasm-std-html:
     desc: Generates code coverage report for cosmwasm-std in HTML format
     cmds:
-      - cmd: cargo llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov clean
       - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-std --no-cfg-coverage --html
 
   cov-cosmwasm-std-html-open:
     desc: Generates code coverage report for cosmwasm-std in HTML format and opens in a browser
     cmds:
-      - cmd: cargo llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov clean
       - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-std --no-cfg-coverage --html --open
 
   cov-badge-cosmwasm-std:
