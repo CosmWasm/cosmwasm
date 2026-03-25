@@ -17,9 +17,7 @@ use super::{Uint256, Uint512};
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal256(1_000_000_000_000_000_000) == 1.0
 ///
-/// The greatest possible value that can be represented is
-/// 115792089237316195423570985008687907853269984665640564039457.584007913129639935
-/// which is (2^256 - 1) / 10^18
+/// The greatest possible value that can be represented is 115792089237316195423570985008687907853269984665640564039457.584007913129639935 = (2^256 - 1) / 10^18
 #[derive(
     Copy,
     Clone,
