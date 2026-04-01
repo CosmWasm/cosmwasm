@@ -241,7 +241,7 @@ pub enum WasmMsg {
         msg: Binary,
         funds: Vec<Coin>,
     },
-    /// Instantiates a new contracts from previously uploaded Wasm code.
+    /// Instantiates a new contract from previously uploaded Wasm code.
     ///
     /// The contract address is non-predictable. But it is guaranteed that
     /// when emitting the same Instantiate message multiple times,
@@ -265,7 +265,7 @@ pub enum WasmMsg {
         /// - not start / end with whitespace
         label: String,
     },
-    /// Instantiates a new contracts from previously uploaded Wasm code
+    /// Instantiates a new contract from previously uploaded Wasm code
     /// using a predictable address derivation algorithm implemented in
     /// [`cosmwasm_std::instantiate2_address`].
     ///
