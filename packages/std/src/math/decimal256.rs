@@ -1,4 +1,3 @@
-use alloc::string::ToString;
 use core::cmp::Ordering;
 use core::fmt::{self, Write};
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
@@ -10,19 +9,15 @@ use crate::errors::{
     OverflowOperation, RoundUpOverflowError, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use crate::{
-    Decimal, SignedDecimal, SignedDecimal256, Uint512, __internal::forward_ref_partial_eq,
-};
+use crate::{Decimal, SignedDecimal, SignedDecimal256, __internal::forward_ref_partial_eq};
 
 use super::Fraction;
 use super::Isqrt;
-use super::Uint256;
+use super::{Uint256, Uint512};
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal256(1_000_000_000_000_000_000) == 1.0
 ///
-/// The greatest possible value that can be represented is
-/// 115792089237316195423570985008687907853269984665640564039457.584007913129639935
-/// (which is (2^256 - 1) / 10^18)
+/// The greatest possible value that can be represented is 115792089237316195423570985008687907853269984665640564039457.584007913129639935 = (2^256 - 1) / 10^18
 #[derive(
     Copy,
     Clone,
@@ -381,20 +376,16 @@ impl Decimal256 {
     /// This should not overflow or panic.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn sqrt(&self) -> Self {
-        // Algorithm described in https://hackmd.io/@webmaster128/SJThlukj_
-        // We start with the highest precision possible and lower it until
-        // there's no overflow.
-        // The max precision is bounded by `Uint256::MAX`, so we can estimate it from `ilog10`.
+        // The max precision is `9 - log10(self.0) / 2`.
         // We can optimize the previous loop by using `ilog10` to directly calculate the precision.
-        let atomics = self.0;
-        if atomics.is_zero() {
+        if self.0.is_zero() {
             // value is 0, so we can use any precision, let's use the max one
             return self.sqrt_with_precision(Self::DECIMAL_PLACES / 2).unwrap();
         }
 
         // 77 is the max `ilog10` value for Uint256
         // 9 is the max precision (DECIMAL_PLACES / 2)
-        let precision_guess = (77 - atomics.ilog10()) / 2;
+        let precision_guess = (77 - self.0.ilog10()) / 2;
         let precision = core::cmp::min(precision_guess, Self::DECIMAL_PLACES / 2);
 
         // The estimate using ilog10 might determine a precision that causes overflow for
@@ -429,34 +420,22 @@ impl Decimal256 {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_add(self, other: Self) -> Self {
-        match self.checked_add(other) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
+        self.checked_add(other).unwrap_or(Self::MAX)
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_sub(self, other: Self) -> Self {
-        match self.checked_sub(other) {
-            Ok(value) => value,
-            Err(_) => Self::zero(),
-        }
+        self.checked_sub(other).unwrap_or_else(|_| Self::zero())
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_mul(self, other: Self) -> Self {
-        match self.checked_mul(other) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
+        self.checked_mul(other).unwrap_or(Self::MAX)
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_pow(self, exp: u32) -> Self {
-        match self.checked_pow(exp) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
+        self.checked_pow(exp).unwrap_or(Self::MAX)
     }
 
     /// Converts this decimal to an unsigned integer by truncating
@@ -590,14 +569,14 @@ impl FromStr for Decimal256 {
 
         if let Some(fractional_part) = parts_iter.next() {
             let fractional = fractional_part.parse::<Uint256>()?;
-            let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
-                || {
+            let exp = Self::DECIMAL_PLACES
+                .checked_sub(fractional_part.len() as u32)
+                .ok_or_else(|| {
                     StdError::msg(format_args!(
                         "Cannot parse more than {} fractional digits",
                         Self::DECIMAL_PLACES
                     ))
-                },
-            )?;
+                })?;
             debug_assert!(exp <= Self::DECIMAL_PLACES);
             let fractional_factor = Uint256::from(10u128).pow(exp);
             atomics = atomics.checked_add(
@@ -618,7 +597,7 @@ impl FromStr for Decimal256 {
 impl fmt::Display for Decimal256 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let whole = (self.0) / Self::DECIMAL_FRACTIONAL;
-        let fractional = (self.0).checked_rem(Self::DECIMAL_FRACTIONAL).unwrap();
+        let fractional = self.0.checked_rem(Self::DECIMAL_FRACTIONAL).unwrap();
 
         if fractional.is_zero() {
             write!(f, "{whole}")

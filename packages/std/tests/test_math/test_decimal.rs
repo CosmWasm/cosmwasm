@@ -6,7 +6,8 @@ use cosmwasm_std::{
 use std::fmt::Write;
 use std::str::FromStr;
 
-const DECIMAL_FRACTIONAL: Uint128 = Uint128::new(1_000_000_000_000_000_000u128); // 1*10^18
+/// 1*10^18
+const DECIMAL_FRACTIONAL: Uint128 = Uint128::new(1_000_000_000_000_000_000);
 
 fn dec(input: &str) -> Decimal {
     Decimal::from_str(input).unwrap()
@@ -1004,7 +1005,7 @@ fn decimal_checked_pow_overflow() {
         Err(OverflowError::new(OverflowOperation::Pow))
     );
     assert_eq!(
-        Decimal::new(Uint128::new(DECIMAL_FRACTIONAL.u128() * 1_000_000_000)).checked_pow(15),
+        Decimal::new(DECIMAL_FRACTIONAL * Uint128::new(1_000_000_000)).checked_pow(15),
         Err(OverflowError::new(OverflowOperation::Pow))
     );
 }

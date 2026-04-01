@@ -18,7 +18,7 @@ use super::{Uint128, Uint256};
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
 ///
-/// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
+/// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 = (2^128 - 1) / 10^18
 #[derive(
     Copy,
     Clone,
@@ -398,8 +398,8 @@ impl Decimal {
     fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
         let inner_mul = 100u128.pow(precision);
         self.0.checked_mul(inner_mul.into()).ok().map(|inner| {
-            let outer_mul = 10u128.pow(Self::DECIMAL_PLACES / 2 - precision);
-            Decimal(inner.isqrt().checked_mul(Uint128::from(outer_mul)).unwrap())
+            let outer_mul = Uint128::from(10u128).pow(Self::DECIMAL_PLACES / 2 - precision);
+            Decimal(inner.isqrt().checked_mul(outer_mul).unwrap())
         })
     }
 
@@ -572,14 +572,14 @@ impl FromStr for Decimal {
 
         if let Some(fractional_part) = parts_iter.next() {
             let fractional = fractional_part.parse::<Uint128>()?;
-            let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
-                || {
+            let exp = Self::DECIMAL_PLACES
+                .checked_sub(fractional_part.len() as u32)
+                .ok_or_else(|| {
                     StdError::msg(format_args!(
                         "Cannot parse more than {} fractional digits",
                         Self::DECIMAL_PLACES
                     ))
-                },
-            )?;
+                })?;
             debug_assert!(exp <= Self::DECIMAL_PLACES);
             let fractional_factor = Uint128::from(10u128.pow(exp));
             atomics = atomics.checked_add(
@@ -600,7 +600,7 @@ impl FromStr for Decimal {
 impl fmt::Display for Decimal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let whole = (self.0) / Self::DECIMAL_FRACTIONAL;
-        let fractional = (self.0).checked_rem(Self::DECIMAL_FRACTIONAL).unwrap();
+        let fractional = self.0.checked_rem(Self::DECIMAL_FRACTIONAL).unwrap();
 
         if fractional.is_zero() {
             write!(f, "{whole}")

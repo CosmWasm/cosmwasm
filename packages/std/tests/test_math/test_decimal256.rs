@@ -1,7 +1,9 @@
 use cosmwasm_std::{
     CheckedFromRatioError, Decimal, Decimal256, Decimal256RangeExceeded, DivideByZeroError,
-    Fraction, OverflowError, OverflowOperation, RoundUpOverflowError, Uint256,
+    Fraction, Int128, Int256, OverflowError, OverflowOperation, RoundUpOverflowError,
+    SignedDecimal, SignedDecimal256, Uint128, Uint256,
 };
+use std::fmt::Write;
 use std::str::FromStr;
 
 /// 1*10**18
@@ -61,6 +63,68 @@ fn decimal256_bps() {
     assert_eq!(
         value,
         Decimal256::new(DECIMAL_FRACTIONAL / Uint256::from(80u8))
+    );
+}
+
+#[test]
+fn decimal256_from_decimal_works() {
+    assert_eq!(
+        Decimal256::from(Decimal::new(Uint128::MAX)),
+        Decimal256::from(Decimal::MAX)
+    );
+    assert_eq!(Decimal256::from(Decimal::zero()), Decimal256::zero());
+    assert_eq!(Decimal256::from(Decimal::one()), Decimal256::one());
+    assert_eq!(
+        Decimal256::from(Decimal::percent(50)),
+        Decimal256::percent(50)
+    );
+}
+
+#[test]
+fn decimal256_from_signed_decimal_works() {
+    assert_eq!(
+        Decimal256::try_from(SignedDecimal::new(Int128::MAX)),
+        Ok(Decimal256::new(Uint256::new(u128::MAX / 2)))
+    );
+    assert_eq!(
+        Decimal256::try_from(SignedDecimal::new(Int128::MIN)),
+        Err(Decimal256RangeExceeded)
+    );
+    assert_eq!(
+        Decimal256::try_from(SignedDecimal::zero()),
+        Ok(Decimal256::zero())
+    );
+    assert_eq!(
+        Decimal256::try_from(SignedDecimal::one()),
+        Ok(Decimal256::one())
+    );
+    assert_eq!(
+        Decimal256::try_from(SignedDecimal::percent(50)),
+        Ok(Decimal256::percent(50))
+    );
+}
+
+#[test]
+fn decimal256_from_signed_decimal256_works() {
+    assert_eq!(
+        Decimal256::try_from(SignedDecimal256::new(Int256::MAX)),
+        Ok(Decimal256::new(Uint256::MAX / Uint256::new(2)))
+    );
+    assert_eq!(
+        Decimal256::try_from(SignedDecimal256::new(Int256::MIN)),
+        Err(Decimal256RangeExceeded)
+    );
+    assert_eq!(
+        Decimal256::try_from(SignedDecimal256::zero()),
+        Ok(Decimal256::zero())
+    );
+    assert_eq!(
+        Decimal256::try_from(SignedDecimal256::one()),
+        Ok(Decimal256::one())
+    );
+    assert_eq!(
+        Decimal256::try_from(SignedDecimal256::percent(50)),
+        Ok(Decimal256::percent(50))
     );
 }
 
@@ -914,8 +978,8 @@ fn decimal256_uint128_div_assign_by_zero() {
 
 #[test]
 fn decimal256_uint128_sqrt() {
+    assert_eq!(Decimal256::percent(0).sqrt(), Decimal256::percent(0));
     assert_eq!(Decimal256::percent(900).sqrt(), Decimal256::percent(300));
-
     assert!(Decimal256::percent(316) < Decimal256::percent(1000).sqrt());
     assert!(Decimal256::percent(1000).sqrt() < Decimal256::percent(317));
 }
@@ -1038,6 +1102,14 @@ fn decimal256_checked_pow() {
 fn decimal256_checked_pow_overflow() {
     assert_eq!(
         Decimal256::MAX.checked_pow(2),
+        Err(OverflowError::new(OverflowOperation::Pow))
+    );
+    assert_eq!(
+        Decimal256::MAX.checked_pow(3),
+        Err(OverflowError::new(OverflowOperation::Pow))
+    );
+    assert_eq!(
+        Decimal256::new(DECIMAL_FRACTIONAL * Uint256::new(1_000_000_000)).checked_pow(15),
         Err(OverflowError::new(OverflowOperation::Pow))
     );
 }
@@ -1332,7 +1404,7 @@ fn decimal256_pow_works() {
 }
 
 #[test]
-#[should_panic]
+#[should_panic(expected = "Multiplication overflow")]
 fn decimal256_pow_overflow_panics() {
     _ = Decimal256::MAX.pow(2u32);
 }
@@ -1500,4 +1572,96 @@ fn decimal256_implements_debug() {
         let expected = format!("Decimal256({s})");
         assert_eq!(format!("{decimal256:?}"), expected);
     }
+}
+
+#[test]
+fn serialize_decimal256_to_string() {
+    let d = Decimal256::from_str("123.45").unwrap();
+    let json_string = serde_json::to_string(&d).unwrap();
+    assert_eq!(r#""123.45""#, json_string);
+}
+
+#[test]
+fn deserialize_decimal256_from_string() {
+    let json_string = r#""123.45""#;
+    let d: Decimal256 = serde_json::from_str(json_string).unwrap();
+    assert_eq!(d, Decimal256::from_str("123.45").unwrap());
+}
+
+#[test]
+fn deserialize256_invalid_decimal() {
+    let json_string = r#""123,45""#;
+    let result: Result<Decimal256, _> = serde_json::from_str(json_string);
+    let err = result.unwrap_err();
+    assert!(err.to_string().contains("invalid digit"));
+}
+
+#[test]
+fn deserialize_wrong_type_triggers_expectation() {
+    let json_decimal = "123.45";
+    let err = serde_json::from_str::<Decimal256>(json_decimal).unwrap_err();
+    assert!(err.to_string().contains("expected string-encoded decimal"));
+}
+
+#[test]
+fn failing_writer_should_work() {
+    enum When {
+        Always,
+        OnDecimal,
+        AfterDecimal,
+    }
+    struct FailingWriter {
+        when: When,
+        consumed_decimal: bool,
+    }
+
+    impl FailingWriter {
+        fn new(when: When) -> Self {
+            Self {
+                when,
+                consumed_decimal: false,
+            }
+        }
+    }
+    impl Write for FailingWriter {
+        fn write_str(&mut self, s: &str) -> std::fmt::Result {
+            match self.when {
+                When::Always => return Err(std::fmt::Error),
+                When::OnDecimal => {
+                    if s == "." {
+                        return Err(std::fmt::Error);
+                    }
+                }
+                When::AfterDecimal => {
+                    if self.consumed_decimal {
+                        return Err(std::fmt::Error);
+                    }
+                    if s == "." {
+                        self.consumed_decimal = true;
+                    }
+                }
+            }
+            Ok(())
+        }
+    }
+    write!(
+        &mut FailingWriter::new(When::Always),
+        "{}",
+        Decimal256::from_str("123.456").unwrap()
+    )
+    .unwrap_err();
+
+    write!(
+        &mut FailingWriter::new(When::OnDecimal),
+        "{}",
+        Decimal256::from_str("123.456").unwrap()
+    )
+    .unwrap_err();
+
+    write!(
+        &mut FailingWriter::new(When::AfterDecimal),
+        "{}",
+        Decimal256::from_str("123.456").unwrap()
+    )
+    .unwrap_err();
 }
