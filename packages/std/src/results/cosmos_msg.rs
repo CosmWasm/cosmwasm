@@ -190,7 +190,7 @@ pub enum DistributionMsg {
         /// The `validator_address`
         validator: String,
     },
-    /// This is translated to a [[MsgFundCommunityPool](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#LL69C1-L76C2).
+    /// This is translated to a [MsgFundCommunityPool](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L69-L76).
     /// `depositor` is automatically filled with the current contract's address.
     #[cfg(feature = "cosmwasm_1_3")]
     FundCommunityPool {
@@ -289,7 +289,7 @@ pub enum WasmMsg {
         funds: Vec<Coin>,
         salt: Binary,
     },
-    /// Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to
+    /// Migrates a given contract to use new wasm code. Passes a MigrateMsg to allow us to
     /// customize behavior.
     ///
     /// Only the contract admin (as defined in wasmd), if any, is able to make this call.
@@ -315,7 +315,7 @@ pub enum WasmMsg {
     ClearAdmin { contract_addr: String },
 }
 
-/// This message type allows the contract interact with the [x/gov] module in order
+/// This message type allows the contract to interact with the [x/gov] module in order
 /// to cast votes.
 ///
 /// [x/gov]: https://github.com/cosmos/cosmos-sdk/tree/v0.45.12/x/gov
