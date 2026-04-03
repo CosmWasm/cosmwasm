@@ -26,3 +26,4 @@ schemars = "0.8.4"
 serde = { version = "1.0.192", default-features = false, features = ["alloc", "derive"] }
 serde_json = "1.0.140"
 thiserror = "1.0.26"
+wasmer = "=4.4.0"
