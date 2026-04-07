@@ -108,7 +108,7 @@ impl Decimal {
         Self(Uint128::new(atomics))
     }
 
-    /// Convert permille (x/1000) into Decimal
+    /// Convert per mille (x/1000) into Decimal
     ///
     /// ## Examples
     ///
