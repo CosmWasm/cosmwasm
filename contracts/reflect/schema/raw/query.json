@@ -476,7 +476,7 @@
               ],
               "properties": {
                 "data": {
-                  "description": "this is the expected protobuf message type (not any), binary encoded",
+                  "description": "This is the expected protobuf message type (not any), binary encoded",
                   "allOf": [
                     {
                       "$ref": "#/definitions/Binary"
@@ -484,7 +484,7 @@
                   ]
                 },
                 "path": {
-                  "description": "this is the fully qualified service path used for routing, eg. \"/cosmos_sdk.x.bank.v1.Query/QueryBalance\"",
+                  "description": "This is the fully qualified service path used for routing, eg. \"/cosmos_sdk.x.bank.v1.Query/QueryBalance\"",
                   "type": "string"
                 }
               },

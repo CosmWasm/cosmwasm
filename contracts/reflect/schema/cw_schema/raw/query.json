@@ -100,11 +100,11 @@
           "type": "named",
           "properties": {
             "data": {
-              "description": "this is the expected protobuf message type (not any), binary encoded",
+              "description": "This is the expected protobuf message type (not any), binary encoded",
               "value": 5
             },
             "path": {
-              "description": "this is the fully qualified service path used for routing,\neg. \"/cosmos_sdk.x.bank.v1.Query/QueryBalance\"",
+              "description": "This is the fully qualified service path used for routing,\neg. \"/cosmos_sdk.x.bank.v1.Query/QueryBalance\"",
               "value": 1
             }
           }
