@@ -204,6 +204,14 @@ fn decimal256_from_atomics_works() {
         Decimal256::from_atomics(u128::MAX, u32::MAX).unwrap(),
         Decimal256::from_str("0.000000000000000000").unwrap()
     );
+    assert_eq!(
+        Decimal256::from_atomics(0u128, u32::MAX).unwrap(),
+        Decimal256::zero()
+    );
+    assert_eq!(
+        Decimal256::from_atomics(Uint256::MAX, u32::MAX).unwrap(),
+        Decimal256::zero()
+    );
 
     // Can be used with max value
     let max = Decimal256::MAX;
