@@ -676,7 +676,7 @@
     "WasmQuery": {
       "oneOf": [
         {
-          "description": "this queries the public API of another contract at a known address (with known ABI) Return value is whatever the contract returns (caller should know), wrapped in a ContractResult that is JSON encoded.",
+          "description": "This queries the public API of another contract at a known address (with known ABI) Return value is whatever the contract returns (caller should know), wrapped in a ContractResult that is JSON encoded.",
           "type": "object",
           "required": [
             "smart"
@@ -707,7 +707,7 @@
           "additionalProperties": false
         },
         {
-          "description": "this queries the raw kv-store of the contract. returns the raw, unparsed data stored at that key, which may be an empty vector if not present",
+          "description": "This queries the raw kv-store of the contract. Returns the raw, unparsed data stored at that key, which may be an empty vector if not present",
           "type": "object",
           "required": [
             "raw"
@@ -724,7 +724,7 @@
                   "type": "string"
                 },
                 "key": {
-                  "description": "Key is the raw key used in the contracts Storage",
+                  "description": "Key is the raw key used in the contract's storage",
                   "allOf": [
                     {
                       "$ref": "#/definitions/Binary"
