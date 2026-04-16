@@ -157,10 +157,12 @@ impl<T> SubMsg<T> {
     /// This allows easier interactions between code written for a specific chain and
     /// code written for multiple chains.
     /// If this is a [`CosmosMsg::Custom`] submessage, the function returns `None`.
-    pub fn change_custom<U>(self) -> Option<SubMsg<U>> {
-        Some(SubMsg {
+```
+    pub fn change_custom<U>(self) -> Option<ReplyOnMsg<U>> {
+        Some(ReplyOnMsg {
             id: self.id,
             payload: self.payload,
+```
             msg: self.msg.change_custom::<U>()?,
             gas_limit: self.gas_limit,
             reply_on: self.reply_on,
