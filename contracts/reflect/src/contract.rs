@@ -164,6 +164,7 @@ fn query_chain(
 }
 
 fn query_raw(deps: Deps<SpecialQuery>, contract: String, key: Binary) -> StdResult<RawResponse> {
+    deps.api.addr_validate(&contract)?;
     let response: Option<Vec<u8>> = deps.querier.query_wasm_raw(contract, key)?;
     Ok(RawResponse {
         data: response.unwrap_or_default().into(),
