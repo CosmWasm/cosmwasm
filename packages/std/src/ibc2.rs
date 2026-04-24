@@ -60,6 +60,8 @@ pub enum Ibc2Msg {
     WriteAcknowledgement {
         /// Existing channel where the packet was received
         source_client: String,
+        /// The identifier of the client that was the intended recipient.
+        destination_client: String,
         /// Sequence number of the packet that was received
         packet_sequence: u64,
         /// The acknowledgement to send back
@@ -81,6 +83,8 @@ pub struct Ibc2PacketReceiveMsg {
     pub relayer: Addr,
     /// The identifier of the source IBC client.
     pub source_client: String,
+    /// The identifier of the destination IBC client.
+    pub destination_client: String,
     /// The unique sequence number of the received packet.
     pub packet_sequence: u64,
 }
@@ -90,12 +94,14 @@ impl Ibc2PacketReceiveMsg {
         payload: Ibc2Payload,
         relayer: Addr,
         source_client: String,
+        destination_client: String,
         packet_sequence: u64,
     ) -> Self {
         Self {
             payload,
             relayer,
             source_client,
+            destination_client,
             packet_sequence,
         }
     }
