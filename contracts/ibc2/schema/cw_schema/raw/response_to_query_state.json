@@ -15,6 +15,9 @@
         "ibc2_packet_timeout_counter": {
           "value": 1
         },
+        "last_destination_client": {
+          "value": 2
+        },
         "last_packet_sent": {
           "value": 8
         },
