@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 (empty)
 
+## [3.0.5] - 2025-04-24
+
+- Fixes to IBCv2 async acks ([#2646])
+
+[#2646]: https://github.com/CosmWasm/cosmwasm/pull/2646
+
 ## [3.0.4] - 2025-02-11
 
 - Prepared version v3.0.4 ([#2613])
@@ -1542,7 +1548,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.4...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.5...HEAD
+[3.0.5]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.4...v3.0.5
 [3.0.4]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.3...v3.0.4
 [3.0.3]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.1...v3.0.2
