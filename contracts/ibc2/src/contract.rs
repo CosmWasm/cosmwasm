@@ -22,6 +22,7 @@ pub fn instantiate(
             ibc2_packet_receive_counter: 0,
             ibc2_packet_timeout_counter: 0,
             last_source_client: "".to_owned(),
+            last_destination_client: "".to_owned(),
             last_packet_seq: 0,
             last_packet_sent: None,
         })?,
@@ -86,6 +87,7 @@ pub fn ibc2_packet_receive(
         &to_json_vec(&State {
             ibc2_packet_receive_counter: state.ibc2_packet_receive_counter + 1,
             last_source_client: msg.source_client.clone(),
+            last_destination_client: msg.destination_client.clone(),
             last_packet_seq: msg.packet_sequence,
             ..state
         })?,
@@ -98,7 +100,9 @@ pub fn ibc2_packet_receive(
         msg.payload.value,
     );
     let new_msg = Ibc2Msg::SendPacket {
-        source_client: msg.source_client,
+        // `destination_client` is this chain's client ID for the peer chain.
+        // When responding to the sender, the destination becomes the source.
+        source_client: msg.destination_client.clone(),
         payloads: vec![new_payload],
         timeout: env.block.time.plus_minutes(1_u64),
     };
@@ -115,6 +119,7 @@ pub fn ibc2_packet_receive(
         Ok(
             resp.add_message(cosmwasm_std::Ibc2Msg::WriteAcknowledgement {
                 source_client: state.last_source_client,
+                destination_client: state.last_destination_client,
                 packet_sequence: state.last_packet_seq,
                 ack: IbcAcknowledgement::new([1, 2, 3]),
             }),
