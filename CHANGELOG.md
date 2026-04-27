@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 (empty)
 
+## [3.0.5] - 2025-04-24
+
+- Fixes to IBCv2 async acks ([#2646])
+
+[#2646]: https://github.com/CosmWasm/cosmwasm/pull/2646
+
+## [3.0.4] - 2025-02-11
+
+- Prepared version v3.0.4 ([#2613])
+
+[#2613]: https://github.com/CosmWasm/cosmwasm/pull/2613
+
 ## [3.0.3] - 2025-02-09
 
 ### Added
