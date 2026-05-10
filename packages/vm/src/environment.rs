@@ -383,7 +383,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         })
     }
 
-    /// Creates a back reference from a contact to its partent instance
+    /// Creates a back reference from a contract to its parent instance
     pub fn set_wasmer_instance(&self, wasmer_instance: Option<NonNull<WasmerInstance>>) {
         self.with_context_data_mut(|context_data| {
             context_data.wasmer_instance = wasmer_instance;

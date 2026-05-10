@@ -692,7 +692,7 @@ mod tests {
         let module = ParsedWasm::parse(&wasm).unwrap();
         check_wasm_exports(&module, Off).unwrap();
 
-        // this is invalid, as it doesn't any required export
+        // this is invalid, as it doesn't have any required export
         let wasm = wat::parse_str(
             r#"(module
                 (type (func))
