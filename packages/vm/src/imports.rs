@@ -45,9 +45,9 @@ const MAX_LENGTH_CANONICAL_ADDRESS: usize = 64;
 /// is 90 characters and we're adding some safety margin around that for other formats.
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 256;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
-/// Length of a serialized Ed25519  signature
+/// Length of a serialized Ed25519 signature
 const MAX_LENGTH_ED25519_SIGNATURE: usize = 64;
-/// Max length of a Ed25519 message in bytes.
+/// Max length of an Ed25519 message in bytes.
 /// This is an arbitrary value, for performance / memory constraints. If you need to verify larger
 /// messages, let us know.
 const MAX_LENGTH_ED25519_MESSAGE: usize = 128 * 1024;
