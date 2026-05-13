@@ -525,9 +525,11 @@ pub fn process_gas_info<A: BackendApi, S: Storage, Q: Querier>(
     let gas_left = env.get_gas_left(store);
 
     let new_limit = env.with_gas_state_mut(|gas_state| {
-        gas_state.externally_used_gas += info.externally_used;
-        // These lines reduce the amount of gas available to wasmer
-        // so it can not consume gas that was consumed externally.
+        gas_state.externally_used_gas = gas_state
+            .externally_used_gas
+            .saturating_add(info.externally_used);
+        // Reduce the amount of gas available to Wasm executor,
+        // so it cannot consume gas that was already consumed externally.
         gas_left
             .saturating_sub(info.externally_used)
             .saturating_sub(info.cost)
@@ -536,7 +538,10 @@ pub fn process_gas_info<A: BackendApi, S: Storage, Q: Querier>(
     // This tells wasmer how much more gas it can consume from this point in time.
     env.set_gas_left(store, new_limit);
 
-    if info.externally_used + info.cost > gas_left {
+    let Some(gas_total) = info.externally_used.checked_add(info.cost) else {
+        return Err(VmError::gas_depletion());
+    };
+    if gas_total > gas_left {
         Err(VmError::gas_depletion())
     } else {
         Ok(())
@@ -1014,5 +1019,49 @@ mod tests {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();
+    }
+
+    #[test]
+    fn gas_depletion_must_not_be_overpassed() {
+        let (env, mut store, _instance) = make_instance(100);
+        let gas_info = GasInfo {
+            externally_used: u64::MAX / 2 + 1,
+            cost: u64::MAX / 2 + 1,
+        };
+        assert!(matches!(
+            process_gas_info(&env, &mut store, gas_info).err().unwrap(),
+            VmError::GasDepletion { .. }
+        ));
+    }
+
+    #[test]
+    fn gas_info_add_assign_should_saturate() {
+        let mut gas_info = GasInfo {
+            cost: u64::MAX - 1,
+            externally_used: u64::MAX - 1,
+        };
+        let gas_info_delta = GasInfo {
+            cost: 2,
+            externally_used: 2,
+        };
+        gas_info += gas_info_delta;
+        assert_eq!(u64::MAX, gas_info.cost);
+        assert_eq!(u64::MAX, gas_info.externally_used);
+    }
+
+    #[test]
+    fn externally_used_gas_should_saturate() {
+        let (env, mut store, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let gas_info = GasInfo {
+            cost: 0,
+            externally_used: u64::MAX / 2 + 1,
+        };
+        let _ = process_gas_info(&env, &mut store, gas_info);
+        let gas_before = env.with_gas_state(|gas_state| gas_state.externally_used_gas);
+        assert_eq!(u64::MAX / 2 + 1, gas_before);
+        let _ = process_gas_info(&env, &mut store, gas_info);
+        let gas_after = env.with_gas_state(|gas_state| gas_state.externally_used_gas);
+        assert!(gas_after > gas_before);
+        assert_eq!(u64::MAX, gas_after);
     }
 }
