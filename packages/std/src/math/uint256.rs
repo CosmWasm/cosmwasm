@@ -199,6 +199,16 @@ impl Uint256 {
         self.0.checked_ilog2().unwrap()
     }
 
+    /// Returns the base 10 logarithm of the number, rounded down.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if `self` is zero.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub fn ilog10(self) -> u32 {
+        self.0.checked_ilog10().unwrap()
+    }
+
     /// Returns `self * numerator / denominator`.
     ///
     /// Due to the nature of the integer division involved, the result is always floored.
@@ -2110,5 +2120,15 @@ mod tests {
                 target_type: "Uint256",
             })),
         );
+    }
+
+    #[test]
+    fn ilog10_works() {
+        assert_eq!(Uint256::one().ilog10(), 0);
+        assert_eq!(Uint256::from(10u128).ilog10(), 1);
+        assert_eq!(Uint256::from(100u128).ilog10(), 2);
+        assert_eq!(Uint256::from(999u128).ilog10(), 2);
+        assert_eq!(Uint256::from(1000u128).ilog10(), 3);
+        assert_eq!(Uint256::MAX.ilog10(), 77);
     }
 }

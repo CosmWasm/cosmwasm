@@ -132,7 +132,7 @@ pub trait Storage {
 /// for backwards compatibility in systems that don't have them all.
 pub trait Api: Any {
     /// Takes a human readable address and validates if it is valid.
-    /// If it the validation succeeds, a `Addr` containing the same data as the input is returned.
+    /// If the validation succeeds, an `Addr` containing the same data as the input is returned.
     ///
     /// This validation checks two things:
     /// 1. The address is valid in the sense that it can be converted to a canonical representation by the backend.

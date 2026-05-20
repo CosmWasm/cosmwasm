@@ -86,17 +86,17 @@ type WasmMsg struct {
 	//
 	// This is translated to a [MsgExecuteContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L68-L78). `sender` is automatically filled with the current contract's address.
 	Execute *ExecuteMsg `json:"execute,omitempty"`
-	// Instantiates a new contracts from previously uploaded Wasm code.
+	// Instantiates a new contract from previously uploaded Wasm code.
 	//
 	// The contract address is non-predictable. But it is guaranteed that when emitting the same Instantiate message multiple times, multiple instances on different addresses will be generated. See also Instantiate2.
 	//
 	// This is translated to a [MsgInstantiateContract](https://github.com/CosmWasm/wasmd/blob/v0.29.2/proto/cosmwasm/wasm/v1/tx.proto#L53-L71). `sender` is automatically filled with the current contract's address.
 	Instantiate *InstantiateMsg `json:"instantiate,omitempty"`
-	// Instantiates a new contracts from previously uploaded Wasm code using a predictable address derivation algorithm implemented in [`cosmwasm_std::instantiate2_address`].
+	// Instantiates a new contract from previously uploaded Wasm code using a predictable address derivation algorithm implemented in [`cosmwasm_std::instantiate2_address`].
 	//
 	// This is translated to a [MsgInstantiateContract2](https://github.com/CosmWasm/wasmd/blob/v0.29.2/proto/cosmwasm/wasm/v1/tx.proto#L73-L96). `sender` is automatically filled with the current contract's address. `fix_msg` is automatically set to false.
 	Instantiate2 *Instantiate2Msg `json:"instantiate2,omitempty"`
-	// Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to customize behavior.
+	// Migrates a given contract to use new wasm code. Passes a MigrateMsg to allow us to customize behavior.
 	//
 	// Only the contract admin (as defined in wasmd), if any, is able to make this call.
 	//
@@ -110,6 +110,6 @@ type WasmMsg struct {
 
 // Coin is a string representation of the sdk.Coin type (more portable than sdk.Int)
 type Coin struct {
-	Amount string `json:"amount"` // string encoing of decimal value, eg. "12.3456"
+	Amount string `json:"amount"` // string encoding of decimal value, eg. "12.3456"
 	Denom  string `json:"denom"`  // type, eg. "ATOM"
 }

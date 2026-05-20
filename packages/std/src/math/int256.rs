@@ -11,8 +11,8 @@ use crate::errors::{
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
-    CheckedMultiplyRatioError, Int128, Int512, Int64, Uint128, Uint256, Uint512, Uint64,
-    __internal::forward_ref_partial_eq,
+    __internal::forward_ref_partial_eq, CheckedMultiplyRatioError, Int128, Int512, Int64, Uint128,
+    Uint256, Uint512, Uint64,
 };
 
 /// Used internally - we don't want to leak this type since we might change
@@ -1317,7 +1317,7 @@ mod tests {
             x << 4,
             Int256::from(0x8000_0000_0000_0000_0000_0000_0000_0000u128)
         );
-        // left shift by by the maximum shift value should result in MIN
+        // left shift by the maximum shift value should result in MIN
         assert_eq!(
             Int256::one() << (core::mem::size_of::<Int256>() as u32 * 8 - 1),
             Int256::MIN

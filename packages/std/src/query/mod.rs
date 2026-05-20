@@ -40,10 +40,10 @@ pub enum QueryRequest<C = Empty> {
     #[cfg(feature = "stargate")]
     #[deprecated = "Please use the GrpcQuery instead"]
     Stargate {
-        /// this is the fully qualified service path used for routing,
+        /// This is the fully qualified service path used for routing,
         /// eg. "/cosmos_sdk.x.bank.v1.Query/QueryBalance"
         path: String,
-        /// this is the expected protobuf message type (not any), binary encoded
+        /// This is the expected protobuf message type (not any), binary encoded
         data: Binary,
     },
     #[cfg(feature = "stargate")]

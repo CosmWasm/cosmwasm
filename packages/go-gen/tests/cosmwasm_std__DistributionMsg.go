@@ -12,7 +12,7 @@ type WithdrawDelegatorRewardMsg struct {
 	Validator string `json:"validator"`
 }
 
-// FundCommunityPoolMsg is translated to a [MsgFundCommunityPool](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#LL69C1-L76C2).
+// FundCommunityPoolMsg is translated to a [MsgFundCommunityPool](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L69-L76).
 // `depositor` is automatically filled with the current contract's address
 type FundCommunityPoolMsg struct {
 	// Amount is the list of coins to be send to the community pool
