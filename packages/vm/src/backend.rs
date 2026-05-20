@@ -68,8 +68,8 @@ impl GasInfo {
 impl AddAssign for GasInfo {
     fn add_assign(&mut self, other: Self) {
         *self = GasInfo {
-            cost: self.cost + other.cost,
-            externally_used: self.externally_used + other.externally_used,
+            cost: self.cost.saturating_add(other.cost),
+            externally_used: self.externally_used.saturating_add(other.externally_used),
         };
     }
 }

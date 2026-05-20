@@ -3,7 +3,7 @@ version: '3'
 silent: true
 
 vars:
-  COSMWASM_CHECK_VERSION: 3.0.4 # The last released version of cosmwasm-check tool before 3.0.5-dev.
+  COSMWASM_CHECK_VERSION: 3.0.5 # The last released version of cosmwasm-check tool before 3.0.6.
   TOOLCHAIN: +1.82.0            # Rust toolchain for building packages.
   TOOLCHAIN_CHECK: +1.82.0      # Rust toolchain for building cosmwasm-check tool.
 
@@ -257,15 +257,15 @@ tasks:
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} test --workspace
 
-  test-cosmwasm-check:
-    desc: Runs all tests for cosmwasm-check
-    cmds:
-      - cmd: cargo {{.TOOLCHAIN}} test -p cosmwasm-check
-
   testn:
     desc: Runs all tests using nextest
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} nextest run --workspace
+
+  test-cosmwasm-check:
+    desc: Runs all tests for cosmwasm-check
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} test -p cosmwasm-check
 
   testn-cosmwasm-check:
     desc: Runs all tests for cosmwasm-check using nextest
