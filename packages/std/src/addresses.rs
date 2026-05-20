@@ -8,7 +8,7 @@ use sha2::{
 };
 
 use crate::Binary;
-use crate::{__internal::forward_ref_partial_eq, HexBinary};
+use crate::{HexBinary, __internal::forward_ref_partial_eq};
 
 /// A human-readable address.
 ///

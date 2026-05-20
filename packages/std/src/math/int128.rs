@@ -11,8 +11,8 @@ use crate::errors::{
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
-    __internal::forward_ref_partial_eq, CheckedMultiplyRatioError, Int256, Int512, Int64, Uint128,
-    Uint256, Uint512, Uint64,
+    CheckedMultiplyRatioError, Int256, Int512, Int64, Uint128, Uint256, Uint512, Uint64,
+    __internal::forward_ref_partial_eq,
 };
 
 use super::conversion::{

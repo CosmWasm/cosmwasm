@@ -243,6 +243,11 @@ tasks:
       - cmd: cargo llvm-cov clean
       - cmd: cargo {{.TOOLCHAIN}} llvm-cov --no-cfg-coverage -p cosmwasm-vm-derive --json --summary-only | coverio
 
+  fmt:
+    desc: Runs code formatter
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} fmt
+
   install-cosmwasm-check:
     desc: Installs cosmwasm-check tool (released version and currently developed version)
     cmds:
