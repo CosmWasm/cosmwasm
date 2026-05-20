@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 (empty)
 
+## [3.0.6] - 2025-05-13
+
+- Bumped version in README. ([#2648])
+- Fixed overflows v3.0.x ([#2662])
+
+[#2648]: https://github.com/CosmWasm/cosmwasm/pull/2648
+[#2662]: https://github.com/CosmWasm/cosmwasm/pull/2662
+
 ## [3.0.5] - 2025-04-24
 
 - Fixes to IBCv2 async acks ([#2646])
@@ -305,6 +313,16 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2495]: https://github.com/CosmWasm/cosmwasm/pull/2495
 [#2500]: https://github.com/CosmWasm/cosmwasm/pull/2500
 [#2501]: https://github.com/CosmWasm/cosmwasm/pull/2501
+
+## [2.3.3] - 2026-05-13
+
+- Replaced deprecated code of `assert_cmd` in v2.3.x ([#2618])
+- Refactored `cosmwasm-check` tests in v2.3.x ([#2621])
+- Fixed overflows v2.3.x ([#2661])
+
+[#2618]: https://github.com/CosmWasm/cosmwasm/pull/2618
+[#2621]: https://github.com/CosmWasm/cosmwasm/pull/2621
+[#2661]: https://github.com/CosmWasm/cosmwasm/pull/2661
 
 ## [2.3.2] - 2026-02-11
 
@@ -1548,16 +1566,19 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.5...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.6...HEAD
+[3.0.6]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.5...v3.0.6
 [3.0.5]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.4...v3.0.5
 [3.0.4]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.3...v3.0.4
 [3.0.3]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.0...v3.0.1
-[3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v3.0.0
+[3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.3...v3.0.0
+[2.3.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.0...v2.3.1
-[2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.3.0
+[2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.8...v2.3.0
+[2.2.8]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.7...v2.2.8
 [2.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.6...v2.2.7
 [2.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.3...v2.2.6
 [2.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...v2.2.3
