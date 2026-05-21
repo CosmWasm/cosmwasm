@@ -389,11 +389,10 @@ where
     /// This provides a rough idea of the peak memory consumption. Note that
     /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
     /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
-    pub fn memory_pages(&mut self) -> usize {
-        let mut fe_mut = self.fe.clone().into_mut(&mut self.store);
-        let (env, store) = fe_mut.data_and_store_mut();
+    pub fn memory_pages(&self) -> usize {
+        let env = self.fe.as_ref(&self.store);
 
-        env.memory(&store).size().0 as _
+        env.memory(&self.store).size().0 as _
     }
 
     /// Returns the currently remaining gas.
@@ -427,11 +426,8 @@ where
         }
     }
 
-    pub fn is_storage_readonly(&mut self) -> bool {
-        let mut fe_mut = self.fe.clone().into_mut(&mut self.store);
-        let (env, _) = fe_mut.data_and_store_mut();
-
-        env.is_storage_readonly()
+    pub fn is_storage_readonly(&self) -> bool {
+        self.fe.as_ref(&self.store).is_storage_readonly()
     }
 
     /// Sets the readonly storage flag on this instance. Since one instance can be used
@@ -854,7 +850,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let mut instance = mock_instance(&wasm, &[]);
+        let instance = mock_instance(&wasm, &[]);
         assert_eq!(instance.memory_pages(), 0);
 
         // min: 3 pages, max: none
@@ -872,7 +868,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let mut instance = mock_instance(&wasm, &[]);
+        let instance = mock_instance(&wasm, &[]);
         assert_eq!(instance.memory_pages(), 3);
     }
 

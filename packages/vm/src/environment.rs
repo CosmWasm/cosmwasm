@@ -7,7 +7,7 @@ use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use derive_more::Debug;
-use wasmer::{AsStoreMut, Instance as WasmerInstance, Memory, MemoryView, Value};
+use wasmer::{AsStoreMut, AsStoreRef, Instance as WasmerInstance, Memory, MemoryView, Value};
 use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
 
 use crate::backend::{BackendApi, GasInfo, Querier, Storage};
@@ -472,7 +472,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
 
     /// Creates a MemoryView.
     /// This must be short living and not be used after the memory was grown.
-    pub fn memory<'a>(&self, store: &'a impl AsStoreMut) -> MemoryView<'a> {
+    pub fn memory<'a>(&self, store: &'a impl AsStoreRef) -> MemoryView<'a> {
         self.memory
             .as_ref()
             .expect("Memory is not set. This is a bug in the lifecycle.")
