@@ -195,13 +195,13 @@ impl SignedDecimal256 {
             Ordering::Equal => Self(atomics),
             Ordering::Greater => {
                 let digits = decimal_places - (Self::DECIMAL_PLACES); // No overflow because decimal_places > DECIMAL_PLACES
-                if let Ok(factor) = ten.checked_pow(digits) {
-                    Self(atomics.checked_div(factor).unwrap()) // Safe because factor cannot be zero
-                } else {
-                    // In this case `factor` exceeds the Int256 range.
-                    // Any Int256 `x` divided by `factor` with `factor > Int256::MAX` is 0.
-                    // Try e.g. Python3: `(2**128-1) // 2**128`
+                if atomics.is_zero() || digits > atomics.unsigned_abs().ilog10() {
+                    // In this case `10^digits > |atomics|`, so the division truncates to zero.
                     Self(Int256::zero())
+                } else {
+                    // `digits <= ilog10(|atomics|)` guarantees `10^digits` fits in Int256.
+                    let factor = ten.checked_pow(digits).unwrap();
+                    Self(atomics.checked_div(factor).unwrap()) // Safe because factor cannot be zero
                 }
             }
         })
@@ -1098,6 +1098,18 @@ mod tests {
         assert_eq!(
             SignedDecimal256::from_atomics(i128::MAX, u32::MAX).unwrap(),
             SignedDecimal256::from_str("0.000000000000000000").unwrap()
+        );
+        assert_eq!(
+            SignedDecimal256::from_atomics(0i128, u32::MAX).unwrap(),
+            SignedDecimal256::zero()
+        );
+        assert_eq!(
+            SignedDecimal256::from_atomics(Int256::MAX, u32::MAX).unwrap(),
+            SignedDecimal256::zero()
+        );
+        assert_eq!(
+            SignedDecimal256::from_atomics(Int256::MIN, u32::MAX).unwrap(),
+            SignedDecimal256::zero()
         );
 
         // Can be used with max value

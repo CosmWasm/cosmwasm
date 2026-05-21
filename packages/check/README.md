@@ -29,7 +29,7 @@ Check an entire directory of contracts (shell dependent):
 cosmwasm-check artifacts/*.wasm
 ```
 
-Check if a contract would ran on a blockchain with a specific set of
+Check if a contract would run on a blockchain with a specific set of
 capabilities:
 
 ```sh

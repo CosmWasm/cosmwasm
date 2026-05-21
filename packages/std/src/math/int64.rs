@@ -1165,7 +1165,7 @@ mod tests {
         assert_eq!(x << 0, x); // left shift by 0 should be no-op
         assert_eq!(x << 1, Int64::from(0x1000_0000_0000_0000i64));
         assert_eq!(x << 4, Int64::from(0x0800_0000_0000_0000i64 << 4));
-        // left shift by by the maximum shift value should result in MIN
+        // left shift by the maximum shift value should result in MIN
         assert_eq!(
             Int64::one() << (core::mem::size_of::<Int64>() as u32 * 8 - 1),
             Int64::MIN

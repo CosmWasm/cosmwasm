@@ -190,7 +190,7 @@ pub enum DistributionMsg {
         /// The `validator_address`
         validator: String,
     },
-    /// This is translated to a [[MsgFundCommunityPool](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#LL69C1-L76C2).
+    /// This is translated to a [MsgFundCommunityPool](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L69-L76).
     /// `depositor` is automatically filled with the current contract's address.
     #[cfg(feature = "cosmwasm_1_3")]
     FundCommunityPool {
@@ -241,7 +241,7 @@ pub enum WasmMsg {
         msg: Binary,
         funds: Vec<Coin>,
     },
-    /// Instantiates a new contracts from previously uploaded Wasm code.
+    /// Instantiates a new contract from previously uploaded Wasm code.
     ///
     /// The contract address is non-predictable. But it is guaranteed that
     /// when emitting the same Instantiate message multiple times,
@@ -265,7 +265,7 @@ pub enum WasmMsg {
         /// - not start / end with whitespace
         label: String,
     },
-    /// Instantiates a new contracts from previously uploaded Wasm code
+    /// Instantiates a new contract from previously uploaded Wasm code
     /// using a predictable address derivation algorithm implemented in
     /// [`cosmwasm_std::instantiate2_address`].
     ///
@@ -289,7 +289,7 @@ pub enum WasmMsg {
         funds: Vec<Coin>,
         salt: Binary,
     },
-    /// Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to
+    /// Migrates a given contract to use new wasm code. Passes a MigrateMsg to allow us to
     /// customize behavior.
     ///
     /// Only the contract admin (as defined in wasmd), if any, is able to make this call.
@@ -315,7 +315,7 @@ pub enum WasmMsg {
     ClearAdmin { contract_addr: String },
 }
 
-/// This message type allows the contract interact with the [x/gov] module in order
+/// This message type allows the contract to interact with the [x/gov] module in order
 /// to cast votes.
 ///
 /// [x/gov]: https://github.com/cosmos/cosmos-sdk/tree/v0.45.12/x/gov

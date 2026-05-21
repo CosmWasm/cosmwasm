@@ -18,7 +18,7 @@ use crate::utils::impl_hidden_constructor;
 )]
 #[serde(rename_all = "snake_case")]
 pub enum WasmQuery {
-    /// this queries the public API of another contract at a known address (with known ABI)
+    /// This queries the public API of another contract at a known address (with known ABI)
     /// Return value is whatever the contract returns (caller should know), wrapped in a
     /// ContractResult that is JSON encoded.
     Smart {
@@ -26,11 +26,11 @@ pub enum WasmQuery {
         /// msg is the json-encoded QueryMsg struct
         msg: Binary,
     },
-    /// this queries the raw kv-store of the contract.
-    /// returns the raw, unparsed data stored at that key, which may be an empty vector if not present
+    /// This queries the raw kv-store of the contract.
+    /// Returns the raw, unparsed data stored at that key, which may be an empty vector if not present
     Raw {
         contract_addr: String,
-        /// Key is the raw key used in the contracts Storage
+        /// Key is the raw key used in the contract's storage
         key: Binary,
     },
     /// Returns a [`ContractInfoResponse`] with metadata on the contract from the runtime

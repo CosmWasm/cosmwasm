@@ -10,9 +10,9 @@ use sha2::{
 use crate::Binary;
 use crate::{HexBinary, __internal::forward_ref_partial_eq};
 
-/// A human readable address.
+/// A human-readable address.
 ///
-/// In Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no
+/// In Cosmos, this is typically bech32 encoded. But for multichain smart contracts no
 /// assumptions should be made other than being UTF-8 encoded and of reasonable length.
 ///
 /// This type represents a validated address. It can be created in the following ways
@@ -280,7 +280,7 @@ impl fmt::Display for Instantiate2AddressError {
 /// Creates a contract address using the predictable address format introduced with
 /// wasmd 0.29. When using instantiate2, this is a way to precompute the address.
 /// When using instantiate, the contract address will use a different algorithm and
-/// cannot be pre-computed as it contains inputs from the chain's state at the time of
+/// cannot be precomputed as it contains inputs from the chain's state at the time of
 /// message execution.
 ///
 /// The predictable address format of instantiate2 is stable. But bear in mind this is
@@ -539,7 +539,7 @@ mod tests {
         let addr: CanonicalAddr = original.into();
         assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
         assert_eq!(
-            (addr.0).as_slice().as_ptr(),
+            addr.0.as_slice().as_ptr(),
             original_ptr,
             "must not be copied"
         );
@@ -550,7 +550,7 @@ mod tests {
         let addr = CanonicalAddr::from(original);
         assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
         assert_eq!(
-            (addr.0).as_slice().as_ptr(),
+            addr.0.as_slice().as_ptr(),
             original_ptr,
             "must not be copied"
         );
@@ -558,14 +558,14 @@ mod tests {
         // Into<Vec<u8>> for CanonicalAddr
         // This test is a bit pointless because we get Into from the From implementation
         let original = CanonicalAddr::from(vec![0u8, 187, 61, 11, 250, 0]);
-        let original_ptr = (original.0).as_slice().as_ptr();
+        let original_ptr = original.0.as_slice().as_ptr();
         let vec: Vec<u8> = original.into();
         assert_eq!(vec.as_slice(), [0u8, 187, 61, 11, 250, 0]);
         assert_eq!(vec.as_ptr(), original_ptr, "must not be copied");
 
         // From<CanonicalAddr> for Vec<u8>
         let original = CanonicalAddr::from(vec![7u8, 35, 49, 101, 0, 255]);
-        let original_ptr = (original.0).as_slice().as_ptr();
+        let original_ptr = original.0.as_slice().as_ptr();
         let vec = Vec::<u8>::from(original);
         assert_eq!(vec.as_slice(), [7u8, 35, 49, 101, 0, 255]);
         assert_eq!(vec.as_ptr(), original_ptr, "must not be copied");
@@ -579,14 +579,14 @@ mod tests {
         let addr = CanonicalAddr::from(original);
         assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
         assert_eq!(
-            (addr.0).as_slice().as_ptr(),
+            addr.0.as_slice().as_ptr(),
             original_ptr,
             "must not be copied"
         );
 
         // From<CanonicalAddr> for Binary
         let original = CanonicalAddr::from(vec![7u8, 35, 49, 101, 0, 255]);
-        let original_ptr = (original.0).as_slice().as_ptr();
+        let original_ptr = original.0.as_slice().as_ptr();
         let bin = Binary::from(original);
         assert_eq!(bin.as_slice(), [7u8, 35, 49, 101, 0, 255]);
         assert_eq!(bin.as_ptr(), original_ptr, "must not be copied");
@@ -600,14 +600,14 @@ mod tests {
         let addr = CanonicalAddr::from(original);
         assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
         assert_eq!(
-            (addr.0).as_slice().as_ptr(),
+            addr.0.as_slice().as_ptr(),
             original_ptr,
             "must not be copied"
         );
 
         // From<CanonicalAddr> for HexBinary
         let original = CanonicalAddr::from(vec![7u8, 35, 49, 101, 0, 255]);
-        let original_ptr = (original.0).as_slice().as_ptr();
+        let original_ptr = original.0.as_slice().as_ptr();
         let bin = HexBinary::from(original);
         assert_eq!(bin.as_slice(), [7u8, 35, 49, 101, 0, 255]);
         assert_eq!(bin.as_ptr(), original_ptr, "must not be copied");

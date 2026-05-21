@@ -100,11 +100,11 @@
           "type": "named",
           "properties": {
             "data": {
-              "description": "this is the expected protobuf message type (not any), binary encoded",
+              "description": "This is the expected protobuf message type (not any), binary encoded",
               "value": 5
             },
             "path": {
-              "description": "this is the fully qualified service path used for routing,\neg. \"/cosmos_sdk.x.bank.v1.Query/QueryBalance\"",
+              "description": "This is the fully qualified service path used for routing,\neg. \"/cosmos_sdk.x.bank.v1.Query/QueryBalance\"",
               "value": 1
             }
           }
@@ -366,20 +366,20 @@
           }
         },
         "raw": {
-          "description": "this queries the raw kv-store of the contract.\nreturns the raw, unparsed data stored at that key, which may be an empty vector if not present",
+          "description": "This queries the raw kv-store of the contract.\nReturns the raw, unparsed data stored at that key, which may be an empty vector if not present",
           "type": "named",
           "properties": {
             "contract_addr": {
               "value": 1
             },
             "key": {
-              "description": "Key is the raw key used in the contracts Storage",
+              "description": "Key is the raw key used in the contract's storage",
               "value": 5
             }
           }
         },
         "smart": {
-          "description": "this queries the public API of another contract at a known address (with known ABI)\nReturn value is whatever the contract returns (caller should know), wrapped in a\nContractResult that is JSON encoded.",
+          "description": "This queries the public API of another contract at a known address (with known ABI)\nReturn value is whatever the contract returns (caller should know), wrapped in a\nContractResult that is JSON encoded.",
           "type": "named",
           "properties": {
             "contract_addr": {

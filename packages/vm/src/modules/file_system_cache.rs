@@ -24,7 +24,7 @@ use super::CachedModule;
 /// This is a value you can manually modify to the cache.
 /// You normally _do not_ need to change this value yourself.
 ///
-/// Cases where you might need to update it yourself, is things like when the memory layout of some types in Rust [std] changes.
+/// Cases where you might need to update it yourself include changes in the memory layout of some types in Rust [std].
 ///
 /// ---
 ///

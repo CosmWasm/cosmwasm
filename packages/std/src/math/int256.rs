@@ -1317,7 +1317,7 @@ mod tests {
             x << 4,
             Int256::from(0x8000_0000_0000_0000_0000_0000_0000_0000u128)
         );
-        // left shift by by the maximum shift value should result in MIN
+        // left shift by the maximum shift value should result in MIN
         assert_eq!(
             Int256::one() << (core::mem::size_of::<Int256>() as u32 * 8 - 1),
             Int256::MIN

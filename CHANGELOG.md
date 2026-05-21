@@ -6,6 +6,64 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 (empty)
 
+## [3.0.7] - 2025-05-21
+
+### Changed
+
+- Tests rely on deprecated `assert_cmd::cargo_bin` which will break on future Cargo versions ([#2584])
+- Synchronize changes from `release/v3.0.x` ([#2674])
+- Updated changelog to `v3.0.6` ([#2673])
+- Fix some comments to improve readability ([#2651])
+- Remove extra space in comment ([#2649])
+- Forward-ported changes from `release/v3.0.x` ([#2647])
+- Backported changes from `release/v3.0.x` to `main` ([#2642])
+- Clarify Stargate query comments in reflect schemas ([#2641])
+- Clarify WasmQuery comments in reflect schemas ([#2640])
+- Fix Empty comment typo in generated schemas ([#2637])
+- sync-generated-message-comment-fixes ([#2636])
+- Fixed comments in schema ([#2635])
+- Clarify WasmMsg instantiate comments ([#2634])
+- Short-circuit zero results in decimal `from_atomics` ([#2633])
+- Improved code coverage for `decimal256` ([#2632])
+- Refactored tests for `Decimal256` ([#2631])
+- Optimize `Decimal256::sqrt` using `ilog10` ([#2629])
+- Improved code coverage for `decimal.rs` ([#2628])
+- Refactored tests for `decimal.rs` ([#2626])
+- Clarify API comments ([#2625])
+- Fix README grammar ([#2624])
+- Fix Rust comment typos ([#2623])
+- Refactored `cosmwasm-check` tests in `v3.0.x` ([#2619])
+- Replaced deprecated `assert_cmd` code in `v3.0.x` ([#2616])
+- Updated released versions ([#2614])
+- Optimize `Decimal::sqrt` using `ilog10` ([#2604])
+
+[#2584]: https://github.com/CosmWasm/cosmwasm/issues/2584
+[#2674]: https://github.com/CosmWasm/cosmwasm/pull/2674
+[#2673]: https://github.com/CosmWasm/cosmwasm/pull/2673
+[#2651]: https://github.com/CosmWasm/cosmwasm/pull/2651
+[#2649]: https://github.com/CosmWasm/cosmwasm/pull/2649
+[#2647]: https://github.com/CosmWasm/cosmwasm/pull/2647
+[#2642]: https://github.com/CosmWasm/cosmwasm/pull/2642
+[#2641]: https://github.com/CosmWasm/cosmwasm/pull/2641
+[#2640]: https://github.com/CosmWasm/cosmwasm/pull/2640
+[#2637]: https://github.com/CosmWasm/cosmwasm/pull/2637
+[#2636]: https://github.com/CosmWasm/cosmwasm/pull/2636
+[#2635]: https://github.com/CosmWasm/cosmwasm/pull/2635
+[#2634]: https://github.com/CosmWasm/cosmwasm/pull/2634
+[#2633]: https://github.com/CosmWasm/cosmwasm/pull/2633
+[#2632]: https://github.com/CosmWasm/cosmwasm/pull/2632
+[#2631]: https://github.com/CosmWasm/cosmwasm/pull/2631
+[#2629]: https://github.com/CosmWasm/cosmwasm/pull/2629
+[#2628]: https://github.com/CosmWasm/cosmwasm/pull/2628
+[#2626]: https://github.com/CosmWasm/cosmwasm/pull/2626
+[#2625]: https://github.com/CosmWasm/cosmwasm/pull/2625
+[#2624]: https://github.com/CosmWasm/cosmwasm/pull/2624
+[#2623]: https://github.com/CosmWasm/cosmwasm/pull/2623
+[#2619]: https://github.com/CosmWasm/cosmwasm/pull/2619
+[#2616]: https://github.com/CosmWasm/cosmwasm/pull/2616
+[#2614]: https://github.com/CosmWasm/cosmwasm/pull/2614
+[#2604]: https://github.com/CosmWasm/cosmwasm/pull/2604
+
 ## [3.0.6] - 2025-05-13
 
 - Bumped version in README. ([#2648])
@@ -1566,7 +1624,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.6...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.7...HEAD
+[3.0.7]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.6...v3.0.7
 [3.0.6]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.5...v3.0.6
 [3.0.5]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.4...v3.0.5
 [3.0.4]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.3...v3.0.4
