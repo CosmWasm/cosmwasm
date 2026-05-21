@@ -618,7 +618,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-check"
-version = "3.0.7-dev"
+version = "3.0.8-dev"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -632,11 +632,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-core"
-version = "3.0.7-dev"
+version = "3.0.8-dev"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "3.0.7-dev"
+version = "3.0.8-dev"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -669,7 +669,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "3.0.7-dev"
+version = "3.0.8-dev"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -678,7 +678,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "3.0.7-dev"
+version = "3.0.8-dev"
 dependencies = [
  "anyhow",
  "cosmwasm-schema-derive",
@@ -694,7 +694,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "3.0.7-dev"
+version = "3.0.8-dev"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -703,7 +703,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "3.0.7-dev"
+version = "3.0.8-dev"
 dependencies = [
  "base64 0.22.1",
  "bech32",
@@ -732,7 +732,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "3.0.7-dev"
+version = "3.0.8-dev"
 dependencies = [
  "bech32",
  "blake2",
@@ -771,7 +771,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm-derive"
-version = "3.0.7-dev"
+version = "3.0.8-dev"
 dependencies = [
  "blake2",
  "proc-macro2",
@@ -924,7 +924,7 @@ dependencies = [
 
 [[package]]
 name = "cw-schema"
-version = "3.0.7-dev"
+version = "3.0.8-dev"
 dependencies = [
  "cw-schema-derive",
  "indexmap",
@@ -940,7 +940,7 @@ dependencies = [
 
 [[package]]
 name = "cw-schema-derive"
-version = "3.0.7-dev"
+version = "3.0.8-dev"
 dependencies = [
  "heck",
  "itertools 0.13.0",

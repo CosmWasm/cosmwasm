@@ -4,6 +4,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+(empty)
+
+## [3.0.7] - 2025-05-21
+
 ### Changed
 
 - Tests rely on deprecated `assert_cmd::cargo_bin` which will break on future Cargo versions ([#2584])
@@ -1620,7 +1624,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.6...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.7...HEAD
+[3.0.7]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.6...v3.0.7
 [3.0.6]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.5...v3.0.6
 [3.0.5]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.4...v3.0.5
 [3.0.4]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.3...v3.0.4
