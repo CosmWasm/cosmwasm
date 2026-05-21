@@ -9,7 +9,7 @@ use crate::errors::{
     OverflowOperation, RoundUpOverflowError, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use crate::{__internal::forward_ref_partial_eq, Decimal, SignedDecimal, SignedDecimal256};
+use crate::{Decimal, SignedDecimal, SignedDecimal256, __internal::forward_ref_partial_eq};
 
 use super::Fraction;
 use super::Isqrt;
