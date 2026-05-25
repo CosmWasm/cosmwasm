@@ -20,8 +20,8 @@ const MANTISSA_MASK_64: u64 = 0x000fffffffffffff;
 /// Instead, we give each of these classes a probability of 25% and
 /// then generate a random pattern within that class
 pub fn random_f32(rng: &mut impl RngCore) -> f32 {
-    let devider = rng.next_u32();
-    let bits = match devider % 4 {
+    let decider = rng.next_u32();
+    let bits = match decider % 4 {
         0 => {
             // 25% chance of being a NaN
             random_nan_32(rng)
@@ -32,7 +32,7 @@ pub fn random_f32(rng: &mut impl RngCore) -> f32 {
         }
         2 => {
             // 25% chance of being an infinite
-            if devider.is_multiple_of(2) {
+            if decider.is_multiple_of(2) {
                 INF_32
             } else {
                 NEG_INF_32
@@ -51,8 +51,8 @@ pub fn random_f32(rng: &mut impl RngCore) -> f32 {
 ///
 /// See [`random_f32`] for more details.
 pub fn random_f64(rng: &mut impl RngCore) -> f64 {
-    let devider = rng.next_u64();
-    let bits = match devider % 4 {
+    let decider = rng.next_u64();
+    let bits = match decider % 4 {
         0 => {
             // 25% chance of being a NaN
             random_nan_64(rng)
@@ -63,7 +63,7 @@ pub fn random_f64(rng: &mut impl RngCore) -> f64 {
         }
         2 => {
             // 25% chance of being an infinite
-            if devider.is_multiple_of(2) {
+            if decider.is_multiple_of(2) {
                 INF_64
             } else {
                 NEG_INF_64
