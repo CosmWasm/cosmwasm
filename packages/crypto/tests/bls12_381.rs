@@ -88,12 +88,14 @@ struct BatchVerifyInput {
     signatures: Vec<String>,
 }
 
+#[allow(dead_code)]
 #[derive(serde::Deserialize, serde::Serialize)]
 struct BatchVerifyFile {
     input: BatchVerifyInput,
     output: bool,
 }
 
+#[allow(dead_code)]
 #[derive(serde::Deserialize, serde::Serialize)]
 struct FastAggregateVerifyInput {
     pubkeys: Vec<String>,

@@ -318,6 +318,7 @@ mod tests {
     use core::str;
     use std::string;
 
+    #[allow(dead_code)]
     #[derive(Debug, thiserror::Error)]
     enum AssertThiserrorWorks {
         #[error(transparent)]

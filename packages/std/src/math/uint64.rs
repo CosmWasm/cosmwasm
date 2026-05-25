@@ -301,11 +301,7 @@ impl Uint64 {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn abs_diff(self, other: Self) -> Self {
-        Self(if self.0 < other.0 {
-            other.0 - self.0
-        } else {
-            self.0 - other.0
-        })
+        Self(other.0.abs_diff(self.0))
     }
 }
 
