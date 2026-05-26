@@ -44,10 +44,7 @@ check_contract() {
     msg "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
     git diff --quiet ./schema
 
-    msg "cosmwasm-check (release)" "$contract"
-    cosmwasm-check-released "$wasm"
-
-    msg "cosmwasm-check (develop)" "$contract"
+    msg "cosmwasm-check" "$contract"
     cosmwasm-check "$wasm"
   )
 }
@@ -74,10 +71,10 @@ contracts_nightly=(
   contracts/floaty
 )
 
-toolchain_stable=1.82.0
-rustflags_stable=""
+toolchain_stable=1.95.0
+toolchain_nightly=nightly-2026-02-28
 
-toolchain_nightly=nightly-2024-09-01 # The last nightly version for 1.82.0
+rustflags_stable=""
 rustflags_nightly="-C target-feature=+nontrapping-fptoint"
 
 if (( parallel )); then

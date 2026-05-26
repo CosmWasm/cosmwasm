@@ -21,12 +21,12 @@ pub fn bls12_381_pairing_equality(
     r: &[u8],
     s: &[u8],
 ) -> Result<bool, CryptoError> {
-    if ps.len() % BLS12_381_G1_POINT_LEN != 0 {
+    if !ps.len().is_multiple_of(BLS12_381_G1_POINT_LEN) {
         return Err(PairingEquality::NotMultipleG1 {
             remainder: ps.len() % BLS12_381_G1_POINT_LEN,
         }
         .into());
-    } else if qs.len() % BLS12_381_G2_POINT_LEN != 0 {
+    } else if !qs.len().is_multiple_of(BLS12_381_G2_POINT_LEN) {
         return Err(PairingEquality::NotMultipleG2 {
             remainder: qs.len() % BLS12_381_G2_POINT_LEN,
         }

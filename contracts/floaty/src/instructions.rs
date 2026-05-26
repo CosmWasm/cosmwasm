@@ -262,28 +262,28 @@ impl Value {
     pub fn u32(&self) -> u32 {
         match self {
             Self::U32(x) => *x,
-            v => panic!("expected u32, got {:?}", v),
+            v => panic!("expected u32, got {v:?}"),
         }
     }
 
     pub fn u64(&self) -> u64 {
         match self {
             Self::U64(x) => *x,
-            v => panic!("expected u64, got {:?}", v),
+            v => panic!("expected u64, got {v:?}"),
         }
     }
 
     pub fn f32(&self) -> f32 {
         match self {
             Self::F32(x) => f32::from_bits(*x),
-            v => panic!("expected f32, got {:?}", v),
+            v => panic!("expected f32, got {v:?}"),
         }
     }
 
     pub fn f64(&self) -> f64 {
         match self {
             Self::F64(x) => f64::from_bits(*x),
-            v => panic!("expected f64, got {:?}", v),
+            v => panic!("expected f64, got {v:?}"),
         }
     }
 }
@@ -471,7 +471,7 @@ pub fn random_args_for(instr: &str, rng: &mut impl RngCore) -> Vec<Value> {
         "i64.trunc_sat_f32_u" => f32,
         "i64.trunc_sat_f64_s" => f64,
         "i64.trunc_sat_f64_u" => f64,
-        _ => panic!("unknown instruction: {}", instr),
+        _ => panic!("unknown instruction: {instr}"),
     }
 }
 
