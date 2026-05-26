@@ -65,8 +65,8 @@ tar = "0.4.46"
 [dev-dependencies]
 criterion = { workspace = true, features = ["html_reports"] }
 glob = "0.3.1"
-hex-literal = "0.4.1"
-rand = "0.8"
+hex-literal = { workspace = true }
+rand = "0.10.1"
 tempfile = "3.1.0"
 wat = "1.0"
 wasm-encoder = "0.205.0"

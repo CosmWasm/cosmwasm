@@ -42,7 +42,7 @@ serde = { version = "1.0.103", default-features = false, features = ["alloc", "d
 serde_json = "1.0.140"
 sha3 = "0.10.9"
 hex = { version = "0.4", features = ["serde"] }
-hex-literal = "0.4.1"
+hex-literal = { workspace = true }
 english-numbers = "0.3"
 glob = "0.3.1"
 
