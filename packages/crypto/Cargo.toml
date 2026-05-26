@@ -24,7 +24,7 @@ num-traits = "0.2.19"
 p256 = { version = "0.13.2", default-features = false, features = ["ecdsa"] }
 ecdsa = "0.16.9" # Needed for RecoveryId in secp256r1_recover_pubkey, see https://github.com/RustCrypto/elliptic-curves/issues/1215
 rand_core = "0.6.4"
-rayon = "1.9.0"
+rayon = "1.12.0"
 sha2 = "0.10"
 thiserror = "1.0.26"
 
