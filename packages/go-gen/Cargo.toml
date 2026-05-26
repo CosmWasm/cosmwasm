@@ -10,7 +10,7 @@ publish = false
 [dependencies]
 cosmwasm-std = { workspace = true, default-features = true, features = ["cosmwasm_3_0", "staking", "stargate"] }
 cosmwasm-schema = { workspace = true }
-anyhow = "1"
+anyhow = { workspace = true }
 indenter = "0.3.3"
 schemars = { workspace = true }
 heck = "0.5.0"
