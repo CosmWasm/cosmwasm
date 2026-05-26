@@ -26,7 +26,7 @@ ecdsa = "0.16.9" # Needed for RecoveryId in secp256r1_recover_pubkey, see https:
 rand_core = "0.6.4"
 rayon = "1.12.0"
 sha2 = "0.10"
-thiserror = "1.0.26"
+thiserror = { workspace = true }
 
 # Not directly used but bumps transitive dependency to avoid <RUSTSEC-2024-0344>
 curve25519-dalek = "4.1.3"
