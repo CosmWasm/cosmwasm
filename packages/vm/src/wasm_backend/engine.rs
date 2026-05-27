@@ -1,3 +1,4 @@
+use super::{is_accounting, Gatekeeper, LimitingTunables, Metering};
 use crate::Size;
 use cosmwasm_vm_derive::hash_function;
 use std::sync::Arc;
@@ -24,7 +25,7 @@ fn cost(operator: &Operator) -> u64 {
     // precise enough to derive insights from it.
     const GAS_PER_OPERATION: u64 = 115;
 
-    if super::metering::is_accounting(operator) {
+    if is_accounting(operator) {
         // Accounting operators are operators where the `Metering` middleware injects instructions
         // to count the gas usage and check for gas exhaustion. Therefore they are more expensive.
         //
@@ -51,7 +52,7 @@ pub fn make_runtime_engine(memory_limit: Option<Size>) -> Engine {
     let mut engine = Engine::headless();
     if let Some(limit) = memory_limit {
         let base = BaseTunables::for_target(&Target::default());
-        let tunables = super::limiting_tunables::LimitingTunables::new(base, limit_to_pages(limit));
+        let tunables = LimitingTunables::new(base, limit_to_pages(limit));
         engine.set_tunables(tunables);
     }
     engine
@@ -60,8 +61,8 @@ pub fn make_runtime_engine(memory_limit: Option<Size>) -> Engine {
 /// Creates an Engine with a compiler attached. Use this when compiling Wasm to a module.
 pub fn make_compiling_engine(memory_limit: Option<Size>) -> Engine {
     let gas_limit = 0;
-    let deterministic = Arc::new(super::gatekeeper::Gatekeeper::default());
-    let metering = Arc::new(super::metering::Metering::new(gas_limit, cost));
+    let deterministic = Arc::new(Gatekeeper::default());
+    let metering = Arc::new(Metering::new(gas_limit, cost));
 
     let mut compiler = make_compiler_config();
     compiler.canonicalize_nans(true);
@@ -70,7 +71,7 @@ pub fn make_compiling_engine(memory_limit: Option<Size>) -> Engine {
     let mut engine: Engine = compiler.into();
     if let Some(limit) = memory_limit {
         let base = BaseTunables::for_target(&Target::default());
-        let tunables = super::limiting_tunables::LimitingTunables::new(base, limit_to_pages(limit));
+        let tunables = LimitingTunables::new(base, limit_to_pages(limit));
         engine.set_tunables(tunables);
     }
     engine
