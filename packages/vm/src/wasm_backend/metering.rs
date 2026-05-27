@@ -27,7 +27,7 @@ impl MeteringGlobalIndexes {
 
     /// The global index in the current module for a boolean indicating whether points are exhausted
     /// or not.
-    /// This boolean is represented as a i32 global:
+    /// This boolean is represented as i32 global:
     ///   * 0: there are remaining points
     ///   * 1: points have been exhausted
     fn points_exhausted(&self) -> GlobalIndex {
