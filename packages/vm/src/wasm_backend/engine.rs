@@ -26,7 +26,7 @@ fn cost(operator: &Operator) -> u64 {
 
     if super::metering::is_accounting(operator) {
         // Accounting operators are operators where the `Metering` middleware injects instructions
-        // to count the gas usage and check for gas exhaustion. Therefore, they are more expensive.
+        // to count the gas usage and check for gas exhaustion. Therefore they are more expensive.
         //
         // Benchmarks show that the overhead is about 14 times the cost of a normal operation.
         // To benchmark this, set `GAS_PER_OPERATION = 100` and run the "infinite loop" and
