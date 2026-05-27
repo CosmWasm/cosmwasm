@@ -277,3 +277,42 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware for FunctionMeter
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cost(_: &Operator) -> u64 {
+        1
+    }
+
+    #[test]
+    fn debug_for_metering_should_work() {
+        assert_eq!(
+            r#"Metering { initial_limit: 0, cost_function: "<function>", global_indexes: Mutex { data: None, poisoned: false, .. } }"#,
+            format!("{:?}", Metering::new(0, cost))
+        );
+    }
+
+    #[test]
+    fn debug_for_function_metering_should_work() {
+        let fn_metering = FunctionMetering {
+            cost_function: Arc::new(cost),
+            global_indexes: MeteringGlobalIndexes(
+                GlobalIndex::from_u32(0),
+                GlobalIndex::from_u32(1),
+            ),
+            accumulated_cost: 0,
+        };
+
+        assert_eq!(
+            r#"FunctionMetering { cost_function: "<function>", global_indexes: MeteringGlobalIndexes { remaining_points: GlobalIndex(0), points_exhausted: GlobalIndex(1) } }"#,
+            format!("{:?}", fn_metering)
+        );
+    }
+
+    #[test]
+    fn cost_function_should_work() {
+        assert_eq!(1, cost(&Operator::I64Const { value: 0 }));
+    }
+}

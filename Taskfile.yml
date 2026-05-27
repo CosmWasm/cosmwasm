@@ -82,6 +82,12 @@ tasks:
       - cmd: cargo llvm-cov clean
       - cmd: cargo {{.TOOLCHAIN}} llvm-cov --workspace --no-cfg-coverage --html
 
+  cov-html-open:
+    desc: Generates code coverage report for all crates in HTML format and open in browser
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --workspace --no-cfg-coverage --html --open
+
   cov-cosmwasm-check:
     desc: Generates code coverage report for cosmwasm-check in text format
     cmds:
