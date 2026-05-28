@@ -1,6 +1,7 @@
-use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
+use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
+use std::hint::black_box;
 
-use rand::Rng;
+use rand::RngExt;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use std::{fs, thread};
@@ -27,7 +28,7 @@ const MEDIUM_GAS_LIMIT: u64 = 1_000_000_000_000; // ~1s
 // Cache
 const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
-// Multi-threaded get_instance benchmark
+// Multithreaded get_instance benchmark
 const INSTANTIATION_THREADS: usize = 128;
 const CONTRACTS: u64 = 10;
 
@@ -361,7 +362,7 @@ fn bench_instance_threads(c: &mut Criterion) {
             let mut writable = &mut leb128_buf[..];
 
             // Generates a random number in the range of a 4-byte unsigned leb128 encoded number
-            let r = rand::thread_rng().gen_range(2097152..2097152 + CONTRACTS);
+            let r = rand::rng().random_range(2097152..2097152 + CONTRACTS);
 
             leb128::write::unsigned(&mut writable, r).expect("Should write number");
 

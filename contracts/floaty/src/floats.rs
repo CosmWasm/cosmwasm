@@ -32,7 +32,7 @@ pub fn random_f32(rng: &mut impl RngCore) -> f32 {
         }
         2 => {
             // 25% chance of being an infinite
-            if decider % 2 == 0 {
+            if decider.is_multiple_of(2) {
                 INF_32
             } else {
                 NEG_INF_32
@@ -63,7 +63,7 @@ pub fn random_f64(rng: &mut impl RngCore) -> f64 {
         }
         2 => {
             // 25% chance of being an infinite
-            if decider % 2 == 0 {
+            if decider.is_multiple_of(2) {
                 INF_64
             } else {
                 NEG_INF_64

@@ -78,7 +78,8 @@ impl<'a> ParsedWasm<'a> {
             | WasmFeatures::SIGN_EXTENSION
             | WasmFeatures::MULTI_VALUE
             | WasmFeatures::FLOATS
-            | WasmFeatures::REFERENCE_TYPES;
+            | WasmFeatures::REFERENCE_TYPES
+            | WasmFeatures::BULK_MEMORY;
 
         let mut validator = Validator::new_with_features(features);
 

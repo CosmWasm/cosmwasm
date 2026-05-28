@@ -41,8 +41,8 @@ contracts_nightly=(
   contracts/floaty
 )
 
-toolchain_stable=1.82.0
-toolchain_nightly=nightly-2024-09-01 # The last nightly version for 1.82.0
+toolchain_stable=1.95.0
+toolchain_nightly=nightly-2026-02-28
 
 for dir in "${contracts_stable[@]}"; do
   check_contract "$dir" "$toolchain_stable"

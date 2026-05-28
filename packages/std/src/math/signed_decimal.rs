@@ -12,7 +12,7 @@ use crate::errors::{
     OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use crate::{Decimal, Decimal256, Int256, SignedDecimal256, __internal::forward_ref_partial_eq};
+use crate::{__internal::forward_ref_partial_eq, Decimal, Decimal256, Int256, SignedDecimal256};
 
 use super::Fraction;
 use super::Int128;
@@ -422,7 +422,7 @@ impl SignedDecimal {
             let mut y = SignedDecimal::one();
 
             while n > 1 {
-                if n % 2 == 0 {
+                if n.is_multiple_of(2) {
                     x = x.checked_mul(x)?;
                     n /= 2;
                 } else {

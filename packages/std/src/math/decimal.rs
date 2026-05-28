@@ -10,7 +10,7 @@ use crate::errors::{
     OverflowOperation, RoundUpOverflowError, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use crate::{Decimal256, SignedDecimal, SignedDecimal256, __internal::forward_ref_partial_eq};
+use crate::{__internal::forward_ref_partial_eq, Decimal256, SignedDecimal, SignedDecimal256};
 
 use super::Fraction;
 use super::Isqrt;
@@ -338,7 +338,7 @@ impl Decimal {
             let mut y = Decimal::one();
 
             while n > 1 {
-                if n % 2 == 0 {
+                if n.is_multiple_of(2) {
                     x = x.checked_mul(x)?;
                     n /= 2;
                 } else {

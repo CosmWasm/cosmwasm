@@ -8,6 +8,7 @@ mod cache;
 mod calls;
 mod capabilities;
 mod compatibility;
+mod compiler_builtins;
 mod config;
 mod conversion;
 mod environment;

@@ -125,10 +125,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
     deps.storage.set(CONFIG_KEY, &to_json_vec(&config)?);
 
     if should_return_error {
-        return Err(StdError::msg(format_args!(
-            "Err in reply msg_id: {}",
-            msg_id
-        )));
+        return Err(StdError::msg(format_args!("Err in reply msg_id: {msg_id}")));
     }
 
     let result = if msg.result.is_ok() {
