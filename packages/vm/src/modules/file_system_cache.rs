@@ -429,7 +429,7 @@ mod tests {
         let id = target_id(&target);
         assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-E3770FA3");
 
-        // Works for durrect target (hashing is deterministic);
+        // Works for direct target (hashing is deterministic);
         let target = Target::default();
         let id1 = target_id(&target);
         let id2 = target_id(&target);
@@ -478,8 +478,7 @@ mod tests {
     }
 
     #[test]
-    fn module_version_static() {
-        let version = raw_module_version_discriminator();
-        assert_eq!(version, "6c36aacf76");
+    fn module_version_discriminator_value() {
+        assert_eq!("6c36aacf76", raw_module_version_discriminator());
     }
 }
