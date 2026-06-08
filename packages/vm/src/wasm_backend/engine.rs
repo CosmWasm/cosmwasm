@@ -41,7 +41,7 @@ fn cost(operator: &Operator) -> u64 {
     }
 }
 
-/// Creates a compiler config using Singlepass
+/// Creates a compiler config using Wasmer Singlepass.
 pub fn make_compiler_config() -> impl CompilerConfig + Into<Engine> {
     wasmer::Singlepass::new()
 }
