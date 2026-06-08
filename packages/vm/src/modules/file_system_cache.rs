@@ -24,7 +24,7 @@ use super::CachedModule;
 /// This is a value you can manually modify to the cache.
 /// You normally _do not_ need to change this value yourself.
 ///
-/// Cases where you might need to update it yourself, is things like when the memory layout of some types in Rust [std] changes.
+/// Cases where you might need to update it yourself include changes in the memory layout of some types in Rust [std].
 ///
 /// ---
 ///
@@ -52,7 +52,7 @@ use super::CachedModule;
 ///   [issues with module deserialization](https://github.com/CosmWasm/wasmvm/issues/426).
 ///   To work around this, the version was bumped to "v5" here to invalidate these corrupt caches.
 /// - **v6**:<br>
-///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identier for the modules.
+///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identifier for the modules.
 /// - **v7**:<br>
 ///   New version because of Wasmer 2.3.0 -> 4 upgrade.
 ///   This internally changes how rkyv is used for module serialization, making compatibility unlikely.
@@ -268,7 +268,7 @@ fn module_size(module_path: &Path) -> VmResult<usize> {
 }
 
 /// Creates an identifier for the Wasmer `Target` that is used for
-/// cache invalidation. The output is reasonable human friendly to be useable
+/// cache invalidation. The output is reasonable human friendly to be usable
 /// in file path component.
 fn target_id(target: &Target) -> String {
     // Use a custom Hasher implementation to avoid randomization.
@@ -429,7 +429,7 @@ mod tests {
         let id = target_id(&target);
         assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-93001945");
 
-        // Works for durrect target (hashing is deterministic);
+        // Works for direct target (hashing is deterministic);
         let target = Target::default();
         let id1 = target_id(&target);
         let id2 = target_id(&target);
@@ -478,8 +478,7 @@ mod tests {
     }
 
     #[test]
-    fn module_version_static() {
-        let version = raw_module_version_discriminator();
-        assert_eq!(version, "5b35f8ce52");
+    fn module_version_discriminator_value() {
+        assert_eq!("5b35f8ce52", raw_module_version_discriminator());
     }
 }
