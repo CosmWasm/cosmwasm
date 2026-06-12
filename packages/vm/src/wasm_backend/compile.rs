@@ -1,6 +1,5 @@
-use wasmer::{Engine, Module};
-
 use crate::errors::VmResult;
+use wasmer::{Engine, Module};
 
 /// Compiles a given Wasm bytecode into a module.
 pub fn compile(engine: &Engine, code: &[u8]) -> VmResult<Module> {
