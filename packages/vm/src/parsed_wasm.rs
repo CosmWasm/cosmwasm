@@ -129,7 +129,7 @@ impl<'a> ParsedWasm<'a> {
                                 }
                                 CompositeInnerType::Array(_) | CompositeInnerType::Struct(_) => {
                                     // ignoring these for now, as they are only available with the GC
-                                    // proposal and we explicitly disabled that above
+                                    // proposal, and we explicitly disabled that above
                                 }
                             }
                         }

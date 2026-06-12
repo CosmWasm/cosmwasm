@@ -2,7 +2,7 @@ use wasmer::{Engine, Module};
 
 use crate::errors::VmResult;
 
-/// Compiles a given Wasm bytecode into a module.
+/// Compiles Wasm bytecode into a module using the given engine.
 pub fn compile(engine: &Engine, code: &[u8]) -> VmResult<Module> {
     let module = Module::new(&engine, code)?;
     Ok(module)
