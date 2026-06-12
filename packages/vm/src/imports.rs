@@ -1066,7 +1066,7 @@ mod tests {
         let gas_limit = TESTING_GAS_LIMIT;
         let env = Environment::new(api, gas_limit);
 
-        let (module, engine) = compile_module(&HACKATOM, TESTING_MEMORY_LIMIT).unwrap();
+        let (module, engine) = compile_module(HACKATOM, TESTING_MEMORY_LIMIT).unwrap();
         let mut store = Store::new(engine);
 
         let fe = FunctionEnv::new(&mut store, env);

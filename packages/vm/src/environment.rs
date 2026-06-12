@@ -588,7 +588,7 @@ mod tests {
     ) {
         let env = Environment::new(MockApi::default(), gas_limit);
 
-        let (module, engine) = compile_module(&HACKATOM, TESTING_MEMORY_LIMIT).unwrap();
+        let (module, engine) = compile_module(HACKATOM, TESTING_MEMORY_LIMIT).unwrap();
         let mut store = Store::new(engine);
 
         // we need stubs for all required imports
