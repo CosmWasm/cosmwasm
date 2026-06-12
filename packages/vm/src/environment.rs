@@ -309,7 +309,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         name: &str,
         args: &[Value],
     ) -> VmResult<Box<[Value]>> {
-        // Clone function before calling it to avoid dead locks
+        // Clone function before calling it to avoid deadlocks
         let func = self.with_wasmer_instance(|instance| {
             let func = instance.exports.get_function(name)?;
             Ok(func.clone())
@@ -559,7 +559,7 @@ mod tests {
     use crate::conversion::ref_to_u32;
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::wasm_backend::{compile, make_compiling_engine};
+    use crate::wasm_backend::compile_module;
     use cosmwasm_std::{
         coin, coins, from_json, to_json_vec, BalanceResponse, BankQuery, Empty, QueryRequest,
     };
@@ -588,8 +588,7 @@ mod tests {
     ) {
         let env = Environment::new(MockApi::default(), gas_limit);
 
-        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = compile(&engine, HACKATOM).unwrap();
+        let (module, engine) = compile_module(&HACKATOM, TESTING_MEMORY_LIMIT).unwrap();
         let mut store = Store::new(engine);
 
         // we need stubs for all required imports

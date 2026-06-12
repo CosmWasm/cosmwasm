@@ -99,7 +99,7 @@ impl InMemoryCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wasm_backend::{compile, make_compiling_engine, make_runtime_engine};
+    use crate::wasm_backend::{compile_module, make_runtime_engine};
     use std::mem;
     use wasmer::{imports, Instance as WasmerInstance, Module, Store};
     use wasmer_middlewares::metering::set_remaining_points;
@@ -157,8 +157,7 @@ mod tests {
         assert!(cache_entry.is_none());
 
         // Compile module
-        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let original = compile(&engine, &wasm).unwrap();
+        let (original, engine) = compile_module(&wasm, TESTING_MEMORY_LIMIT).unwrap();
 
         // Ensure original module can be executed
         {
@@ -207,9 +206,9 @@ mod tests {
         assert_eq!(cache.len(), 0);
 
         // Add 1
-        let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let (original1, _) = compile_module(&wasm1, TESTING_MEMORY_LIMIT).unwrap();
         let module = CachedModule {
-            module: compile(&engine1, &wasm1).unwrap(),
+            module: original1,
             engine: make_runtime_engine(TESTING_MEMORY_LIMIT),
             size_estimate: 900_000,
         };
@@ -217,9 +216,9 @@ mod tests {
         assert_eq!(cache.len(), 1);
 
         // Add 2
-        let engine2 = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let (original2, _) = compile_module(&wasm2, TESTING_MEMORY_LIMIT).unwrap();
         let module = CachedModule {
-            module: compile(&engine2, &wasm2).unwrap(),
+            module: original2,
             engine: make_runtime_engine(TESTING_MEMORY_LIMIT),
             size_estimate: 900_000,
         };
@@ -227,9 +226,9 @@ mod tests {
         assert_eq!(cache.len(), 2);
 
         // Add 3 (pushes out the previous two)
-        let engine3 = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let (original3, _) = compile_module(&wasm3, TESTING_MEMORY_LIMIT).unwrap();
         let module = CachedModule {
-            module: compile(&engine3, &wasm3).unwrap(),
+            module: original3,
             engine: make_runtime_engine(TESTING_MEMORY_LIMIT),
             size_estimate: 1_500_000,
         };
@@ -252,9 +251,9 @@ mod tests {
         assert_eq!(cache.size(), 0);
 
         // Add 1
-        let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let (original1, _) = compile_module(&wasm1, TESTING_MEMORY_LIMIT).unwrap();
         let module = CachedModule {
-            module: compile(&engine1, &wasm1).unwrap(),
+            module: original1,
             engine: make_runtime_engine(TESTING_MEMORY_LIMIT),
             size_estimate: 900_000,
         };
@@ -262,9 +261,9 @@ mod tests {
         assert_eq!(cache.size(), 900_032);
 
         // Add 2
-        let engine2 = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let (original2, _) = compile_module(&wasm2, TESTING_MEMORY_LIMIT).unwrap();
         let module = CachedModule {
-            module: compile(&engine2, &wasm2).unwrap(),
+            module: original2,
             engine: make_runtime_engine(TESTING_MEMORY_LIMIT),
             size_estimate: 800_000,
         };
@@ -272,9 +271,9 @@ mod tests {
         assert_eq!(cache.size(), 900_032 + 800_032);
 
         // Add 3 (pushes out the previous two)
-        let engine3 = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let (original3, _) = compile_module(&wasm3, TESTING_MEMORY_LIMIT).unwrap();
         let module = CachedModule {
-            module: compile(&engine3, &wasm3).unwrap(),
+            module: original3,
             engine: make_runtime_engine(TESTING_MEMORY_LIMIT),
             size_estimate: 1_500_000,
         };
@@ -301,8 +300,7 @@ mod tests {
         assert_eq!(cache.size(), 0);
 
         // Compile module
-        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let original = compile(&engine, &wasm).unwrap();
+        let (original, _) = compile_module(&wasm, TESTING_MEMORY_LIMIT).unwrap();
 
         // Store module
         let module = CachedModule {

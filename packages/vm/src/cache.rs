@@ -1,14 +1,3 @@
-use std::collections::{BTreeSet, HashSet};
-use std::fs::{self, File, OpenOptions};
-use std::io::{Read, Write};
-use std::marker::PhantomData;
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
-use std::sync::Mutex;
-use wasmer::{Module, Store};
-
-use cosmwasm_std::Checksum;
-
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
 use crate::compatibility::check_wasm;
@@ -20,7 +9,16 @@ use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryC
 use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
 use crate::static_analysis::{Entrypoint, ExportInfo, REQUIRED_IBC_EXPORTS};
-use crate::wasm_backend::{compile, make_compiling_engine};
+use crate::wasm_backend::compile_module;
+use cosmwasm_std::Checksum;
+use std::collections::{BTreeSet, HashSet};
+use std::fs::{self, File, OpenOptions};
+use std::io::{Read, Write};
+use std::marker::PhantomData;
+use std::path::{Path, PathBuf};
+use std::str::FromStr;
+use std::sync::Mutex;
+use wasmer::{Module, Store};
 
 const STATE_DIR: &str = "state";
 // Things related to the state of the blockchain.
@@ -251,7 +249,7 @@ where
             )?;
         }
 
-        let module = compile_module(wasm)?;
+        let (module, _) = compile_module(wasm, None)?;
 
         if persist {
             self.save_to_disk(wasm, &module)
@@ -376,10 +374,7 @@ where
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
         {
-            // Module will run with a different engine, so we can set memory limit to None
-            let compiling_engine = make_compiling_engine(None);
-            // This module cannot be executed directly as it was not created with the runtime engine
-            let module = compile(&compiling_engine, &wasm)?;
+            let (module, _) = compile_module(&wasm, None)?;
             cache.fs_cache.store(checksum, &module)?;
         }
 
@@ -511,10 +506,7 @@ where
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
         {
-            // Module will run with a different engine, so we can set memory limit to None
-            let compiling_engine = make_compiling_engine(None);
-            // This module cannot be executed directly as it was not created with the runtime engine
-            let module = compile(&compiling_engine, &wasm)?;
+            let (module, _) = compile_module(&wasm, None)?;
             cache.fs_cache.store(checksum, &module)?;
         }
 
@@ -537,12 +529,6 @@ where
         let store = Store::new(engine);
         Ok((module, store))
     }
-}
-
-fn compile_module(wasm: &[u8]) -> Result<Module, VmError> {
-    let compiling_engine = make_compiling_engine(None);
-    let module = compile(&compiling_engine, wasm)?;
-    Ok(module)
 }
 
 unsafe impl<A, S, Q> Sync for Cache<A, S, Q>
