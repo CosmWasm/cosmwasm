@@ -3,7 +3,7 @@ use crate::wasm_backend::engine::make_compiling_engine;
 use crate::Size;
 use wasmer::{Engine, Module};
 
-/// Compiles a given Wasm bytecode into a module.
+/// Compiles Wasm bytecode into a module using the given engine.
 pub fn compile(engine: &Engine, code: &[u8]) -> VmResult<Module> {
     let module = Module::new(&engine, code)?;
     Ok(module)

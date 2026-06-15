@@ -1,8 +1,7 @@
-use cosmwasm_std::Checksum;
-use std::collections::HashMap;
-
 use super::cached_module::CachedModule;
 use crate::VmResult;
+use cosmwasm_std::Checksum;
+use std::collections::HashMap;
 
 /// Struct storing some additional metadata, which is only of interest for the pinned cache,
 /// alongside the cached module.
@@ -77,7 +76,7 @@ impl PinnedMemoryCache {
     pub fn size(&self) -> usize {
         self.modules
             .iter()
-            .map(|(key, module)| std::mem::size_of_val(key) + module.module.size_estimate)
+            .map(|(key, module)| size_of_val(key) + module.module.size_estimate)
             .sum()
     }
 }

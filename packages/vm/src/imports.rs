@@ -1,22 +1,5 @@
 //! Import implementations
 
-use std::marker::PhantomData;
-
-use cosmwasm_core::{BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
-use cosmwasm_crypto::{
-    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_hash_to_g1, bls12_381_hash_to_g2,
-    bls12_381_pairing_equality, ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey,
-    secp256k1_verify, secp256r1_recover_pubkey, secp256r1_verify, CryptoError, HashFunction,
-};
-use cosmwasm_crypto::{
-    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
-};
-use rand_core::OsRng;
-
-#[cfg(feature = "iterator")]
-use cosmwasm_std::Order;
-use wasmer::{AsStoreMut, FunctionEnvMut};
-
 use crate::backend::{BackendApi, BackendError, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
 use crate::environment::{process_gas_info, DebugInfo, Environment};
@@ -29,6 +12,20 @@ use crate::sections::decode_sections;
 use crate::sections::encode_sections;
 use crate::serde::to_vec;
 use crate::GasInfo;
+use cosmwasm_core::{BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
+use cosmwasm_crypto::{
+    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_hash_to_g1, bls12_381_hash_to_g2,
+    bls12_381_pairing_equality, ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey,
+    secp256k1_verify, secp256r1_recover_pubkey, secp256r1_verify, CryptoError, HashFunction,
+};
+use cosmwasm_crypto::{
+    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
+};
+#[cfg(feature = "iterator")]
+use cosmwasm_std::Order;
+use rand_core::OsRng;
+use std::marker::PhantomData;
+use wasmer::{AsStoreMut, FunctionEnvMut};
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
@@ -42,7 +39,7 @@ const MAX_LENGTH_DB_VALUE: usize = 128 * KI;
 const MAX_LENGTH_CANONICAL_ADDRESS: usize = 64;
 /// The max length of human address inputs (in bytes).
 /// The maximum allowed size for [bech32](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
-/// is 90 characters and we're adding some safety margin around that for other formats.
+/// is 90 characters, and we're adding some safety margin around that for other formats.
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 256;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 /// Length of a serialized Ed25519 signature
@@ -75,7 +72,7 @@ fn charge_host_call_gas<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
 //
 // This block of do_* prefixed functions is tailored for Wasmer's
 // Function::new_typed_with_env interface. Those require an env in the first
-// argument and cannot capture other variables. Thus everything is accessed
+// argument and cannot capture other variables. Thus, everything is accessed
 // through the env.
 
 /// Reads a storage entry from the VM's storage into Wasm memory
@@ -2070,7 +2067,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_works() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2089,7 +2086,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_wrong_hash_verify_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let mut hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2110,7 +2107,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_larger_hash_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let mut hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2135,7 +2132,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_shorter_hash_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let mut hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2156,7 +2153,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_wrong_sig_verify_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2177,7 +2174,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_larger_sig_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2202,7 +2199,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_shorter_sig_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2223,7 +2220,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_wrong_pubkey_format_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2244,7 +2241,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_wrong_pubkey_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2265,7 +2262,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_larger_pubkey_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2290,7 +2287,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_shorter_pubkey_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2311,7 +2308,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_empty_pubkey_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
@@ -2330,7 +2327,7 @@ mod tests {
     #[test]
     fn do_secp256r1_verify_wrong_data_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = vec![0x22; MESSAGE_HASH_MAX_LEN];
@@ -2624,7 +2621,7 @@ mod tests {
         let response_ptr = do_query_chain(fe_mut.as_mut(), request_ptr).unwrap();
         let response = force_read(&mut fe_mut, response_ptr);
 
-        let query_result: cosmwasm_std::QuerierResult = cosmwasm_std::from_json(response).unwrap();
+        let query_result: cosmwasm_std::QuerierResult = from_json(response).unwrap();
         let query_result_inner = query_result.unwrap();
         let query_result_inner_inner = query_result_inner.unwrap();
         let parsed_again: BalanceResponse = from_json(query_result_inner_inner).unwrap();
@@ -2645,7 +2642,7 @@ mod tests {
         let response_ptr = do_query_chain(fe_mut.as_mut(), request_ptr).unwrap();
         let response = force_read(&mut fe_mut, response_ptr);
 
-        let query_result: cosmwasm_std::QuerierResult = cosmwasm_std::from_json(response).unwrap();
+        let query_result: cosmwasm_std::QuerierResult = from_json(response).unwrap();
         match query_result {
             SystemResult::Ok(_) => panic!("This must not succeed"),
             SystemResult::Err(SystemError::InvalidRequest { request: err, .. }) => {
@@ -2673,7 +2670,7 @@ mod tests {
         let response_ptr = do_query_chain(fe_mut.as_mut(), request_ptr).unwrap();
         let response = force_read(&mut fe_mut, response_ptr);
 
-        let query_result: cosmwasm_std::QuerierResult = cosmwasm_std::from_json(response).unwrap();
+        let query_result: cosmwasm_std::QuerierResult = from_json(response).unwrap();
         match query_result {
             SystemResult::Ok(_) => panic!("This must not succeed"),
             SystemResult::Err(SystemError::NoSuchContract { addr }) => {

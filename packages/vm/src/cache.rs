@@ -221,7 +221,7 @@ where
 
     /// Takes a Wasm bytecode and stores it to the cache.
     ///
-    /// This performs static checks, compiles the bytescode to a module and
+    /// This performs static checks, compiles the bytecode to a module and
     /// stores the Wasm file on disk.
     ///
     /// This does the same as [`Cache::save_wasm_unchecked`] plus the static checks.
@@ -234,7 +234,7 @@ where
     /// Takes a Wasm bytecode and stores it to the cache.
     ///
     /// This performs static checks if `checked` is `true`,
-    /// compiles the bytescode to a module and
+    /// compiles the bytecode to a module and
     /// stores the Wasm file on disk if `persist` is `true`.
     ///
     /// Only set `checked = false` when a Wasm blob is stored which was previously checked
@@ -260,7 +260,7 @@ where
 
     /// Takes a Wasm bytecode and stores it to the cache.
     ///
-    /// This compiles the bytescode to a module and
+    /// This compiles the bytecode to a module and
     /// stores the Wasm file on disk.
     ///
     /// This does the same as [`Cache::save_wasm`] but without the static checks.
@@ -316,7 +316,7 @@ where
         }
     }
 
-    /// Performs static anlyzation on this Wasm without compiling or instantiating it.
+    /// Performs static analysis on this Wasm without compiling or instantiating it.
     ///
     /// Once the contract was stored via [`Cache::store_code`], this can be called at any point in time.
     /// It does not depend on any caching of the contract.

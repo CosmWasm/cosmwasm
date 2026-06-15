@@ -1,11 +1,9 @@
-use clru::{CLruCache, CLruCacheConfig, WeightScale};
-use std::collections::hash_map::RandomState;
-use std::num::NonZeroUsize;
-
-use cosmwasm_std::Checksum;
-
 use super::cached_module::CachedModule;
 use crate::{Size, VmError, VmResult};
+use clru::{CLruCache, CLruCacheConfig, WeightScale};
+use cosmwasm_std::Checksum;
+use std::collections::hash_map::RandomState;
+use std::num::NonZeroUsize;
 
 // Minimum module size.
 // Based on `examples/module_size.sh`, and the cosmwasm-plus contracts.
@@ -22,7 +20,7 @@ struct SizeScale;
 impl WeightScale<Checksum, CachedModule> for SizeScale {
     #[inline]
     fn weight(&self, key: &Checksum, value: &CachedModule) -> usize {
-        std::mem::size_of_val(key) + value.size_estimate
+        size_of_val(key) + value.size_estimate
     }
 }
 
@@ -133,14 +131,14 @@ mod tests {
 
     #[test]
     fn check_element_sizes() {
-        let key_size = mem::size_of::<Checksum>();
+        let key_size = size_of::<Checksum>();
         assert_eq!(key_size, 32);
 
-        let value_size = mem::size_of::<Module>();
+        let value_size = size_of::<Module>();
         assert_eq!(value_size, 8);
 
         // Just in case we want to go that route
-        let boxed_value_size = mem::size_of::<Box<Module>>();
+        let boxed_value_size = size_of::<Box<Module>>();
         assert_eq!(boxed_value_size, 8);
     }
 

@@ -29,9 +29,9 @@ use wasmer::{
 pub struct GasReport {
     /// The original limit the instance was created with
     pub limit: u64,
-    /// The remaining gas that can be spend
+    /// The remaining gas that can be spent.
     pub remaining: u64,
-    /// The amount of gas that was spend and metered externally in operations triggered by this instance
+    /// The amount of gas that was spent and metered externally in operations triggered by this instance
     pub used_externally: u64,
     /// The amount of gas that was spend and metered internally (i.e. by executing Wasm and calling
     /// API methods which are not metered externally)
@@ -57,11 +57,11 @@ pub struct Instance<A: BackendApi, S: Storage, Q: Querier> {
 
 impl<A, S, Q> Instance<A, S, Q>
 where
-    A: BackendApi + 'static, // 'static is needed here to allow copying API instances into closures
-    S: Storage + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
-    Q: Querier + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
+    A: BackendApi + 'static, // static is needed here to allow copying API instances into closures
+    S: Storage + 'static, // static is needed here to allow using this in an Environment that is cloned into closures
+    Q: Querier + 'static, // static is needed here to allow using this in an Environment that is cloned into closures
 {
-    /// This is the only Instance constructor that can be called from outside of cosmwasm-vm,
+    /// This is the only Instance constructor that can be called from outside cosmwasm-vm,
     /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
     pub fn from_code(
         wasm: &[u8],
@@ -104,7 +104,7 @@ where
             Function::new_typed_with_env(&mut store, &fe, do_db_write),
         );
 
-        // Removes the value at the given key. Different than writing &[] as future
+        // Removes the value at the given key. Different from writing &[] as future
         // scans will not find this key.
         // At the moment it is not possible to differentiate between a key that existed before and one that did not exist (https://github.com/CosmWasm/cosmwasm/issues/290).
         // Ownership of both key pointer is not transferred to the host.
@@ -114,7 +114,7 @@ where
         );
 
         // Reads human address from source_ptr and checks if it is valid.
-        // Returns 0 if the input is valid. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
+        // Returns 0 if the input is valid. Returns a non-zero memory location to a Region containing a UTF-8 encoded error string for invalid inputs.
         // Ownership of the input pointer is not transferred to the host.
         env_imports.insert(
             "addr_validate",
@@ -123,7 +123,7 @@ where
 
         // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
         // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
-        // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
+        // Returns 0 on success. Returns a non-zero memory location to a Region containing a UTF-8 encoded error string for invalid inputs.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "addr_canonicalize",
@@ -132,7 +132,7 @@ where
 
         // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
         // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
-        // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
+        // Returns 0 on success. Returns a non-zero memory location to a Region containing a UTF-8 encoded error string for invalid inputs.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "addr_humanize",
@@ -141,7 +141,7 @@ where
 
         // Reads a list of points of the subgroup G1 on the BLS12-381 curve and aggregates them down to a single element.
         // The "out_ptr" parameter has to be a pointer to a region with the sufficient size to fit an element of G1 (48 bytes).
-        // Returns a u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
+        // Returns u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
         env_imports.insert(
             "bls12_381_aggregate_g1",
             Function::new_typed_with_env(&mut store, &fe, do_bls12_381_aggregate_g1),
@@ -149,7 +149,7 @@ where
 
         // Reads a list of points of the subgroup G2 on the BLS12-381 curve and aggregates them down to a single element.
         // The "out_ptr" parameter has to be a pointer to a region with the sufficient size to fit an element of G2 (96 bytes).
-        // Returns a u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
+        // Returns u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
         env_imports.insert(
             "bls12_381_aggregate_g2",
             Function::new_typed_with_env(&mut store, &fe, do_bls12_381_aggregate_g2),
@@ -167,7 +167,7 @@ where
         // Three parameters, "hash_function" and "msg" and "dst", are passed down which are both arbitrary octet strings.
         // The "hash_function" parameter is interpreted as a case of the "HashFunction" enum.
         // The "out_ptr" parameter has to be a pointer to a region with the sufficient size to fit an element of G1 (48 bytes).
-        // Returns a u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
+        // Returns u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
         env_imports.insert(
             "bls12_381_hash_to_g1",
             Function::new_typed_with_env(&mut store, &fe, do_bls12_381_hash_to_g1),
@@ -176,7 +176,7 @@ where
         // Three parameters, "hash_function" and "msg" and "dst", are passed down which are both arbitrary octet strings.
         // The "hash_function" parameter is interpreted as a case of the "HashFunction" enum.
         // The "out_ptr" parameter has to be a pointer to a region with the sufficient size to fit an element of G2 (96 bytes).
-        // Returns a u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
+        // Returns u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
         env_imports.insert(
             "bls12_381_hash_to_g2",
             Function::new_typed_with_env(&mut store, &fe, do_bls12_381_hash_to_g2),
@@ -228,7 +228,7 @@ where
 
         // Allows the contract to emit debug logs that the host can either process or ignore.
         // This is never written to chain.
-        // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
+        // Takes a pointer argument of a memory region that must contain a UTF-8 encoded string.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "debug",
@@ -236,7 +236,7 @@ where
         );
 
         // Aborts the contract execution with an error message provided by the contract.
-        // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
+        // Takes a pointer argument of a memory region that must contain a UTF-8 encoded string.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "abort",
@@ -414,8 +414,8 @@ where
             remaining: gas_left,
             used_externally: state.externally_used_gas,
             // If externally_used_gas exceeds the gas limit, this will return 0.
-            // no matter how much gas was used internally. But then we error with out of gas
-            // anyways, and it does not matter much anymore where gas was spend.
+            // no matter how much gas was used internally. But then we error without of gas
+            // anyway, and it does not matter much anymore where gas was spend.
             used_internally: state
                 .gas_limit
                 .saturating_sub(state.externally_used_gas)
@@ -489,7 +489,7 @@ where
     }
 
     /// Calls a function exported by the instance.
-    /// The function is expected to return no value. Otherwise this calls errors.
+    /// The function is expected to return no value. Otherwise, this calls errors.
     pub(crate) fn call_function0(&mut self, name: &str, args: &[Value]) -> VmResult<()> {
         let mut fe_mut = self.fe.clone().into_mut(&mut self.store);
         let (env, mut store) = fe_mut.data_and_store_mut();
@@ -498,7 +498,7 @@ where
     }
 
     /// Calls a function exported by the instance.
-    /// The function is expected to return one value. Otherwise this calls errors.
+    /// The function is expected to return one value. Otherwise, this calls errors.
     pub(crate) fn call_function1(&mut self, name: &str, args: &[Value]) -> VmResult<Value> {
         let mut fe_mut = self.fe.clone().into_mut(&mut self.store);
         let (env, mut store) = fe_mut.data_and_store_mut();
@@ -517,8 +517,8 @@ pub fn instance_from_module<A, S, Q>(
     extra_imports: Option<HashMap<&str, Exports>>,
 ) -> VmResult<Instance<A, S, Q>>
 where
-    A: BackendApi + 'static, // 'static is needed here to allow copying API instances into closures
-    S: Storage + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
+    A: BackendApi + 'static, // static is needed here to allow copying API instances into closures
+    S: Storage + 'static, // static is needed here to allow using this in an Environment that is cloned into closures
     Q: Querier + 'static,
 {
     Instance::from_module(store, module, backend, gas_limit, extra_imports, None)
