@@ -7,7 +7,7 @@ use anyhow::Context;
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 use cosmwasm_std::{from_json, StdResultExt};
-use cosmwasm_vm::internals::{check_wasm, compile, make_compiling_engine, LogOutput, Logger};
+use cosmwasm_vm::internals::{check_wasm, compile_module, LogOutput, Logger};
 use cosmwasm_vm::{capabilities_from_csv, WasmLimits};
 use std::collections::HashSet;
 use std::fs::File;
@@ -169,8 +169,7 @@ fn check_contract(
     // Compile module
     let start = Instant::now();
     {
-        let engine = make_compiling_engine(None);
-        let _module = compile(&engine, &wasm)?;
+        _ = compile_module(&wasm, None)?;
     }
     if verbose {
         let duration = start.elapsed();

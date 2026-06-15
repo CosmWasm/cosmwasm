@@ -60,7 +60,7 @@ pub fn make_runtime_engine(memory_limit: Option<Size>) -> Engine {
     engine
 }
 
-/// Creates an Engine with a compiler attached. Use this when compiling Wasm to a module.
+/// Creates an Engine with make_compiling_engine, a compiler attached. Use this when compiling Wasm to a module.
 pub fn make_compiling_engine(memory_limit: Option<Size>) -> Engine {
     let gas_limit = 0;
     let deterministic = Arc::new(Gatekeeper::default());

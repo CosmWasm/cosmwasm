@@ -1,4 +1,6 @@
 use crate::errors::VmResult;
+use crate::wasm_backend::engine::make_compiling_engine;
+use crate::Size;
 use wasmer::{Engine, Module};
 
 /// Compiles Wasm bytecode into a module using the given engine.
@@ -7,10 +9,16 @@ pub fn compile(engine: &Engine, code: &[u8]) -> VmResult<Module> {
     Ok(module)
 }
 
+/// Compiles a given Wasm byte code into a module using compiling engine.
+pub fn compile_module(wasm: &[u8], memory_limit: Option<Size>) -> VmResult<(Module, Engine)> {
+    let engine = make_compiling_engine(memory_limit);
+    let module = compile(&engine, wasm)?;
+    Ok((module, engine))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wasm_backend::make_compiling_engine;
 
     static FLOATY: &[u8] = include_bytes!("../../testdata/floaty.wasm");
 

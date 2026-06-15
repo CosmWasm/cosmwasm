@@ -1,16 +1,7 @@
-use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
-use std::ptr::NonNull;
-use std::rc::Rc;
-use std::sync::Mutex;
-
-use wasmer::{
-    Exports, Function, FunctionEnv, Imports, Instance as WasmerInstance, Module, Store, Value,
-};
-
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
 use crate::conversion::{ref_to_u32, to_u32};
+pub use crate::environment::DebugInfo;
 use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::imports::{
@@ -22,11 +13,17 @@ use crate::imports::{
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{do_db_next, do_db_next_key, do_db_next_value, do_db_scan};
+use crate::internals::compile_module;
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
-use crate::wasm_backend::{compile, make_compiling_engine};
-
-pub use crate::environment::DebugInfo; // Re-exported as public via to be usable for set_debug_handler
+use std::cell::RefCell;
+use std::collections::{HashMap, HashSet};
+use std::ptr::NonNull;
+use std::rc::Rc;
+use std::sync::Mutex;
+use wasmer::{
+    Exports, Function, FunctionEnv, Imports, Instance as WasmerInstance, Module, Store, Value,
+};
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
@@ -67,13 +64,12 @@ where
     /// This is the only Instance constructor that can be called from outside cosmwasm-vm,
     /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
     pub fn from_code(
-        code: &[u8],
+        wasm: &[u8],
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let engine = make_compiling_engine(memory_limit);
-        let module = compile(&engine, code)?;
+        let (module, engine) = compile_module(wasm, memory_limit)?;
         let store = Store::new(engine);
         Instance::from_module(store, &module, backend, options.gas_limit, None, None)
     }
@@ -536,6 +532,7 @@ mod tests {
 
     use super::*;
     use crate::calls::{call_execute, call_instantiate, call_query};
+    use crate::internals::compile_module;
     use crate::testing::{
         mock_backend, mock_env, mock_info, mock_instance, mock_instance_options,
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
@@ -656,8 +653,7 @@ mod tests {
         .unwrap();
 
         let backend = mock_backend(&[]);
-        let engine = make_compiling_engine(memory_limit);
-        let module = compile(&engine, &wasm).unwrap();
+        let (module, engine) = compile_module(&wasm, memory_limit).unwrap();
         let mut store = Store::new(engine);
 
         let called = Arc::new(AtomicBool::new(false));
