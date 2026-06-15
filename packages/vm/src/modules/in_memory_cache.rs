@@ -98,7 +98,6 @@ impl InMemoryCache {
 mod tests {
     use super::*;
     use crate::wasm_backend::{compile_module, make_runtime_engine};
-    use std::mem;
     use wasmer::{imports, Instance as WasmerInstance, Module, Store};
     use wasmer_middlewares::metering::set_remaining_points;
 
