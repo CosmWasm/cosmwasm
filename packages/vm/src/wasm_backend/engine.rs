@@ -1,3 +1,6 @@
+use super::gatekeeper::Gatekeeper;
+use super::limiting_tunables::LimitingTunables;
+use crate::size::Size;
 use cosmwasm_vm_derive::hash_function;
 use std::sync::Arc;
 use wasmer::NativeEngineExt;
@@ -5,11 +8,6 @@ use wasmer::{
     sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
 };
 use wasmer_middlewares::metering::{is_accounting, Metering};
-
-use crate::size::Size;
-
-use super::gatekeeper::Gatekeeper;
-use super::limiting_tunables::LimitingTunables;
 
 /// WebAssembly linear memory objects have sizes measured in pages. Each page
 /// is 65536 (2^16) bytes. In WebAssembly version 1, a linear memory can have at
@@ -31,7 +29,7 @@ fn cost(operator: &Operator) -> u64 {
 
     if is_accounting(operator) {
         // Accounting operators are operators where the `Metering` middleware injects instructions
-        // to count the gas usage and check for gas exhaustion. Therefore they are more expensive.
+        // to count the gas usage and check for gas exhaustion. Therefore, they are more expensive.
         //
         // Benchmarks show that the overhead is about 14 times the cost of a normal operation.
         // To benchmark this, set `GAS_PER_OPERATION = 100` and run the "infinite loop" and
