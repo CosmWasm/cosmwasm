@@ -42,7 +42,7 @@ const MAX_LENGTH_DB_VALUE: usize = 128 * KI;
 const MAX_LENGTH_CANONICAL_ADDRESS: usize = 64;
 /// The max length of human address inputs (in bytes).
 /// The maximum allowed size for [bech32](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
-/// is 90 characters and we're adding some safety margin around that for other formats.
+/// is 90 characters, and we're adding some safety margin around that for other formats.
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 256;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 /// Length of a serialized Ed25519 signature
@@ -75,7 +75,7 @@ fn charge_host_call_gas<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
 //
 // This block of do_* prefixed functions is tailored for Wasmer's
 // Function::new_typed_with_env interface. Those require an env in the first
-// argument and cannot capture other variables. Thus everything is accessed
+// argument and cannot capture other variables. Thus, everything is accessed
 // through the env.
 
 /// Reads a storage entry from the VM's storage into Wasm memory

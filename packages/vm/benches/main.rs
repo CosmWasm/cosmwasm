@@ -27,7 +27,7 @@ const MEDIUM_GAS_LIMIT: u64 = 1_000_000_000_000; // ~1s
 // Cache
 const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
-// Multi-threaded get_instance benchmark
+// Multithreaded get_instance benchmark
 const INSTANTIATION_THREADS: usize = 128;
 const CONTRACTS: u64 = 10;
 
@@ -330,7 +330,7 @@ fn bench_cache(c: &mut Criterion) {
 
 fn bench_instance_threads(c: &mut Criterion) {
     let temp_dir = TempDir::new().unwrap();
-    c.bench_function("multi-threaded get_instance", |b| {
+    c.bench_function("multithreaded get_instance", |b| {
         let options = CacheOptions::new(
             temp_dir.path(),
             capabilities_from_csv(DEFAULT_CAPABILITIES),
