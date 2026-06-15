@@ -1,5 +1,4 @@
 use std::ptr::NonNull;
-
 use wasmer::{
     vm::{
         MemoryError, MemoryStyle, TableStyle, VMMemory, VMMemoryDefinition, VMTable,

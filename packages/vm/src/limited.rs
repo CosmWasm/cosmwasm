@@ -4,7 +4,7 @@
 use std::collections::{BTreeSet, HashSet};
 
 pub trait LimitedDisplay {
-    /// Returns a string representationof the object, which is shorter than or equal to `max_length`.
+    /// Returns a string representation of the object, which is shorter than or equal to `max_length`.
     /// Implementations must panic if `max_length` is not reasonably large.
     fn to_string_limited(&self, max_length: usize) -> String;
 }
@@ -17,7 +17,7 @@ impl<E: Ord + AsRef<str>> LimitedDisplay for BTreeSet<E> {
 
 impl<E: Ord + AsRef<str>> LimitedDisplay for HashSet<E> {
     fn to_string_limited(&self, max_length: usize) -> String {
-        // Iteration order in HashSet is undeterminstic. We sort
+        // Iteration order in HashSet is undeterministic. We sort
         // here to be on the safe side and to simplify testing.
         let sorted = BTreeSet::from_iter(self);
         sorted.to_string_limited(max_length)
@@ -92,7 +92,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn works_for_btreeset() {
+    fn works_for_btree_set() {
         let set = BTreeSet::<String>::new();
         assert_eq!(set.to_string_limited(100), "{}");
         assert_eq!(set.to_string_limited(20), "{}");
@@ -128,7 +128,7 @@ mod tests {
     }
 
     #[test]
-    fn works_for_hashset() {
+    fn works_for_hash_set() {
         let set = HashSet::<String>::new();
         assert_eq!(set.to_string_limited(100), "{}");
         assert_eq!(set.to_string_limited(20), "{}");

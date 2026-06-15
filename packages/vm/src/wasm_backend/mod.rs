@@ -6,5 +6,5 @@ mod limiting_tunables;
 #[cfg(test)]
 pub use engine::make_compiler_config;
 
-pub use compile::compile;
+pub use compile::{compile, compile_module};
 pub use engine::{make_compiling_engine, make_runtime_engine, COST_FUNCTION_HASH};
