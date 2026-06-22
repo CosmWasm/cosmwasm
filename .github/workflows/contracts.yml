@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-2025-vs2026 ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
         dir: [
           burner,
           crypto-verify,
@@ -85,7 +85,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-2025-vs2026 ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
         dir: [ floaty ]
     defaults:
       run:
@@ -136,7 +136,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-2025-vs2026 ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -240,7 +240,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-2025-vs2026 ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
