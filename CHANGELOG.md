@@ -6,7 +6,21 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 (empty)
 
-## [3.0.7] - 2025-05-21
+## [3.0.8] - 2026-05-21
+
+### Changed
+
+- Updated GitHub Windows runner in actions ([#2680])
+- Fixing style and typos ([#2688])
+- Refactored imports and unused prefixes ([#2689])
+- Added `compile_module` function ([#2690])
+
+[#2680]: https://github.com/CosmWasm/cosmwasm/pull/2680
+[#2688]: https://github.com/CosmWasm/cosmwasm/pull/2688
+[#2689]: https://github.com/CosmWasm/cosmwasm/pull/2689
+[#2690]: https://github.com/CosmWasm/cosmwasm/pull/2690
+
+## [3.0.7] - 2026-05-21
 
 ### Changed
 
@@ -64,7 +78,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2614]: https://github.com/CosmWasm/cosmwasm/pull/2614
 [#2604]: https://github.com/CosmWasm/cosmwasm/pull/2604
 
-## [3.0.6] - 2025-05-13
+## [3.0.6] - 2026-05-13
 
 - Bumped version in README. ([#2648])
 - Fixed overflows v3.0.x ([#2662])
@@ -72,7 +86,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2648]: https://github.com/CosmWasm/cosmwasm/pull/2648
 [#2662]: https://github.com/CosmWasm/cosmwasm/pull/2662
 
-## [3.0.5] - 2025-04-24
+## [3.0.5] - 2026-04-24
 
 - Fixes to IBCv2 async acks ([#2646])
 
@@ -1624,7 +1638,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.7...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.8...HEAD
+[3.0.8]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.7...v3.0.8
 [3.0.7]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.6...v3.0.7
 [3.0.6]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.5...v3.0.6
 [3.0.5]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.4...v3.0.5
