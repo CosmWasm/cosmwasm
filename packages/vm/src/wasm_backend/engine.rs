@@ -1,3 +1,8 @@
+use super::Gatekeeper;
+use super::LimitingTunables;
+use super::{is_accounting, Metering};
+use crate::parsed_wasm::ParsedWasm;
+use crate::size::Size;
 use cosmwasm_vm_derive::hash_function;
 use std::sync::Arc;
 use wasmer::NativeEngineExt;
@@ -5,18 +10,14 @@ use wasmer::{
     sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
 };
 
-use crate::size::Size;
-
-use super::gatekeeper::Gatekeeper;
-use super::limiting_tunables::LimitingTunables;
-use super::metering::{is_accounting, Metering};
-
 /// WebAssembly linear memory objects have sizes measured in pages. Each page
 /// is 65536 (2^16) bytes. In WebAssembly version 1, a linear memory can have at
 /// most 65536 pages, for a total of 2^32 bytes (4 gibibytes).
 /// https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md
 const MAX_WASM_PAGES: u32 = 65536;
 
+// This function is hashed and put into the `module_version_discriminator` because it is used as
+// part of the compilation process. If it changes, modules need to be recompiled.
 #[hash_function(const_name = "COST_FUNCTION_HASH")]
 fn cost(operator: &Operator) -> u64 {
     // A flat fee for each operation
@@ -32,13 +33,22 @@ fn cost(operator: &Operator) -> u64 {
     const GAS_PER_OPERATION: u64 = 115;
 
     if is_accounting(operator) {
+        // Accounting operators are operators where the `Metering` middleware injects instructions
+        // to count the gas usage and check for gas exhaustion. Therefore, they are more expensive.
+        //
+        // Benchmarks show that the overhead is about 14 times the cost of a normal operation.
+        // To benchmark this, set `GAS_PER_OPERATION = 100` and run the "infinite loop" and
+        // "argon2" benchmarks. From the "Gas used" output, you can calculate the number of
+        // operations and from that together with the run time the expected gas value per operation:
+        // GAS_PER_OP = GAS_TARGET_PER_SEC / (NUM_OPS / RUNTIME_IN_SECS)
+        // This is repeated with different multipliers to bring the two benchmarks closer together.
         GAS_PER_OPERATION * 14
     } else {
         GAS_PER_OPERATION
     }
 }
 
-/// Use Cranelift as the compiler backend if the feature is enabled
+/// Creates a compiler config using Wasmer Singlepass.
 pub fn make_compiler_config() -> impl CompilerConfig + Into<Engine> {
     wasmer::Singlepass::new()
 }
@@ -55,11 +65,15 @@ pub fn make_runtime_engine(memory_limit: Option<Size>) -> Engine {
     engine
 }
 
-/// Creates an Engine with a compiler attached. Use this when compiling Wasm to a module.
-pub fn make_compiling_engine(memory_limit: Option<Size>) -> Engine {
+/// Creates an Engine with a compiler attached.
+/// Use this when compiling Wasm to a module.
+pub fn make_compiling_engine(
+    memory_limit: Option<Size>,
+    parsed_wasm: Option<ParsedWasm>,
+) -> Engine {
     let gas_limit = 0;
     let deterministic = Arc::new(Gatekeeper::default());
-    let metering = Arc::new(Metering::new(gas_limit, cost));
+    let metering = Arc::new(Metering::new(gas_limit, cost, parsed_wasm));
 
     let mut compiler = make_compiler_config();
     compiler.canonicalize_nans(true);
@@ -101,6 +115,12 @@ mod tests {
         // anything else
         assert_eq!(cost(&Operator::I64Const { value: 7 }), 115);
         assert_eq!(cost(&Operator::I64Extend8S {}), 115);
+    }
+
+    #[test]
+    fn make_compiler_config_returns_singlepass() {
+        let cc = Box::new(make_compiler_config());
+        assert_eq!(cc.compiler().name(), "singlepass");
     }
 
     #[test]
