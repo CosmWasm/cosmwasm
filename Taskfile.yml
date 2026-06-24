@@ -3,7 +3,7 @@ version: '3'
 silent: true
 
 vars:
-  COSMWASM_CHECK_VERSION: 3.0.6 # The last released version of cosmwasm-check tool before 3.0.7.
+  COSMWASM_CHECK_VERSION: 3.0.8 # The last released version of cosmwasm-check tool before 3.0.9.
   TOOLCHAIN: +1.82.0            # Rust toolchain for building packages.
   TOOLCHAIN_CHECK: +1.82.0      # Rust toolchain for building cosmwasm-check tool.
 
