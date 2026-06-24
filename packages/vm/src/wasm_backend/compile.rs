@@ -1,4 +1,5 @@
 use crate::errors::VmResult;
+use crate::parsed_wasm::ParsedWasm;
 use crate::wasm_backend::engine::make_compiling_engine;
 use crate::Size;
 use wasmer::{Engine, Module};
@@ -11,7 +12,8 @@ pub fn compile(engine: &Engine, code: &[u8]) -> VmResult<Module> {
 
 /// Compiles a given Wasm byte code into a module using compiling engine.
 pub fn compile_module(wasm: &[u8], memory_limit: Option<Size>) -> VmResult<(Module, Engine)> {
-    let engine = make_compiling_engine(memory_limit);
+    let parsed_wasm = ParsedWasm::parse(wasm)?;
+    let engine = make_compiling_engine(memory_limit, Some(parsed_wasm));
     let module = compile(&engine, wasm)?;
     Ok((module, engine))
 }
@@ -24,7 +26,8 @@ mod tests {
 
     #[test]
     fn contract_with_floats_passes_check() {
-        let engine = make_compiling_engine(None);
+        let parsed_wasm = ParsedWasm::parse(FLOATY).unwrap();
+        let engine = make_compiling_engine(None, Some(parsed_wasm));
         assert!(compile(&engine, FLOATY).is_ok());
     }
 
@@ -36,7 +39,7 @@ mod tests {
         )"#;
 
         let wasm = wat::parse_str(WASM).unwrap();
-        let engine = make_compiling_engine(None);
+        let engine = make_compiling_engine(None, None);
         let error = compile(&engine, &wasm).unwrap_err();
         assert!(error.to_string().contains("FuncRef"));
     }

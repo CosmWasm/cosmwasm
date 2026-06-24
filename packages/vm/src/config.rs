@@ -21,6 +21,12 @@ const DEFAULT_MAX_TOTAL_FUNCTION_PARAMS: usize = 10_000;
 
 const DEFAULT_MAX_FUNCTION_RESULTS: usize = 1;
 
+/// Default maximum value of locals in a single function.
+const DEFAULT_MAX_FUNCTION_LOCALS: usize = 100;
+
+/// Default maximum value of locals in all functions in module.
+const DEFAULT_MAX_TOTAL_FUNCTION_LOCALS: usize = 10_000;
+
 /// Various configurations for the VM.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[non_exhaustive]
@@ -85,6 +91,12 @@ pub struct WasmLimits {
 
     /// The maximum number of results a Wasm function type can have.
     pub max_function_results: Option<usize>,
+
+    /// The maximum number of locals a Wasm function can have.
+    pub max_function_locals: Option<usize>,
+
+    /// The maximum total number of locals in all functions a Wasm module can have.
+    pub max_total_function_locals: Option<usize>,
 }
 
 impl WasmLimits {
@@ -119,6 +131,16 @@ impl WasmLimits {
     pub fn max_function_results(&self) -> usize {
         self.max_function_results
             .unwrap_or(DEFAULT_MAX_FUNCTION_RESULTS)
+    }
+
+    pub fn max_function_locals(&self) -> usize {
+        self.max_function_locals
+            .unwrap_or(DEFAULT_MAX_FUNCTION_LOCALS)
+    }
+
+    pub fn max_total_function_locals(&self) -> usize {
+        self.max_total_function_locals
+            .unwrap_or(DEFAULT_MAX_TOTAL_FUNCTION_LOCALS)
     }
 }
 

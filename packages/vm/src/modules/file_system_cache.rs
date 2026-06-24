@@ -67,7 +67,9 @@ use super::CachedModule;
 /// - **v20**:<br>
 ///   New version because of Wasmer 4.3.3 -> 4.3.7 upgrade.
 ///   Module compatibility between Wasmer versions is not guaranteed.
-const MODULE_SERIALIZATION_VERSION: &str = "v20";
+/// - **v21**:<br>
+///   New version because of additional gas charging for function locals.
+const MODULE_SERIALIZATION_VERSION: &str = "v21";
 
 /// Function that actually does the heavy lifting of creating the module version discriminator.
 ///
@@ -477,6 +479,6 @@ mod tests {
     #[test]
     fn module_version_static() {
         let version = raw_module_version_discriminator();
-        assert_eq!(version, "6c36aacf76");
+        assert_eq!(version, "db9eb9f9ba");
     }
 }
