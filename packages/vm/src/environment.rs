@@ -554,7 +554,7 @@ mod tests {
     use crate::conversion::ref_to_u32;
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::wasm_backend::{compile, make_compiling_engine};
+    use crate::wasm_backend::compile_module;
     use cosmwasm_std::{
         coins, from_json, to_json_vec, AllBalanceResponse, BankQuery, Empty, QueryRequest,
     };
@@ -582,9 +582,7 @@ mod tests {
         Box<WasmerInstance>,
     ) {
         let env = Environment::new(MockApi::default(), gas_limit);
-
-        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = compile(&engine, CONTRACT).unwrap();
+        let (module, engine) = compile_module(CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
         let mut store = Store::new(engine);
 
         // we need stubs for all required imports
