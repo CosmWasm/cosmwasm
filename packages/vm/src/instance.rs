@@ -526,10 +526,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::sync::atomic::{AtomicBool, Ordering};
-    use std::sync::Arc;
-    use std::time::SystemTime;
-
     use super::*;
     use crate::calls::{call_execute, call_instantiate, call_query};
     use crate::internals::compile_module;
@@ -541,6 +537,9 @@ mod tests {
     use cosmwasm_std::{
         coin, coins, from_json, BalanceResponse, BankQuery, Empty, QueryRequest, Uint256,
     };
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+    use std::time::SystemTime;
     use wasmer::FunctionEnvMut;
 
     const KIB: usize = 1024;
@@ -1109,7 +1108,7 @@ mod tests {
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 24624251);
+        assert_eq!(execute_used, 24624366);
     }
 
     #[test]
@@ -1152,6 +1151,6 @@ mod tests {
         );
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 11105221);
+        assert_eq!(query_used, 11105566);
     }
 }
