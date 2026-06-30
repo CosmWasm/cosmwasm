@@ -1,12 +1,8 @@
-//! `metering` is a middleware for tracking how many operators are
-//! executed in total and putting a limit on the total number of
-//! operators executed. The WebAssembly instance execution is stopped
-//! when the limit is reached.
+//! # Metering middleware
 //!
-//! # Example
-//!
-//! [See the `metering` detailed and complete
-//! example](https://github.com/wasmerio/wasmer/blob/main/examples/metering.rs).
+//! This module implements a middleware for tracking how many operators are
+//! executed in total and putting a limit on the total number of operators executed.
+//! The WebAssembly instance execution is stopped when the limit is reached.
 
 use std::sync::{Arc, Mutex};
 use wasmer::wasmparser::{BlockType as WpTypeOrFuncType, Operator};
@@ -28,8 +24,8 @@ impl MeteringGlobalIndexes {
     /// The global index in the current module for a boolean indicating whether points are exhausted
     /// or not.
     /// This boolean is represented as i32 global:
-    ///   * 0: there are remaining points
-    ///   * 1: points have been exhausted
+    ///   - 0: there are still remaining points
+    ///   - 1: points have been exhausted
     fn points_exhausted(&self) -> GlobalIndex {
         self.1
     }
