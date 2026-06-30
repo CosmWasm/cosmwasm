@@ -71,8 +71,8 @@ contracts_nightly=(
   contracts/floaty
 )
 
-toolchain_stable=1.96.0
-toolchain_nightly=nightly-2026-04-11
+toolchain_stable=1.95.0
+toolchain_nightly=nightly-2026-02-28
 
 rustflags_stable=""
 rustflags_nightly="-C target-feature=+nontrapping-fptoint"

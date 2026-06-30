@@ -7,7 +7,7 @@ on:
   pull_request:
 
 env:
-  TOOLCHAIN_STABLE: 1.96.0  # Rust toolchain for building packages.
+  TOOLCHAIN_STABLE: 1.95.0  # Rust toolchain for building packages.
 
 jobs:
   format:

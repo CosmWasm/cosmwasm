@@ -3,7 +3,7 @@ version: '3'
 silent: true
 
 vars:
-  TOOLCHAIN: +1.96.0 # Rust toolchain for building packages.
+  TOOLCHAIN: +1.95.0 # Rust toolchain for building packages.
 
 tasks:
 
