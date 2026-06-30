@@ -1,5 +1,7 @@
-use super::gatekeeper::Gatekeeper;
-use super::limiting_tunables::LimitingTunables;
+use super::Gatekeeper;
+use super::LimitingTunables;
+use super::{is_accounting, Metering};
+use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
 use cosmwasm_vm_derive::hash_function;
 use std::sync::Arc;
@@ -7,7 +9,6 @@ use wasmer::NativeEngineExt;
 use wasmer::{
     sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
 };
-use wasmer_middlewares::metering::{is_accounting, Metering};
 
 /// WebAssembly linear memory objects have sizes measured in pages. Each page
 /// is 65536 (2^16) bytes. In WebAssembly version 1, a linear memory can have at
@@ -25,6 +26,10 @@ fn cost(operator: &Operator) -> u64 {
     // In https://github.com/CosmWasm/cosmwasm/pull/1042 a profiler is developed to
     // identify runtime differences between different Wasm operation, but this is not yet
     // precise enough to derive insights from it.
+    //
+    // Please note that any changes to this function need to be accompanied by a bump of
+    // `MODULE_SERIALIZATION_VERSION` to avoid cached modules from using different amounts of gas
+    // compared to newly compiled ones.
     const GAS_PER_OPERATION: u64 = 115;
 
     if is_accounting(operator) {
@@ -60,11 +65,15 @@ pub fn make_runtime_engine(memory_limit: Option<Size>) -> Engine {
     engine
 }
 
-/// Creates an Engine with make_compiling_engine, a compiler attached. Use this when compiling Wasm to a module.
-pub fn make_compiling_engine(memory_limit: Option<Size>) -> Engine {
+/// Creates an Engine with a compiler attached.
+/// Use this when compiling Wasm to a module.
+pub fn make_compiling_engine(
+    memory_limit: Option<Size>,
+    parsed_wasm: Option<ParsedWasm>,
+) -> Engine {
     let gas_limit = 0;
     let deterministic = Arc::new(Gatekeeper::default());
-    let metering = Arc::new(Metering::new(gas_limit, cost));
+    let metering = Arc::new(Metering::new(gas_limit, cost, parsed_wasm));
 
     let mut compiler = make_compiler_config();
     compiler.canonicalize_nans(true);
