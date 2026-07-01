@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 (empty)
 
+## [2.2.9] - 2026-07-01
+
+- Prepared version v2.2.9 ([#2696])
+
+[#2696]: https://github.com/CosmWasm/cosmwasm/pull/2696
+
 ## [2.2.8] - 2026-05-13
 
 - Replaced deprecated code of `assert_cmd` in v2.2.x ([#2617])
@@ -1217,7 +1223,8 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.8...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.9...HEAD
+[2.2.9]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.8...v2.2.9
 [2.2.8]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.7...v2.2.8
 [2.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.6...v2.2.7
 [2.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.3...v2.2.6
