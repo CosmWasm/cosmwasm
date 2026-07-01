@@ -3,7 +3,7 @@ version: '3'
 silent: true
 
 vars:
-  COSMWASM_CHECK_VERSION: 2.2.7 # The last released version of cosmwasm-check tool before v2.2.8.
+  COSMWASM_CHECK_VERSION: 2.2.8 # The last released version of cosmwasm-check tool before v2.2.9.
   TOOLCHAIN: +1.81.0            # The last Rust toolchain without 'reference-types'.
   TOOLCHAIN_CHECK: +1.82.0      # Rust toolchain for building cosmwasm-check tool.
 
@@ -72,6 +72,18 @@ tasks:
     cmds:
       - cmd: cargo llvm-cov clean
       - cmd: cargo {{.TOOLCHAIN}} llvm-cov --workspace --no-cfg-coverage
+
+  cov-html:
+    desc: Generates code coverage report for all crates in HTML format
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --workspace --no-cfg-coverage --html
+
+  cov-html-open:
+    desc: Generates code coverage report for all crates in HTML format
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov --workspace --no-cfg-coverage --html --open
 
   cov-cosmwasm-check:
     desc: Generates code coverage report for cosmwasm-check in text format
@@ -160,8 +172,23 @@ tasks:
   cov-cosmwasm-std:
     desc: Generates code coverage report for cosmwasm-std in text format
     cmds:
-      - cmd: cargo llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov clean
       - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-std --no-cfg-coverage
+
+  cov-cosmwasm-std-html:
+    desc: Generates code coverage report for cosmwasm-std in HTML format
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-std --no-cfg-coverage --html
+
+  cov-cosmwasm-std-html-open:
+    desc: Generates code coverage report for cosmwasm-std in HTML format and opens in a browser
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-std --no-cfg-coverage --html --open
 
   cov-badge-cosmwasm-std:
     desc: Generates the detailed code coverage badge for cosmwasm-std
@@ -193,6 +220,11 @@ tasks:
       - cmd: cargo llvm-cov clean
       - cmd: cargo {{.TOOLCHAIN}} llvm-cov --no-cfg-coverage -p cosmwasm-vm-derive --json --summary-only | coverio
 
+  fmt:
+    desc: Runs code formatter
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} fmt
+
   install-cosmwasm-check:
     desc: Installs cosmwasm-check tool (released version and currently developed version)
     cmds:
@@ -211,6 +243,16 @@ tasks:
     desc: Runs all tests using nextest
     cmds:
       - cmd: cargo {{.TOOLCHAIN}} nextest run --workspace
+
+  test-cosmwasm-check:
+    desc: Runs all tests for cosmwasm-check
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} test -p cosmwasm-check
+
+  testn-cosmwasm-check:
+    desc: Runs all tests for cosmwasm-check using nextest
+    cmds:
+      - cmd: cargo {{.TOOLCHAIN}} nextest run -p cosmwasm-check
 
   test-cosmwasm-core:
     desc: Runs tests for cosmwasm-core

@@ -2,12 +2,10 @@
 name = "reflect"
 version = "0.0.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
+description = "Reflect messages to use for test cases - based on cw-mask"
 edition = "2021"
 publish = false
-description = "Reflect messages to use for test cases - based on cw-mask"
 license = "Apache-2.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -24,12 +22,12 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { version = "=2.2.8" }
-cosmwasm-std = { version = "=2.2.8", default-features = false, features = ["cosmwasm_2_2", "staking", "stargate", "std"] }
+cosmwasm-schema = { version = "=2.2.9" }
+cosmwasm-std = { version = "=2.2.9", default-features = false, features = ["cosmwasm_2_2", "staking", "stargate", "std"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=2.2.8", default-features = false, features = ["stargate"] }
+cosmwasm-vm = { version = "=2.2.9", default-features = false, features = ["stargate"] }
 backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0

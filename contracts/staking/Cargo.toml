@@ -6,8 +6,6 @@ edition = "2021"
 publish = false
 license = "Apache-2.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
 crate-type = ["cdylib", "rlib"]
 
@@ -23,12 +21,12 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { version = "=2.2.8" }
-cosmwasm-std = { version = "=2.2.8", default-features = false, features = ["staking", "std"] }
+cosmwasm-schema = { version = "=2.2.9" }
+cosmwasm-std = { version = "=2.2.9", default-features = false, features = ["staking", "std"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = "0.8.2"
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=2.2.8", default-features = false, features = ["staking"] }
+cosmwasm-vm = { version = "=2.2.9", default-features = false, features = ["staking"] }
 backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0

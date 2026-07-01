@@ -298,6 +298,8 @@ fn check_wasm_functions(module: &ParsedWasm, limits: &WasmLimits, logs: Logger) 
             module.total_func_params
         )
     });
+    logs.add(|| format!("Max function locals: {}", module.max_func_locals));
+    logs.add(|| format!("Total function locals count: {}", module.total_func_locals));
 
     if module.function_count > limits.max_functions() {
         return Err(VmError::static_validation_err(format!(
@@ -322,6 +324,22 @@ fn check_wasm_functions(module: &ParsedWasm, limits: &WasmLimits, logs: Logger) 
         return Err(VmError::static_validation_err(format!(
             "Wasm contract contains more than {} function parameters in total",
             limits.max_total_function_params()
+        )));
+    }
+
+    if module.max_func_locals > limits.max_function_locals() {
+        return Err(VmError::static_validation_err(format!(
+            "Wasm contract contains function with more than {} locals: {}",
+            limits.max_function_locals(),
+            module.max_func_locals
+        )));
+    }
+
+    if module.total_func_locals > limits.max_total_function_locals() {
+        return Err(VmError::static_validation_err(format!(
+            "Wasm contract contains more than {} function locals in total: {}",
+            limits.max_total_function_locals(),
+            module.total_func_locals
         )));
     }
 

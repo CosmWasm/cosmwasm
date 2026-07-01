@@ -24,7 +24,7 @@ use crate::imports::{
 use crate::imports::{do_db_next, do_db_next_key, do_db_next_value, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
-use crate::wasm_backend::{compile, make_compiling_engine};
+use crate::wasm_backend::compile_module;
 
 pub use crate::environment::DebugInfo; // Re-exported as public via to be usable for set_debug_handler
 
@@ -72,8 +72,7 @@ where
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let engine = make_compiling_engine(memory_limit);
-        let module = compile(&engine, code)?;
+        let (module, engine) = compile_module(code, memory_limit)?;
         let store = Store::new(engine);
         Instance::from_module(store, &module, backend, options.gas_limit, None, None)
     }
@@ -649,8 +648,7 @@ mod tests {
         .unwrap();
 
         let backend = mock_backend(&[]);
-        let engine = make_compiling_engine(memory_limit);
-        let module = compile(&engine, &wasm).unwrap();
+        let (module, engine) = compile_module(&wasm, memory_limit).unwrap();
         let mut store = Store::new(engine);
 
         let called = Arc::new(AtomicBool::new(false));
@@ -914,7 +912,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 251);
-        assert_eq!(report2.used_internally, 23164835);
+        assert_eq!(report2.used_internally, 23165870);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -1106,7 +1104,7 @@ mod tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 23165086);
+        assert_eq!(init_used, 23166121);
     }
 
     #[test]
@@ -1131,7 +1129,7 @@ mod tests {
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 27661681);
+        assert_eq!(execute_used, 27662716);
     }
 
     #[test]
@@ -1174,6 +1172,6 @@ mod tests {
         );
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 16370691);
+        assert_eq!(query_used, 16371956);
     }
 }
