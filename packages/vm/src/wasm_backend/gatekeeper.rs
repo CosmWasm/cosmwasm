@@ -8,7 +8,7 @@ use wasmer::{
 struct GatekeeperConfig {
     /// True iff float operations are allowed.
     ///
-    /// Note: there are float operations in the SIMD block as well and we do not yet handle
+    /// Note: there are float operations in the SIMD block as well, and we do not yet handle
     /// any combination of `allow_floats` and `allow_feature_simd` properly.
     allow_floats: bool,
     //

@@ -65,6 +65,12 @@ pub struct ParsedWasm<'a> {
     pub max_func_results: usize,
     /// How many function parameters are used in the module
     pub total_func_params: usize,
+    /// How many locals the function has; the index is the function id.
+    pub func_locals: Vec<usize>,
+    /// How many locals the function with the most locals has.
+    pub max_func_locals: usize,
+    /// How many function locals are used in the module.
+    pub total_func_locals: usize,
     /// Collections of functions that are potentially pending validation
     pub func_validator: FunctionValidator<'a>,
     /// Contract migrate version as defined in a custom section
@@ -78,8 +84,7 @@ impl<'a> ParsedWasm<'a> {
             | WasmFeatures::SIGN_EXTENSION
             | WasmFeatures::MULTI_VALUE
             | WasmFeatures::FLOATS
-            | WasmFeatures::REFERENCE_TYPES
-            | WasmFeatures::BULK_MEMORY;
+            | WasmFeatures::REFERENCE_TYPES;
 
         let mut validator = Validator::new_with_features(features);
 
@@ -95,6 +100,9 @@ impl<'a> ParsedWasm<'a> {
             max_func_params: 0,
             max_func_results: 0,
             total_func_params: 0,
+            func_locals: vec![],
+            max_func_locals: 0,
+            total_func_locals: 0,
             func_validator: FunctionValidator::Pending(OpaqueDebug::default()),
             contract_migrate_version: None,
         };
@@ -103,6 +111,17 @@ impl<'a> ParsedWasm<'a> {
             let p = p?;
             // validate the payload
             if let ValidPayload::Func(fv, body) = validator.payload(&p)? {
+                // Collect local variable counts defined in function.
+                let mut locals_count = 0;
+                let locals_reader = body.get_locals_reader()?;
+                for local in locals_reader {
+                    let (n, _) = local?;
+                    locals_count += n as usize;
+                }
+                this.func_locals.push(locals_count);
+                this.max_func_locals = locals_count.max(this.max_func_locals);
+                this.total_func_locals += locals_count;
+
                 // also validate function bodies
                 this.func_validator.push((fv, body));
                 this.function_count += 1;
@@ -130,7 +149,7 @@ impl<'a> ParsedWasm<'a> {
                                 }
                                 CompositeInnerType::Array(_) | CompositeInnerType::Struct(_) => {
                                     // ignoring these for now, as they are only available with the GC
-                                    // proposal and we explicitly disabled that above
+                                    // proposal, and we explicitly disabled that above
                                 }
                             }
                         }

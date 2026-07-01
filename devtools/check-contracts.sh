@@ -44,7 +44,11 @@ check_contract() {
     msg "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
     git diff --quiet ./schema
 
-    msg "cosmwasm-check" "$contract"
+    # Temporarily commented out while we introduce a braking change, no previously released version would work.
+    # msg "cosmwasm-check (release)" "$contract"
+    # cosmwasm-check-released "$wasm"
+
+    msg "cosmwasm-check (develop)" "$contract"
     cosmwasm-check "$wasm"
   )
 }

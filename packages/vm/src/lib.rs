@@ -70,5 +70,7 @@ pub mod internals {
 
     pub use crate::compatibility::{check_wasm, LogOutput, Logger};
     pub use crate::instance::instance_from_module;
-    pub use crate::wasm_backend::{compile, make_compiling_engine, make_runtime_engine};
+    pub use crate::wasm_backend::{
+        compile, compile_module, make_compiling_engine, make_runtime_engine,
+    };
 }

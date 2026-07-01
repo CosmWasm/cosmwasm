@@ -1,31 +1,47 @@
-use super::{is_accounting, Gatekeeper, LimitingTunables, Metering};
-use crate::Size;
+use super::Gatekeeper;
+use super::LimitingTunables;
+use super::{is_accounting, Metering};
+use crate::parsed_wasm::ParsedWasm;
+use crate::size::Size;
 use cosmwasm_vm_derive::hash_function;
 use std::sync::Arc;
+use wasmer::NativeEngineExt;
 use wasmer::{
-    sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, NativeEngineExt, Pages,
-    Target, WASM_PAGE_SIZE,
+    sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
 };
 
-/// WebAssembly linear memory objects have sizes measured in pages.
-/// Each page is 65536 (2^16) bytes. In WebAssembly version 1, a linear memory
-/// can have at most 65536 pages, for a total of 2^32 bytes (4 gibibytes).
+/// WebAssembly linear memory objects have sizes measured in pages. Each page
+/// is 65536 (2^16) bytes. In WebAssembly version 1, a linear memory can have at
+/// most 65536 pages, for a total of 2^32 bytes (4 gibibytes).
 /// https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md
 const MAX_WASM_PAGES: u32 = 65536;
 
-//-----------------------------------------------------------------------------
-// Cost function.
-//
-// This function is hashed and put into the `raw_module_version_discriminator`
-// because it is used as a part of the compilation process.
-// If this function changes, all modules need to be recompiled.
-// Gas calculation procedure is explained in details here:
-//   https://cosmwasm.github.io/core/architecture/gas
-//-----------------------------------------------------------------------------
+// This function is hashed and put into the `module_version_discriminator` because it is used as
+// part of the compilation process. If it changes, modules need to be recompiled.
 #[hash_function(const_name = "COST_FUNCTION_HASH")]
 fn cost(operator: &Operator) -> u64 {
+    // A flat fee for each operation
+    // The target is 1 Teragas per second (see GAS.md).
+    //
+    // In https://github.com/CosmWasm/cosmwasm/pull/1042 a profiler is developed to
+    // identify runtime differences between different Wasm operation, but this is not yet
+    // precise enough to derive insights from it.
+    //
+    // Please note that any changes to this function need to be accompanied by a bump of
+    // `MODULE_SERIALIZATION_VERSION` to avoid cached modules from using different amounts of gas
+    // compared to newly compiled ones.
     const GAS_PER_OPERATION: u64 = 115;
+
     if is_accounting(operator) {
+        // Accounting operators are operators where the `Metering` middleware injects instructions
+        // to count the gas usage and check for gas exhaustion. Therefore, they are more expensive.
+        //
+        // Benchmarks show that the overhead is about 14 times the cost of a normal operation.
+        // To benchmark this, set `GAS_PER_OPERATION = 100` and run the "infinite loop" and
+        // "argon2" benchmarks. From the "Gas used" output, you can calculate the number of
+        // operations and from that together with the run time the expected gas value per operation:
+        // GAS_PER_OP = GAS_TARGET_PER_SEC / (NUM_OPS / RUNTIME_IN_SECS)
+        // This is repeated with different multipliers to bring the two benchmarks closer together.
         GAS_PER_OPERATION * 14
     } else {
         GAS_PER_OPERATION
@@ -49,11 +65,15 @@ pub fn make_runtime_engine(memory_limit: Option<Size>) -> Engine {
     engine
 }
 
-/// Creates an Engine with a compiler attached. Use this when compiling Wasm to a module.
-pub fn make_compiling_engine(memory_limit: Option<Size>) -> Engine {
+/// Creates an Engine with a compiler attached.
+/// Use this when compiling Wasm to a module.
+pub fn make_compiling_engine(
+    memory_limit: Option<Size>,
+    parsed_wasm: Option<ParsedWasm>,
+) -> Engine {
     let gas_limit = 0;
     let deterministic = Arc::new(Gatekeeper::default());
-    let metering = Arc::new(Metering::new(gas_limit, cost));
+    let metering = Arc::new(Metering::new(gas_limit, cost, parsed_wasm));
 
     let mut compiler = make_compiler_config();
     compiler.canonicalize_nans(true);
