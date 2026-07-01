@@ -4,7 +4,7 @@ use std::mem;
 
 use clap::{Arg, Command};
 
-use cosmwasm_vm::internals::{compile, make_compiling_engine};
+use cosmwasm_vm::internals::compile_module;
 use wasmer::{Engine, Module};
 
 pub fn main() {
@@ -34,8 +34,7 @@ pub fn main() {
     println!("wasm size: {wasm_size} bytes");
 
     // Compile module
-    let engine = make_compiling_engine(None);
-    let module = compile(&engine, &wasm).unwrap();
+    let (module, engine) = compile_module(&wasm, None).unwrap();
     mem::drop(wasm);
 
     let serialized = module.serialize().unwrap();
