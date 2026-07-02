@@ -1,6 +1,6 @@
 use super::Gatekeeper;
 use super::LimitingTunables;
-use super::{is_accounting, Metering};
+use super::{is_branching_operator, Metering};
 use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
 use cosmwasm_vm_derive::hash_function;
@@ -19,7 +19,7 @@ const MAX_WASM_PAGES: u32 = 65536;
 // This function is hashed and put into the `module_version_discriminator` because it is used as
 // part of the compilation process. If it changes, modules need to be recompiled.
 #[hash_function(const_name = "COST_FUNCTION_HASH")]
-fn cost(operator: &Operator) -> u64 {
+fn cost(operator: &Operator) -> (u64, u64) {
     // A flat fee for each operation
     // The target is 1 Teragas per second (see GAS.md).
     //
@@ -31,8 +31,10 @@ fn cost(operator: &Operator) -> u64 {
     // `MODULE_SERIALIZATION_VERSION` to avoid cached modules from using different amounts of gas
     // compared to newly compiled ones.
     const GAS_PER_OPERATION: u64 = 115;
+    const BRANCHING_MULTIPLIER: u64 = 14;
+    const BULK_MEMORY_MULTIPLIER: u64 = 1;
 
-    if is_accounting(operator) {
+    if is_branching_operator(operator) {
         // Accounting operators are operators where the `Metering` middleware injects instructions
         // to count the gas usage and check for gas exhaustion. Therefore, they are more expensive.
         //
@@ -42,9 +44,19 @@ fn cost(operator: &Operator) -> u64 {
         // operations and from that together with the run time the expected gas value per operation:
         // GAS_PER_OP = GAS_TARGET_PER_SEC / (NUM_OPS / RUNTIME_IN_SECS)
         // This is repeated with different multipliers to bring the two benchmarks closer together.
-        return GAS_PER_OPERATION * 14;
+        return (GAS_PER_OPERATION * BRANCHING_MULTIPLIER, 0);
     }
-    GAS_PER_OPERATION
+    match operator {
+        Operator::MemoryInit { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
+        Operator::MemoryGrow { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
+        Operator::MemoryFill { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
+        Operator::MemoryCopy { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
+        Operator::TableInit { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
+        Operator::TableGrow { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
+        Operator::TableFill { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
+        Operator::TableCopy { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
+        _ => (GAS_PER_OPERATION, 0),
+    }
 }
 
 /// Creates a compiler config using Wasmer Singlepass.
@@ -108,12 +120,12 @@ mod tests {
     #[test]
     fn cost_works() {
         // accounting operator
-        assert_eq!(cost(&Operator::Br { relative_depth: 3 }), 1610);
-        assert_eq!(cost(&Operator::Return {}), 1610);
+        assert_eq!(cost(&Operator::Br { relative_depth: 3 }).0, 1610);
+        assert_eq!(cost(&Operator::Return {}).0, 1610);
 
         // anything else
-        assert_eq!(cost(&Operator::I64Const { value: 7 }), 115);
-        assert_eq!(cost(&Operator::I64Extend8S {}), 115);
+        assert_eq!(cost(&Operator::I64Const { value: 7 }).0, 115);
+        assert_eq!(cost(&Operator::I64Extend8S {}).0, 115);
     }
 
     #[test]
