@@ -295,6 +295,23 @@ pub fn is_branching_operator(operator: &Operator) -> bool {
 }
 
 /// Returns Wasm code for charging and checking remaining gas points.
+///
+/// Algorithm:
+///
+/// ```wat
+/// global.get $remaining_points
+/// i64.const $cost
+/// i64.lt_u
+/// if
+///   i32.const 1
+///   global.set $points_exhausted
+///   unreachable
+/// end
+/// global.get $remaining_points
+/// i64.const $cost
+/// i64.sub
+/// global.set $remaining_points
+/// ```
 fn gas_check_wasm_code<'a>(
     global_indexes: &MeteringGlobalIndexes,
     cost: u64,
