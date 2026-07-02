@@ -42,10 +42,9 @@ fn cost(operator: &Operator) -> u64 {
         // operations and from that together with the run time the expected gas value per operation:
         // GAS_PER_OP = GAS_TARGET_PER_SEC / (NUM_OPS / RUNTIME_IN_SECS)
         // This is repeated with different multipliers to bring the two benchmarks closer together.
-        GAS_PER_OPERATION * 14
-    } else {
-        GAS_PER_OPERATION
+        return GAS_PER_OPERATION * 14;
     }
+    GAS_PER_OPERATION
 }
 
 /// Creates a compiler config using Wasmer Singlepass.

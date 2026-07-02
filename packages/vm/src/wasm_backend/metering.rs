@@ -15,7 +15,14 @@ const CHARGED_LOCALS_THRESHOLD: usize = 30;
 
 /// Indexes of Wasm global variables for tracking metering data.
 #[derive(Debug, Clone)]
-struct MeteringGlobalIndexes(GlobalIndex, GlobalIndex);
+struct MeteringGlobalIndexes(
+    /// Remaining gas points.
+    GlobalIndex,
+    /// Points exhausted flag.
+    GlobalIndex,
+    /// Length of bulk-memory operation.
+    GlobalIndex,
+);
 
 impl MeteringGlobalIndexes {
     /// The global index in the current module for tracking remaining gas points.
@@ -31,6 +38,17 @@ impl MeteringGlobalIndexes {
     ///   * 1: gas points have been exhausted.
     fn points_exhausted(&self) -> GlobalIndex {
         self.1
+    }
+
+    /// The global index in the current module for tracking
+    /// the length of the bulk-memory operation.
+    /// This length is originally available on the top of the stack
+    /// just before the bulk-memory operation is executed.
+    /// This variable saves this length temporarily to enable
+    /// metering calculations and then restores this value
+    /// on the top of the stack.
+    fn bulk_memory_length(&self) -> GlobalIndex {
+        self.2
     }
 }
 
@@ -134,9 +152,25 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync + 'static> ModuleMiddleware for Meter
             ExportIndex::Global(points_exhausted_global_index),
         );
 
+        // Append a global for the bulk-memory operation length and initialize it.
+        let bulk_memory_length_global_index = module_info
+            .globals
+            .push(GlobalType::new(Type::I32, Mutability::Var));
+
+        module_info
+            .global_initializers
+            .push(GlobalInit::I32Const(0));
+
+        module_info.exports.insert(
+            "wasmer_metering_bulk_memory_length".to_string(),
+            ExportIndex::Global(points_exhausted_global_index),
+        );
+
+        // Initialize global indexes.
         *global_indexes = Some(MeteringGlobalIndexes(
             remaining_points_global_index,
             points_exhausted_global_index,
+            bulk_memory_length_global_index,
         ));
 
         Ok(())
@@ -310,7 +344,7 @@ mod tests {
             .transform_module_info(&mut ModuleInfo::new())
             .unwrap();
         assert_eq!(
-            "FunctionMetering { is_first_operator: true, cost_function: \"<cost_function>\", global_indexes: MeteringGlobalIndexes(GlobalIndex(0), GlobalIndex(1)), accumulated_cost: 0, charged_locals_count: 0 }",
+            "FunctionMetering { is_first_operator: true, cost_function: \"<cost_function>\", global_indexes: MeteringGlobalIndexes(GlobalIndex(0), GlobalIndex(1), GlobalIndex(2)), accumulated_cost: 0, charged_locals_count: 0 }",
             format!("{:?}", metering.generate_function_middleware(LocalFunctionIndex::from_u32(0)))
         );
     }

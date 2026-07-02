@@ -478,7 +478,6 @@ mod tests {
 
     #[test]
     fn module_version_static() {
-        let version = raw_module_version_discriminator();
-        assert_eq!(version, "db9eb9f9ba");
+        assert_eq!("db923ed68f", raw_module_version_discriminator());
     }
 }
