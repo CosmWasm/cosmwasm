@@ -229,6 +229,18 @@ tasks:
       - cmd: cargo llvm-cov clean
       - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-vm --no-cfg-coverage
 
+  cov-cosmwasm-vm-html:
+    desc: Generates code coverage report for cosmwasm-vm in HTML format
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-vm --no-cfg-coverage --html
+
+  cov-cosmwasm-vm-html-open:
+    desc: Generates code coverage report for cosmwasm-vm in HTML format and opens in a browser
+    cmds:
+      - cmd: cargo llvm-cov clean
+      - cmd: cargo {{.TOOLCHAIN}} llvm-cov -p cosmwasm-vm --no-cfg-coverage --html --open
+
   cov-badge-cosmwasm-vm:
     desc: Generates the detailed code coverage badge for cosmwasm-vm
     cmds:

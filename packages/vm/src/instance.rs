@@ -1153,4 +1153,123 @@ mod tests {
         let query_used = gas_before_query - instance.get_gas_left();
         assert_eq!(query_used, 11105566);
     }
+
+    #[test]
+    fn charging_gas_for_locals_works() {
+        fn gas_usage(n: usize) -> u64 {
+            // Simple function call, where the first instruction
+            // in the function body IS NOT an accounting instruction.
+            const TEMPLATE: &str = r#"
+            (module
+              (memory 1)
+              (func (export "fun") (result i32)
+                (local;;LOCALS;;)
+                i32.const 10
+              )
+              (export "memory" (memory 0))
+            )"#;
+            let backend = mock_backend(&[]);
+            let (instance_options, memory_limit) = mock_instance_options();
+            let wasm = wat::parse_str(TEMPLATE.replace(";;LOCALS;;", &" i32".repeat(n))).unwrap();
+            let mut instance =
+                Instance::from_code(&wasm, backend, instance_options, memory_limit).unwrap();
+            let gas_before = instance.get_gas_left();
+            instance.call_function1("fun", &[]).unwrap();
+            gas_before - instance.get_gas_left()
+        }
+
+        // function call:     1610
+        //      1  local:        0
+        //  return value:   +  115
+        //                ---------
+        //      gas used:     1725
+        assert_eq!(1725, gas_usage(1));
+
+        // function call:     1610
+        //     29 locals:        0
+        //  return value:   +  115
+        //                ---------
+        //      gas used:     1725
+        assert_eq!(1725, gas_usage(29));
+
+        // function call:     1610
+        //     30 locals:      115
+        //  return value:   +  115
+        //                ---------
+        //      gas used:     1840
+        assert_eq!(1840, gas_usage(30));
+
+        // function call:     1610
+        //  49971 locals:  5746665
+        //  return value:   +  115
+        //                ---------
+        //      gas used:  5748390
+        #[cfg(not(target_os = "windows"))]
+        assert_eq!(5748390, gas_usage(50000));
+    }
+
+    #[test]
+    fn charging_gas_for_locals_with_accounting_works() {
+        fn gas_usage(n: usize) -> u64 {
+            // Simple function call, where the first instruction
+            // in the function body IS an accounting instruction.
+            const TEMPLATE: &str = r#"
+            (module
+              (memory 1)
+              (func $fun (result i32)
+                i32.const 10
+              )
+              (func (export "wrapper") (result i32)
+                (local;;LOCALS;;)
+                call $fun
+              )
+              (export "memory" (memory 0))
+            )"#;
+            let backend = mock_backend(&[]);
+            let (instance_options, memory_limit) = mock_instance_options();
+            let wasm = wat::parse_str(TEMPLATE.replace(";;LOCALS;;", &" i32".repeat(n))).unwrap();
+            let mut instance =
+                Instance::from_code(&wasm, backend, instance_options, memory_limit).unwrap();
+            let gas_before = instance.get_gas_left();
+            instance.call_function1("wrapper", &[]).unwrap();
+            gas_before - instance.get_gas_left()
+        }
+
+        // function call:            1610
+        // function call:            1610
+        // call operator:            1610
+        //      1  local:               0
+        //  return value:          +  115
+        //                       ---------
+        //      gas used:            4945
+        assert_eq!(4945, gas_usage(1));
+
+        // function call:            1610
+        // function call:            1610
+        // call operator:            1610
+        //      1  local:               0
+        //  return value:          +  115
+        //                       ---------
+        //      gas used:            4945
+        assert_eq!(4945, gas_usage(29));
+
+        // function call:            1610
+        // function call:            1610
+        // call operator:            1610
+        //     30 locals:             115
+        //  return value:          +  115
+        //                       ---------
+        //      gas used:            5060
+        assert_eq!(5060, gas_usage(30));
+
+        // function call:            1610
+        // function call:            1610
+        // call operator:            1610
+        //  49971 locals:         5746665
+        //  return value:          +  115
+        //                       ---------
+        //      gas used:         5751610
+        #[cfg(not(target_os = "windows"))]
+        assert_eq!(5751610, gas_usage(50000));
+    }
 }
