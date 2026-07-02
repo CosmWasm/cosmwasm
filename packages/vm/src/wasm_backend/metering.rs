@@ -215,7 +215,7 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware for FunctionMeter
     }
 }
 
-/// Returns `true` if and only if the given operator is an accounting operator.
+/// Returns `true` when the given operator is an accounting operator.
 /// Accounting operators do additional work to track the metering points.
 pub fn is_accounting(operator: &Operator) -> bool {
     // Possible sources and targets of a branch.
