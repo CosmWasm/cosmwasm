@@ -20,7 +20,9 @@ struct MeteringGlobalIndexes(
     GlobalIndex,
     /// Points exhausted flag.
     GlobalIndex,
-    /// Length of bulk-memory operation.
+    /// Data length of bulk-memory operation.
+    GlobalIndex,
+    /// Dynamic cost of bulk-memory operation.
     GlobalIndex,
 );
 
@@ -41,14 +43,20 @@ impl MeteringGlobalIndexes {
     }
 
     /// The global index in the current module for tracking
-    /// the length of the bulk-memory operation.
-    /// This length is originally available on the top of the stack
+    /// the length of data in the bulk-memory operation.
+    /// This data length is originally available on the top of the stack
     /// just before the bulk-memory operation is executed.
-    /// This variable saves this length temporarily to enable
-    /// metering calculations and then restores this value
-    /// on the top of the stack.
-    fn bulk_memory_length(&self) -> GlobalIndex {
+    /// This variable saves this data length temporarily, to enable
+    /// metering calculations and then restores its value
+    /// back on the top of the stack.
+    fn data_length(&self) -> GlobalIndex {
         self.2
+    }
+
+    /// The global index in the current module for tracking
+    /// the total dynamic cost of the bulk-memory operation.
+    fn dynamic_cost(&self) -> GlobalIndex {
+        self.3
     }
 }
 
@@ -124,7 +132,7 @@ impl<F: Fn(&Operator) -> (u64, u64) + Send + Sync + 'static> ModuleMiddleware fo
             panic!("Metering::transform_module_info: Attempting to use a `Metering` middleware from multiple modules.");
         }
 
-        // Append a global for remaining points and initialize it.
+        // Append a global variable for tracking remaining points and initialize it.
         let remaining_points_global_index = module_info
             .globals
             .push(GlobalType::new(Type::I64, Mutability::Var));
@@ -138,7 +146,7 @@ impl<F: Fn(&Operator) -> (u64, u64) + Send + Sync + 'static> ModuleMiddleware fo
             ExportIndex::Global(remaining_points_global_index),
         );
 
-        // Append a global for the exhausted points boolean and initialize it.
+        // Append a global variable for the exhausted points boolean flag and initialize it.
         let points_exhausted_global_index = module_info
             .globals
             .push(GlobalType::new(Type::I32, Mutability::Var));
@@ -152,8 +160,8 @@ impl<F: Fn(&Operator) -> (u64, u64) + Send + Sync + 'static> ModuleMiddleware fo
             ExportIndex::Global(points_exhausted_global_index),
         );
 
-        // Append a global for the bulk-memory operation length and initialize it.
-        let bulk_memory_length_global_index = module_info
+        // Append a global variable for data length of the bulk-memory operation and initialize it.
+        let data_length_global_index = module_info
             .globals
             .push(GlobalType::new(Type::I32, Mutability::Var));
 
@@ -162,15 +170,30 @@ impl<F: Fn(&Operator) -> (u64, u64) + Send + Sync + 'static> ModuleMiddleware fo
             .push(GlobalInit::I32Const(0));
 
         module_info.exports.insert(
-            "wasmer_metering_bulk_memory_length".to_string(),
-            ExportIndex::Global(points_exhausted_global_index),
+            "wasmer_metering_data_length".to_string(),
+            ExportIndex::Global(data_length_global_index),
+        );
+
+        // Append a global variable for dynamic cost of the bulk memory operation and initialize it.
+        let dynamic_cost_global_index = module_info
+            .globals
+            .push(GlobalType::new(Type::I64, Mutability::Var));
+
+        module_info
+            .global_initializers
+            .push(GlobalInit::I64Const(0));
+
+        module_info.exports.insert(
+            "wasmer_metering_dynamic_cost".to_string(),
+            ExportIndex::Global(dynamic_cost_global_index),
         );
 
         // Initialize global indexes.
         *global_indexes = Some(MeteringGlobalIndexes(
             remaining_points_global_index,
             points_exhausted_global_index,
-            bulk_memory_length_global_index,
+            data_length_global_index,
+            dynamic_cost_global_index,
         ));
 
         Ok(())
@@ -337,24 +360,79 @@ fn gas_check_branching_wasm_code<'a>(
 
 /// Returns Wasm code for charging bulk memory operation cost,
 /// accumulated cost and checking remaining gas points.
+///
+/// # Algorithm
+///
+/// ```wat
+/// global.set 2         ;; Pop $length and save in global
+/// global.get 2         ;; Push $length
+/// i64.extend_i32_u     ;; Convert i32 $length to i64 value
+/// i64.const 31         ;; Push $decrUnitSize
+/// i64.add              ;; Add $length + $decUnitSize
+/// i64.const 32         ;; Push $unitSize
+/// i64.div_u            ;; Div ($length + $decUnitSize) / $unitSize
+/// i64.const 13         ;; Push $unitCost
+/// i64.mul              ;; Mul (($length + $decUnitSize) / $unitSize) * $unitCost
+/// i64.const 3          ;; Push $accumulatedCost
+/// i64.add              ;; $dynamicCost is on top of the stack
+/// global.set 3         ;; Pop $dynamicCost and save in global
+/// global.get 0         ;; Push $remainingPoints
+/// global.get 3         ;; Push $dynamicCost from global
+/// i64.lt_u             ;; bool($remainingPoints < $dynamicCost)
+/// if                   ;; if 1
+///   i32.const 1        ;; Prepare exhausted flag
+///   global.set 1       ;; Save exhausted flag in global
+///   unreachable        ;; Break execution
+/// end                  ;; end if 1
+/// global.get 0         ;; Push $remainingPoints from global
+/// global.get 3         ;; Push $dynamicCost from global
+/// i64.sub              ;; Subtract $remainingPoints - $dynamicCost
+/// global.set 0         ;; Save $remainingPoints in global
+/// global.get 2         ;; Push $length
+/// ```
 fn gas_check_bulk_memory_wasm_code<'a>(
     global_indexes: &MeteringGlobalIndexes,
     unit_size: u64,
     unit_cost: u64,
     accumulated_cost: u64,
-) -> [Operator<'a>; 13] {
+) -> [Operator<'a>; 25] {
     let idx_remaining_points = global_indexes.remaining_points().as_u32();
     let idx_points_exhausted = global_indexes.points_exhausted().as_u32();
-    let idx_bulk_memory_length = global_indexes.bulk_memory_length().as_u32();
+    let idx_data_length = global_indexes.data_length().as_u32();
+    let idx_dynamic_cost = global_indexes.dynamic_cost().as_u32();
+    let dec_unit_size = unit_size.saturating_sub(1).max(1);
     [
         Operator::GlobalSet {
-            global_index: idx_bulk_memory_length,
+            global_index: idx_data_length,
+        },
+        Operator::GlobalGet {
+            global_index: idx_data_length,
+        },
+        Operator::I64ExtendI32U,
+        Operator::I64Const {
+            value: dec_unit_size as i64,
+        },
+        Operator::I64Add,
+        Operator::I64Const {
+            value: unit_size as i64,
+        },
+        Operator::I64DivU,
+        Operator::I64Const {
+            value: unit_cost as i64,
+        },
+        Operator::I64Mul,
+        Operator::I64Const {
+            value: accumulated_cost as i64,
+        },
+        Operator::I64Add,
+        Operator::GlobalSet {
+            global_index: idx_dynamic_cost,
         },
         Operator::GlobalGet {
             global_index: idx_remaining_points,
         },
-        Operator::I64Const {
-            value: accumulated_cost as i64,
+        Operator::GlobalGet {
+            global_index: idx_dynamic_cost,
         },
         Operator::I64LtU,
         Operator::If {
@@ -369,12 +447,15 @@ fn gas_check_bulk_memory_wasm_code<'a>(
         Operator::GlobalGet {
             global_index: idx_remaining_points,
         },
-        Operator::I64Const {
-            value: accumulated_cost as i64,
+        Operator::GlobalGet {
+            global_index: idx_dynamic_cost,
         },
         Operator::I64Sub,
         Operator::GlobalSet {
             global_index: idx_remaining_points,
+        },
+        Operator::GlobalGet {
+            global_index: idx_data_length,
         },
     ]
 }
