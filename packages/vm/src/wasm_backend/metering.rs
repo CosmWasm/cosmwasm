@@ -406,7 +406,7 @@ fn gas_check_bulk_memory_wasm_code<'a>(
     let idx_points_exhausted = global_indexes.points_exhausted().as_u32();
     let idx_data_length = global_indexes.data_length().as_u32();
     let idx_dynamic_cost = global_indexes.dynamic_cost().as_u32();
-    let dec_unit_size = unit_size.saturating_sub(1).max(1);
+    let dec_unit_size = unit_size.saturating_sub(1);
     [
         Operator::GlobalSet {
             global_index: idx_data_length,
