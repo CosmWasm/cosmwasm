@@ -24,7 +24,7 @@ std = []
 iterator = []
 # staking exposes bindings to a required staking module in the runtime, via new
 # CosmosMsg types, and new QueryRequest types. This should only be enabled on contracts
-# that require these types, so other contracts can be used on systems with eg. PoA consensus
+# that require these types, so other contracts can be used on systems with e.g. PoA consensus
 staking = []
 # stargate enables stargate-dependent messages and queries, like raw protobuf messages
 # as well as ibc-related functionality
