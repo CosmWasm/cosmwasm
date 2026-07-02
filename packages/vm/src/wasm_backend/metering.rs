@@ -252,8 +252,8 @@ impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> FunctionMiddleware for F
         }
 
         // Get the cost of the current operator, and add it to the accumulator.
-        // This needs to be done before the metering logic, to prevent operators like `Call`
-        // from escaping metering in some corner cases.
+        // This needs to be done before the metering logic, to prevent operators
+        // like `Call` from escaping metering in some corner cases.
         let (operator_cost, unit_cost, unit_size) = (self.cost_function)(&operator);
         self.accumulated_cost += operator_cost;
 
@@ -268,9 +268,9 @@ impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> FunctionMiddleware for F
             self.accumulated_cost = 0;
         }
 
-        // When the unit cost for the operator is non-zero (bulk-memory operator),
+        // When the unit cost and unit size are non-zero (only for bulk-memory operators),
         // then inject dynamic cost calculations and perform necessary checks.
-        if unit_cost > 0 {
+        if unit_cost > 0 && unit_size > 0 {
             // Inject code for charging gas before bulk-memory operator.
             state.extend(gas_check_bulk_memory_wasm_code(
                 &self.global_indexes,
