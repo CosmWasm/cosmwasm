@@ -19,7 +19,7 @@ const MAX_WASM_PAGES: u32 = 65536;
 // This function is hashed and put into the `module_version_discriminator` because it is used as
 // part of the compilation process. If it changes, modules need to be recompiled.
 #[hash_function(const_name = "COST_FUNCTION_HASH")]
-fn cost(operator: &Operator) -> (u64, u64) {
+fn cost(operator: &Operator) -> (u64, u64, u64) {
     // A flat fee for each operation
     // The target is 1 Teragas per second (see GAS.md).
     //
@@ -44,18 +44,18 @@ fn cost(operator: &Operator) -> (u64, u64) {
         // operations and from that together with the run time the expected gas value per operation:
         // GAS_PER_OP = GAS_TARGET_PER_SEC / (NUM_OPS / RUNTIME_IN_SECS)
         // This is repeated with different multipliers to bring the two benchmarks closer together.
-        return (GAS_PER_OPERATION * BRANCHING_MULTIPLIER, 0);
+        return (GAS_PER_OPERATION * BRANCHING_MULTIPLIER, 0, 0);
     }
     match operator {
-        Operator::MemoryInit { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
-        Operator::MemoryGrow { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
-        Operator::MemoryFill { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
-        Operator::MemoryCopy { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
-        Operator::TableInit { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
-        Operator::TableGrow { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
-        Operator::TableFill { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
-        Operator::TableCopy { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0),
-        _ => (GAS_PER_OPERATION, 0),
+        Operator::MemoryInit { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
+        Operator::MemoryGrow { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
+        Operator::MemoryFill { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
+        Operator::MemoryCopy { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
+        Operator::TableInit { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
+        Operator::TableGrow { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
+        Operator::TableFill { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
+        Operator::TableCopy { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
+        _ => (GAS_PER_OPERATION, 0, 0),
     }
 }
 
