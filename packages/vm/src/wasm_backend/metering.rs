@@ -236,8 +236,8 @@ impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> FunctionMiddleware for F
         // having a large number of locals, then charge additional gas.
         if self.is_first_operator && self.charged_locals_count > 0 {
             // Calculate the total gas cost for all charged locals in function.
-            let (single_local_cost, _, _) = (self.cost_function)(&Operator::Nop);
-            let locals_cost = single_local_cost.saturating_mul(self.charged_locals_count);
+            let (operator_cost, _, _) = (self.cost_function)(&Operator::Nop);
+            let locals_cost = operator_cost.saturating_mul(self.charged_locals_count);
             if is_branching_operator(&operator) {
                 // If the first operator is an accounting operator, then gas charging code
                 // will be injected anyway, so it is enough to increase the accumulated cost.
