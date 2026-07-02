@@ -221,7 +221,10 @@ impl<F: Fn(&Operator) -> (u64, u64) + Send + Sync> FunctionMiddleware for Functi
                 self.accumulated_cost += locals_cost;
             } else {
                 // Otherwise, inject code for charging gas at the beginning of the function body.
-                state.extend(gas_check_wasm_code(&self.global_indexes, locals_cost));
+                state.extend(gas_check_branching_wasm_code(
+                    &self.global_indexes,
+                    locals_cost,
+                ));
             }
         }
 
@@ -235,7 +238,7 @@ impl<F: Fn(&Operator) -> (u64, u64) + Send + Sync> FunctionMiddleware for Functi
         // and then perform necessary checks.
         if is_branching_operator(&operator) && self.accumulated_cost > 0 {
             // Inject code for charging gas before the accounting operator.
-            state.extend(gas_check_wasm_code(
+            state.extend(gas_check_branching_wasm_code(
                 &self.global_indexes,
                 self.accumulated_cost,
             ));
@@ -294,27 +297,11 @@ pub fn is_branching_operator(operator: &Operator) -> bool {
     )
 }
 
-/// Returns Wasm code for charging and checking remaining gas points.
-///
-/// Algorithm:
-///
-/// ```wat
-/// global.get $remaining_points
-/// i64.const $cost
-/// i64.lt_u
-/// if
-///   i32.const 1
-///   global.set $points_exhausted
-///   unreachable
-/// end
-/// global.get $remaining_points
-/// i64.const $cost
-/// i64.sub
-/// global.set $remaining_points
-/// ```
-fn gas_check_wasm_code<'a>(
+/// Returns Wasm code for charging accumulated cost
+/// and checking remaining gas points.
+fn gas_check_branching_wasm_code<'a>(
     global_indexes: &MeteringGlobalIndexes,
-    cost: u64,
+    accumulated_cost: u64,
 ) -> [Operator<'a>; 12] {
     let idx_remaining_points = global_indexes.remaining_points().as_u32();
     let idx_points_exhausted = global_indexes.points_exhausted().as_u32();
@@ -322,7 +309,9 @@ fn gas_check_wasm_code<'a>(
         Operator::GlobalGet {
             global_index: idx_remaining_points,
         },
-        Operator::I64Const { value: cost as i64 },
+        Operator::I64Const {
+            value: accumulated_cost as i64,
+        },
         Operator::I64LtU,
         Operator::If {
             blockty: BlockType::Empty,
@@ -336,7 +325,53 @@ fn gas_check_wasm_code<'a>(
         Operator::GlobalGet {
             global_index: idx_remaining_points,
         },
-        Operator::I64Const { value: cost as i64 },
+        Operator::I64Const {
+            value: accumulated_cost as i64,
+        },
+        Operator::I64Sub,
+        Operator::GlobalSet {
+            global_index: idx_remaining_points,
+        },
+    ]
+}
+
+/// Returns Wasm code for charging bulk memory operation cost,
+/// accumulated cost and checking remaining gas points.
+fn gas_check_bulk_memory_wasm_code<'a>(
+    global_indexes: &MeteringGlobalIndexes,
+    unit_size: u64,
+    unit_cost: u64,
+    accumulated_cost: u64,
+) -> [Operator<'a>; 13] {
+    let idx_remaining_points = global_indexes.remaining_points().as_u32();
+    let idx_points_exhausted = global_indexes.points_exhausted().as_u32();
+    let idx_bulk_memory_length = global_indexes.bulk_memory_length().as_u32();
+    [
+        Operator::GlobalSet {
+            global_index: idx_bulk_memory_length,
+        },
+        Operator::GlobalGet {
+            global_index: idx_remaining_points,
+        },
+        Operator::I64Const {
+            value: accumulated_cost as i64,
+        },
+        Operator::I64LtU,
+        Operator::If {
+            blockty: BlockType::Empty,
+        },
+        Operator::I32Const { value: 1 },
+        Operator::GlobalSet {
+            global_index: idx_points_exhausted,
+        },
+        Operator::Unreachable,
+        Operator::End,
+        Operator::GlobalGet {
+            global_index: idx_remaining_points,
+        },
+        Operator::I64Const {
+            value: accumulated_cost as i64,
+        },
         Operator::I64Sub,
         Operator::GlobalSet {
             global_index: idx_remaining_points,
