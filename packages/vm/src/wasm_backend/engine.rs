@@ -55,6 +55,8 @@ fn cost(operator: &Operator) -> (u64, u64, u64) {
         Operator::TableGrow { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
         Operator::TableFill { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
         Operator::TableCopy { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
+        Operator::DataDrop { data_index: _ } => (GAS_PER_OPERATION, 0, 0), // TODO implement
+        Operator::ElemDrop { elem_index: _ } => (GAS_PER_OPERATION, 0, 0), // TODO implement
         _ => (GAS_PER_OPERATION, 0, 0),
     }
 }
