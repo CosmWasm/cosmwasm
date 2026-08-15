@@ -478,6 +478,6 @@ mod tests {
 
     #[test]
     fn module_version_static() {
-        assert_eq!("72d35e33ba", raw_module_version_discriminator());
+        assert_eq!("60f2cde41d", raw_module_version_discriminator());
     }
 }

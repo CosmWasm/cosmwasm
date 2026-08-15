@@ -69,7 +69,7 @@ impl MeteringGlobalIndexes {
 /// global index to store metering state. Attempts to use a `Metering`
 /// instance from multiple modules will result in a panic.
 ///
-pub struct Metering<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> {
+pub struct Metering<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> {
     /// Initial limit of gas points.
     initial_limit: u64,
     /// Function that maps each operator to a cost in gas points.
@@ -80,7 +80,7 @@ pub struct Metering<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> {
     function_locals: Vec<usize>,
 }
 
-impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> std::fmt::Debug for Metering<F> {
+impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> std::fmt::Debug for Metering<F> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Metering")
             .field("initial_limit", &self.initial_limit)
@@ -91,7 +91,7 @@ impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> std::fmt::Debug for Mete
     }
 }
 
-impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> Metering<F> {
+impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> Metering<F> {
     /// Creates a `Metering` middleware.
     ///
     /// When providing a cost function, you should consider that branching operations do
@@ -107,7 +107,9 @@ impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> Metering<F> {
     }
 }
 
-impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync + 'static> ModuleMiddleware for Metering<F> {
+impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync + 'static> ModuleMiddleware
+    for Metering<F>
+{
     /// Generates a function middleware for a given function identified by provided index.
     fn generate_function_middleware(&self, idx: LocalFunctionIndex) -> Box<dyn FunctionMiddleware> {
         let locals_count = self
@@ -201,7 +203,7 @@ impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync + 'static> ModuleMiddlewa
 }
 
 /// The function-level metering middleware.
-pub struct FunctionMetering<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> {
+pub struct FunctionMetering<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> {
     /// Flag indicating if the first operator in function was encountered.
     is_first_operator: bool,
     /// Function that maps each operator to a cost in gas points.
@@ -214,7 +216,9 @@ pub struct FunctionMetering<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> {
     charged_locals_count: u64,
 }
 
-impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> std::fmt::Debug for FunctionMetering<F> {
+impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> std::fmt::Debug
+    for FunctionMetering<F>
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("FunctionMetering")
             .field("is_first_operator", &self.is_first_operator)
@@ -226,7 +230,9 @@ impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> std::fmt::Debug for Func
     }
 }
 
-impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> FunctionMiddleware for FunctionMetering<F> {
+impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> FunctionMiddleware
+    for FunctionMetering<F>
+{
     fn feed<'a>(
         &mut self,
         operator: Operator<'a>,
@@ -236,7 +242,7 @@ impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> FunctionMiddleware for F
         // having a large number of locals, then charge additional gas.
         if self.is_first_operator && self.charged_locals_count > 0 {
             // Calculate the total gas cost for all charged locals in function.
-            let (operator_cost, _, _) = (self.cost_function)(&Operator::Nop);
+            let (operator_cost, _, _, _, _) = (self.cost_function)(&Operator::Nop);
             let locals_cost = operator_cost.saturating_mul(self.charged_locals_count);
             if is_branching_operator(&operator) {
                 // If the first operator is an accounting operator, then gas charging code
@@ -254,7 +260,7 @@ impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> FunctionMiddleware for F
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators
         // like `Call` from escaping metering in some corner cases.
-        let (operator_cost, unit_cost, unit_size) = (self.cost_function)(&operator);
+        let (operator_cost, unit_cost_x, unit_size_x, _, _) = (self.cost_function)(&operator);
         self.accumulated_cost += operator_cost;
 
         // For branching operator, finalize the cost of the previous basic block
@@ -269,13 +275,13 @@ impl<F: Fn(&Operator) -> (u64, u64, u64) + Send + Sync> FunctionMiddleware for F
         }
 
         // When the unit cost and unit size are non-zero (only for bulk-memory operators),
-        // then inject dynamic cost calculations and perform necessary checks.
-        if unit_cost > 0 && unit_size > 0 {
+        // then inject approximated linear cost calculations and perform necessary checks.
+        if unit_cost_x > 0 && unit_size_x > 0 {
             // Inject code for charging gas before bulk-memory operator.
             state.extend(gas_check_bulk_memory_wasm_code(
                 &self.global_indexes,
-                unit_cost,
-                unit_size,
+                unit_cost_x,
+                unit_size_x,
                 self.accumulated_cost,
             ));
             self.accumulated_cost = 0;
@@ -471,13 +477,13 @@ mod tests {
     use super::*;
 
     /// Dummy cost function to be used in the following tests.
-    fn cost(_: &Operator) -> (u64, u64, u64) {
-        (1, 0, 0)
+    fn cost(_: &Operator) -> (u64, u64, u64, u64, u64) {
+        (1, 0, 0, 0, 0)
     }
 
     #[test]
     fn debug_for_metering_works() {
-        assert_eq!((1, 0, 0), cost(&Operator::Nop));
+        assert_eq!((1, 0, 0, 0, 0), cost(&Operator::Nop));
         assert_eq!(
             "Metering { initial_limit: 0, cost_function: \"<cost_function>\", global_indexes: Mutex { data: None, poisoned: false, .. }, function_locals: [] }",
             format!("{:?}", Metering::new(0, cost, None))
@@ -486,7 +492,7 @@ mod tests {
 
     #[test]
     fn debug_for_function_metering_works() {
-        assert_eq!((1, 0, 0), cost(&Operator::Nop));
+        assert_eq!((1, 0, 0, 0, 0), cost(&Operator::Nop));
         let metering = Metering::new(0, cost, None);
         metering
             .transform_module_info(&mut ModuleInfo::new())
@@ -502,7 +508,7 @@ mod tests {
         expected = "Metering::transform_module_info: Attempting to use a `Metering` middleware from multiple modules."
     )]
     fn using_metering_multiple_times_should_panic() {
-        assert_eq!((1, 0, 0), cost(&Operator::Nop));
+        assert_eq!((1, 0, 0, 0, 0), cost(&Operator::Nop));
         let metering = Metering::new(0, cost, None);
         let mut module_1 = ModuleInfo::new();
         let mut module_2 = ModuleInfo::new();

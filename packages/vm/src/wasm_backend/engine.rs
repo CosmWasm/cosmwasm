@@ -18,8 +18,15 @@ const MAX_WASM_PAGES: u32 = 65536;
 
 // This function is hashed and put into the `module_version_discriminator` because it is used as
 // part of the compilation process. If it changes, modules need to be recompiled.
+// Returns:
+// (u64, u64, u64, u64, u64)
+//   │    │    │    │    └─── unit size for y-axis of planar approximation
+//   │    │    │    └──────── unit cost for y-axis of planar approximation
+//   │    │    └───────────── unit size for x-axis of linear/planar approximation
+//   │    └────────────────── unit cost for x-axis of linear/planar approximation
+//   └─────────────────────── base cost for operator
 #[hash_function(const_name = "COST_FUNCTION_HASH")]
-fn cost(operator: &Operator) -> (u64, u64, u64) {
+fn cost(operator: &Operator) -> (u64, u64, u64, u64, u64) {
     // A flat fee for each operation
     // The target is 1 Teragas per second (see GAS.md).
     //
@@ -43,18 +50,18 @@ fn cost(operator: &Operator) -> (u64, u64, u64) {
         // operations and from that together with the run time the expected gas value per operation:
         // GAS_PER_OP = GAS_TARGET_PER_SEC / (NUM_OPS / RUNTIME_IN_SECS)
         // This is repeated with different multipliers to bring the two benchmarks closer together.
-        return (GAS_PER_OPERATION * BRANCHING_MULTIPLIER, 0, 0);
+        return (GAS_PER_OPERATION * BRANCHING_MULTIPLIER, 0, 0, 0, 0);
     }
     match operator {
-        Operator::MemoryInit { .. } => (310_000, 32_768, 64),
-        Operator::MemoryGrow { .. } => (2_300_000, 32, 8192),
-        Operator::MemoryFill { .. } => (2_900_000, 32_768, 64),
-        Operator::MemoryCopy { .. } => (4_500_000, 50_176, 64),
-        Operator::TableInit { .. } => (70_000, 52_224, 32),
-        Operator::TableGrow { .. } => (108_145, 4_383, 1 /*, 3_471, 1 */),
-        Operator::TableFill { .. } => (80_000, 45_056, 64),
-        Operator::TableCopy { .. } => (70_000, 34816, 32),
-        _ => (GAS_PER_OPERATION, 0, 0),
+        Operator::MemoryInit { .. } => (310_000, 32_768, 64, 0, 0),
+        Operator::MemoryGrow { .. } => (2_300_000, 32, 8192, 0, 0),
+        Operator::MemoryFill { .. } => (2_900_000, 32_768, 64, 0, 0),
+        Operator::MemoryCopy { .. } => (4_500_000, 50_176, 64, 0, 0),
+        Operator::TableInit { .. } => (70_000, 52_224, 32, 0, 0),
+        Operator::TableGrow { .. } => (108_145, 4_383, 1, 3_471, 1),
+        Operator::TableFill { .. } => (80_000, 45_056, 64, 0, 0),
+        Operator::TableCopy { .. } => (70_000, 34816, 32, 0, 0),
+        _ => (GAS_PER_OPERATION, 0, 0, 0, 0),
     }
 }
 
