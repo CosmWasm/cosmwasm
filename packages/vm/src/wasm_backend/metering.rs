@@ -278,7 +278,7 @@ impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> FunctionMiddle
         // then inject approximated linear cost calculations and perform necessary checks.
         if unit_cost_x > 0 && unit_size_x > 0 {
             // Inject code for charging gas before bulk-memory operator.
-            state.extend(gas_check_bulk_memory_wasm_code(
+            state.extend(gas_check_linear_bulk_memory_wasm_code(
                 &self.global_indexes,
                 unit_cost_x,
                 unit_size_x,
@@ -370,39 +370,39 @@ fn gas_check_branching_wasm_code<'a>(
     ]
 }
 
-/// Returns Wasm code for charging bulk memory operation cost,
+/// Returns Wasm code for charging linear bulk memory operation cost,
 /// accumulated cost and checking remaining gas points.
 ///
 /// # Algorithm
 ///
 /// ```wat
-/// global.set 2         ;; Pop $length and save in global
-/// global.get 2         ;; Push $length
+/// global.set 2         ;; Pop $length from the stack and save in global variable
+/// global.get 2         ;; Push $length onto the stack
 /// i64.extend_i32_u     ;; Convert i32 $length to i64 value
-/// i64.const 31         ;; Push $decrUnitSize
-/// i64.add              ;; Add $length + $decUnitSize
-/// i64.const 32         ;; Push $unitSize
-/// i64.div_u            ;; Div ($length + $decUnitSize) / $unitSize
-/// i64.const 13         ;; Push $unitCost
-/// i64.mul              ;; Mul (($length + $decUnitSize) / $unitSize) * $unitCost
-/// i64.const 3          ;; Push $accumulatedCost
-/// i64.add              ;; $dynamicCost is on top of the stack
-/// global.set 3         ;; Pop $dynamicCost and save in global
-/// global.get 0         ;; Push $remainingPoints
-/// global.get 3         ;; Push $dynamicCost from global
+/// i64.const 31         ;; Push precalculated ($unitSize - 1) onto the stack
+/// i64.add              ;; Add $length + ($unitSize - 1)
+/// i64.const 32         ;; Push $unitSize onto the stack
+/// i64.div_u            ;; Div ($length + ($unitSize - 1)) / $unitSize
+/// i64.const 13         ;; Push $unitCost onto the stack
+/// i64.mul              ;; Mul (($length + ($unitSize - 1)) / $unitSize) * $unitCost
+/// i64.const 3          ;; Push $accumulatedCost onto the stack
+/// i64.add              ;; $dynamicCost is on the top of the stack
+/// global.set 3         ;; Pop $dynamicCost from the stack and save in global variable
+/// global.get 0         ;; Push $remainingPoints onto the stack
+/// global.get 3         ;; Push $dynamicCost onto the stack taken from global variable
 /// i64.lt_u             ;; bool($remainingPoints < $dynamicCost)
 /// if                   ;; if 1
 ///   i32.const 1        ;; Prepare exhausted flag
 ///   global.set 1       ;; Save exhausted flag in global
 ///   unreachable        ;; Break execution
 /// end                  ;; end if 1
-/// global.get 0         ;; Push $remainingPoints from global
-/// global.get 3         ;; Push $dynamicCost from global
+/// global.get 0         ;; Push $remainingPoints onto the stack taken from global
+/// global.get 3         ;; Push $dynamicCost onto the stack taken from global
 /// i64.sub              ;; Subtract $remainingPoints - $dynamicCost
-/// global.set 0         ;; Save $remainingPoints in global
-/// global.get 2         ;; Push $length
+/// global.set 0         ;; Save $remainingPoints in global variable
+/// global.get 2         ;; Push $length (from the first instruction) back onto the stack
 /// ```
-fn gas_check_bulk_memory_wasm_code<'a>(
+fn gas_check_linear_bulk_memory_wasm_code<'a>(
     global_indexes: &MeteringGlobalIndexes,
     unit_cost: u64,
     unit_size: u64,
@@ -412,7 +412,7 @@ fn gas_check_bulk_memory_wasm_code<'a>(
     let idx_points_exhausted = global_indexes.points_exhausted().as_u32();
     let idx_data_length = global_indexes.data_length().as_u32();
     let idx_dynamic_cost = global_indexes.dynamic_cost().as_u32();
-    let dec_unit_size = unit_size.saturating_sub(1);
+    let decremented_unit_size = unit_size.saturating_sub(1);
     [
         Operator::GlobalSet {
             global_index: idx_data_length,
@@ -422,7 +422,7 @@ fn gas_check_bulk_memory_wasm_code<'a>(
         },
         Operator::I64ExtendI32U,
         Operator::I64Const {
-            value: dec_unit_size as i64,
+            value: decremented_unit_size as i64,
         },
         Operator::I64Add,
         Operator::I64Const {
@@ -514,10 +514,5 @@ mod tests {
         let mut module_2 = ModuleInfo::new();
         metering.transform_module_info(&mut module_1).unwrap();
         metering.transform_module_info(&mut module_2).unwrap();
-    }
-
-    #[test]
-    fn branching_and_bulk_memory_operators_must_be_disjoint() {
-        // TODO Implement test.
     }
 }
