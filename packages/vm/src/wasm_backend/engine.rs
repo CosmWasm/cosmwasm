@@ -123,12 +123,14 @@ fn limit_to_pages(limit: Size) -> Pages {
 mod tests {
     use super::*;
 
+    /// Utility function that mocks linear approximation.
     fn linear(p: (u64, u64, u64, u64, u64), x: i32) -> u64 {
         assert_eq!(0, p.3);
         assert_eq!(0, p.4);
         (x as u64).div_ceil(p.2) * p.1 + p.0
     }
 
+    /// Utility function that mocks planar approximation.
     fn planar(p: (u64, u64, u64, u64, u64), x: i32, y: i32) -> u64 {
         (x as u64).div_ceil(p.2) * p.1 + (y as u64).div_ceil(p.4) * p.3 + p.0
     }
