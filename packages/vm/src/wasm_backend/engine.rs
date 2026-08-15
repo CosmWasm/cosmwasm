@@ -3,6 +3,7 @@ use super::LimitingTunables;
 use super::{is_branching_operator, Metering};
 use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
+use crate::wasm_backend::metering::MeteringCoefficients;
 use cosmwasm_vm_derive::hash_function;
 use std::sync::Arc;
 use wasmer::NativeEngineExt;
@@ -26,7 +27,7 @@ const MAX_WASM_PAGES: u32 = 65536;
 //   │    └────────────────── unit cost for x-axis of linear/planar approximation
 //   └─────────────────────── base cost for operator
 #[hash_function(const_name = "COST_FUNCTION_HASH")]
-fn cost(operator: &Operator) -> (u64, u64, u64, u64, u64) {
+fn cost(operator: &Operator) -> MeteringCoefficients {
     // A flat fee for each operation
     // The target is 1 Teragas per second (see GAS.md).
     //
@@ -50,18 +51,18 @@ fn cost(operator: &Operator) -> (u64, u64, u64, u64, u64) {
         // operations and from that together with the run time the expected gas value per operation:
         // GAS_PER_OP = GAS_TARGET_PER_SEC / (NUM_OPS / RUNTIME_IN_SECS)
         // This is repeated with different multipliers to bring the two benchmarks closer together.
-        return (GAS_PER_OPERATION * BRANCHING_MULTIPLIER, 0, 0, 0, 0);
+        return (GAS_PER_OPERATION * BRANCHING_MULTIPLIER, 0, 0, 0, 0, 0);
     }
     match operator {
-        Operator::MemoryInit { .. } => (310_000, 32_768, 64, 0, 0),
-        Operator::MemoryGrow { .. } => (2_300_000, 32, 8192, 0, 0),
-        Operator::MemoryFill { .. } => (2_900_000, 32_768, 64, 0, 0),
-        Operator::MemoryCopy { .. } => (4_500_000, 50_176, 64, 0, 0),
-        Operator::TableInit { .. } => (70_000, 52_224, 32, 0, 0),
-        Operator::TableGrow { .. } => (108_145, 4_383, 1, 3_471, 1),
-        Operator::TableFill { .. } => (80_000, 45_056, 64, 0, 0),
-        Operator::TableCopy { .. } => (70_000, 34816, 32, 0, 0),
-        _ => (GAS_PER_OPERATION, 0, 0, 0, 0),
+        Operator::MemoryInit { .. } => (310_000, 32_768, 64, 0, 0, 0),
+        Operator::MemoryGrow { .. } => (2_300_000, 32, 8192, 0, 0, 0),
+        Operator::MemoryFill { .. } => (2_900_000, 32_768, 64, 0, 0, 0),
+        Operator::MemoryCopy { .. } => (4_500_000, 50_176, 64, 0, 0, 0),
+        Operator::TableInit { .. } => (70_000, 52_224, 32, 0, 0, 0),
+        Operator::TableGrow { table } => (108_145, 4_383, 1, 3_471, 1, *table),
+        Operator::TableFill { .. } => (80_000, 45_056, 64, 0, 0, 0),
+        Operator::TableCopy { .. } => (70_000, 34816, 32, 0, 0, 0),
+        _ => (GAS_PER_OPERATION, 0, 0, 0, 0, 0),
     }
 }
 
@@ -124,14 +125,14 @@ mod tests {
     use super::*;
 
     /// Utility function that mocks linear approximation.
-    fn linear(p: (u64, u64, u64, u64, u64), x: i32) -> u64 {
+    fn linear(p: MeteringCoefficients, x: i32) -> u64 {
         assert_eq!(0, p.3);
         assert_eq!(0, p.4);
         (x as u64).div_ceil(p.2) * p.1 + p.0
     }
 
     /// Utility function that mocks planar approximation.
-    fn planar(p: (u64, u64, u64, u64, u64), x: i32, y: i32) -> u64 {
+    fn planar(p: MeteringCoefficients, x: i32, y: i32) -> u64 {
         (x as u64).div_ceil(p.2) * p.1 + (y as u64).div_ceil(p.4) * p.3 + p.0
     }
 

@@ -60,6 +60,8 @@ impl MeteringGlobalIndexes {
     }
 }
 
+pub type MeteringCoefficients = (u64, u64, u64, u64, u64, u32);
+
 /// The module-level metering middleware.
 ///
 /// # Panic
@@ -69,7 +71,7 @@ impl MeteringGlobalIndexes {
 /// global index to store metering state. Attempts to use a `Metering`
 /// instance from multiple modules will result in a panic.
 ///
-pub struct Metering<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> {
+pub struct Metering<F: Fn(&Operator) -> MeteringCoefficients + Send + Sync> {
     /// Initial limit of gas points.
     initial_limit: u64,
     /// Function that maps each operator to a cost in gas points.
@@ -80,7 +82,7 @@ pub struct Metering<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync>
     function_locals: Vec<usize>,
 }
 
-impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> std::fmt::Debug for Metering<F> {
+impl<F: Fn(&Operator) -> MeteringCoefficients + Send + Sync> std::fmt::Debug for Metering<F> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Metering")
             .field("initial_limit", &self.initial_limit)
@@ -91,7 +93,7 @@ impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> std::fmt::Debu
     }
 }
 
-impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> Metering<F> {
+impl<F: Fn(&Operator) -> MeteringCoefficients + Send + Sync> Metering<F> {
     /// Creates a `Metering` middleware.
     ///
     /// When providing a cost function, you should consider that branching operations do
@@ -107,7 +109,7 @@ impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> Metering<F> {
     }
 }
 
-impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync + 'static> ModuleMiddleware
+impl<F: Fn(&Operator) -> MeteringCoefficients + Send + Sync + 'static> ModuleMiddleware
     for Metering<F>
 {
     /// Generates a function middleware for a given function identified by provided index.
@@ -203,7 +205,7 @@ impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync + 'static> Modu
 }
 
 /// The function-level metering middleware.
-pub struct FunctionMetering<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> {
+pub struct FunctionMetering<F: Fn(&Operator) -> MeteringCoefficients + Send + Sync> {
     /// Flag indicating if the first operator in function was encountered.
     is_first_operator: bool,
     /// Function that maps each operator to a cost in gas points.
@@ -216,7 +218,7 @@ pub struct FunctionMetering<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send
     charged_locals_count: u64,
 }
 
-impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> std::fmt::Debug
+impl<F: Fn(&Operator) -> MeteringCoefficients + Send + Sync> std::fmt::Debug
     for FunctionMetering<F>
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -230,7 +232,7 @@ impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> std::fmt::Debu
     }
 }
 
-impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> FunctionMiddleware
+impl<F: Fn(&Operator) -> MeteringCoefficients + Send + Sync> FunctionMiddleware
     for FunctionMetering<F>
 {
     fn feed<'a>(
@@ -242,7 +244,7 @@ impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> FunctionMiddle
         // having a large number of locals, then charge additional gas.
         if self.is_first_operator && self.charged_locals_count > 0 {
             // Calculate the total gas cost for all charged locals in function.
-            let (operator_cost, _, _, _, _) = (self.cost_function)(&Operator::Nop);
+            let (operator_cost, _, _, _, _, _) = (self.cost_function)(&Operator::Nop);
             let locals_cost = operator_cost.saturating_mul(self.charged_locals_count);
             if is_branching_operator(&operator) {
                 // If the first operator is an accounting operator, then gas charging code
@@ -260,7 +262,8 @@ impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> FunctionMiddle
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators
         // like `Call` from escaping metering in some corner cases.
-        let (operator_cost, unit_cost_x, unit_size_x, _, _) = (self.cost_function)(&operator);
+        let (operator_cost, unit_cost_x, unit_size_x, unit_cost_y, unit_size_y, index) =
+            (self.cost_function)(&operator);
         self.accumulated_cost += operator_cost;
 
         // For branching operator, finalize the cost of the previous basic block
@@ -274,10 +277,27 @@ impl<F: Fn(&Operator) -> (u64, u64, u64, u64, u64) + Send + Sync> FunctionMiddle
             self.accumulated_cost = 0;
         }
 
-        // When the unit cost and unit size are non-zero (only for bulk-memory operators),
-        // then inject approximated linear cost calculations and perform necessary checks.
+        // When the unit_cost_x, unit_size_x, unit_cost_y and unit_size_y are non-zero
+        // (only for bulk-memory operators), then inject approximated PLANAR cost
+        // calculations and perform necessary checks.
+        if unit_cost_x > 0 && unit_size_x > 0 && unit_cost_y > 0 && unit_size_y > 0 {
+            // Inject code for charging gas before the bulk-memory operator.
+            state.extend(gas_check_planar_bulk_memory_wasm_code(
+                &self.global_indexes,
+                unit_cost_x,
+                unit_size_x,
+                unit_cost_y,
+                unit_size_y,
+                self.accumulated_cost,
+                index,
+            ));
+            self.accumulated_cost = 0;
+        }
+
+        // When the unit_cost_x and unit_size_x are non-zero (only for bulk-memory operators),
+        // then inject approximated LINEAR cost calculations and perform necessary checks.
         if unit_cost_x > 0 && unit_size_x > 0 {
-            // Inject code for charging gas before bulk-memory operator.
+            // Inject code for charging gas before the bulk-memory operator.
             state.extend(gas_check_linear_bulk_memory_wasm_code(
                 &self.global_indexes,
                 unit_cost_x,
@@ -376,7 +396,7 @@ fn gas_check_branching_wasm_code<'a>(
 /// # Algorithm
 ///
 /// ```wat
-/// global.set 2         ;; Pop $length from the stack and save in global variable
+/// global.set 2         ;; Consume $length from the stack and save in global variable
 /// global.get 2         ;; Push $length onto the stack
 /// i64.extend_i32_u     ;; Convert i32 $length to i64 value
 /// i64.const 31         ;; Push precalculated ($unitSize - 1) onto the stack
@@ -404,15 +424,15 @@ fn gas_check_branching_wasm_code<'a>(
 /// ```
 fn gas_check_linear_bulk_memory_wasm_code<'a>(
     global_indexes: &MeteringGlobalIndexes,
-    unit_cost: u64,
-    unit_size: u64,
+    unit_cost_x: u64,
+    unit_size_x: u64,
     accumulated_cost: u64,
 ) -> [Operator<'a>; 25] {
     let idx_remaining_points = global_indexes.remaining_points().as_u32();
     let idx_points_exhausted = global_indexes.points_exhausted().as_u32();
     let idx_data_length = global_indexes.data_length().as_u32();
     let idx_dynamic_cost = global_indexes.dynamic_cost().as_u32();
-    let decremented_unit_size = unit_size.saturating_sub(1);
+    let decremented_unit_size_x = unit_size_x.saturating_sub(1);
     [
         Operator::GlobalSet {
             global_index: idx_data_length,
@@ -422,15 +442,143 @@ fn gas_check_linear_bulk_memory_wasm_code<'a>(
         },
         Operator::I64ExtendI32U,
         Operator::I64Const {
-            value: decremented_unit_size as i64,
+            value: decremented_unit_size_x as i64,
         },
         Operator::I64Add,
         Operator::I64Const {
-            value: unit_size as i64,
+            value: unit_size_x as i64,
         },
         Operator::I64DivU,
         Operator::I64Const {
-            value: unit_cost as i64,
+            value: unit_cost_x as i64,
+        },
+        Operator::I64Mul,
+        Operator::I64Const {
+            value: accumulated_cost as i64,
+        },
+        Operator::I64Add,
+        Operator::GlobalSet {
+            global_index: idx_dynamic_cost,
+        },
+        Operator::GlobalGet {
+            global_index: idx_remaining_points,
+        },
+        Operator::GlobalGet {
+            global_index: idx_dynamic_cost,
+        },
+        Operator::I64LtU,
+        Operator::If {
+            blockty: BlockType::Empty,
+        },
+        Operator::I32Const { value: 1 },
+        Operator::GlobalSet {
+            global_index: idx_points_exhausted,
+        },
+        Operator::Unreachable,
+        Operator::End,
+        Operator::GlobalGet {
+            global_index: idx_remaining_points,
+        },
+        Operator::GlobalGet {
+            global_index: idx_dynamic_cost,
+        },
+        Operator::I64Sub,
+        Operator::GlobalSet {
+            global_index: idx_remaining_points,
+        },
+        Operator::GlobalGet {
+            global_index: idx_data_length,
+        },
+    ]
+}
+
+/// Returns Wasm code for charging planar bulk memory operation cost,
+/// accumulated cost and checking remaining gas points.
+///
+/// # Algorithm
+///
+/// ```wat
+/// global.set 2         ;; Consume $length from the stack and save in global variable
+/// global.get 2         ;; Push $length onto the stack
+/// i64.extend_i32_u     ;; Convert i32 $length to i64 value
+/// i64.const 31         ;; Push precalculated ($unitSizeY - 1) onto the stack
+/// i64.add              ;; Add $length + ($unitSizeY - 1)
+/// i64.const 32         ;; Push $unitSizeY onto the stack
+/// i64.div_u            ;; Div ($length + ($unitSizeY - 1)) / $unitSizeY
+/// i64.const 13         ;; Push $unitCostY onto the stack
+/// i64.mul              ;; Mul (($length + ($unitSizeY - 1)) / $unitSizeY) * $unitCostY
+/// table.size 0         ;; Push table size onto the stack
+/// i64.extend_i32_u     ;; Convert i32 $tableSize to i64 value
+/// i64.const 63         ;; Push precalculated ($unitSizeX - 1) onto the stack
+/// i64.add              ;; Add $tableSize + ($unitSizeX - 1)
+/// i64.const 64         ;; Push $unitSizeX onto the stack
+/// i64.div_u            ;; Div ($tableSize + ($unitSizeX - 1)) / $unitSizeX
+/// i64.const 183        ;; Push $unitCostX onto the stack
+/// i64.mul              ;; Mul (($tableSize + ($unitSizeX - 1)) / $unitSizeX) * $unitCostX
+/// i64.const 3          ;; Push $accumulatedCost onto the stack
+/// i64.add              ;; $dynamicCost is on the top of the stack
+/// global.set 3         ;; Pop $dynamicCost from the stack and save in global variable
+/// global.get 0         ;; Push $remainingPoints onto the stack
+/// global.get 3         ;; Push $dynamicCost onto the stack taken from global variable
+/// i64.lt_u             ;; bool($remainingPoints < $dynamicCost)
+/// if                   ;; if 1
+///   i32.const 1        ;; Prepare exhausted flag
+///   global.set 1       ;; Save exhausted flag in global
+///   unreachable        ;; Break execution
+/// end                  ;; end if 1
+/// global.get 0         ;; Push $remainingPoints onto the stack taken from global
+/// global.get 3         ;; Push $dynamicCost onto the stack taken from global
+/// i64.sub              ;; Subtract $remainingPoints - $dynamicCost
+/// global.set 0         ;; Save $remainingPoints in global variable
+/// global.get 2         ;; Push $length (from the first instruction) back onto the stack
+/// ```
+fn gas_check_planar_bulk_memory_wasm_code<'a>(
+    global_indexes: &MeteringGlobalIndexes,
+    unit_cost_x: u64,
+    unit_size_x: u64,
+    unit_cost_y: u64,
+    unit_size_y: u64,
+    accumulated_cost: u64,
+    index: u32,
+) -> [Operator<'a>; 33] {
+    let idx_remaining_points = global_indexes.remaining_points().as_u32();
+    let idx_points_exhausted = global_indexes.points_exhausted().as_u32();
+    let idx_data_length = global_indexes.data_length().as_u32();
+    let idx_dynamic_cost = global_indexes.dynamic_cost().as_u32();
+    let decremented_unit_size_x = unit_size_x.saturating_sub(1);
+    let decremented_unit_size_y = unit_size_y.saturating_sub(1);
+    [
+        Operator::GlobalSet {
+            global_index: idx_data_length,
+        },
+        Operator::GlobalGet {
+            global_index: idx_data_length,
+        },
+        Operator::I64ExtendI32U,
+        Operator::I64Const {
+            value: decremented_unit_size_y as i64,
+        },
+        Operator::I64Add,
+        Operator::I64Const {
+            value: unit_size_y as i64,
+        },
+        Operator::I64DivU,
+        Operator::I64Const {
+            value: unit_cost_y as i64,
+        },
+        Operator::I64Mul,
+        Operator::TableSize { table: index },
+        Operator::I64ExtendI32U,
+        Operator::I64Const {
+            value: decremented_unit_size_x as i64,
+        },
+        Operator::I64Add,
+        Operator::I64Const {
+            value: unit_size_x as i64,
+        },
+        Operator::I64DivU,
+        Operator::I64Const {
+            value: unit_cost_x as i64,
         },
         Operator::I64Mul,
         Operator::I64Const {
@@ -477,13 +625,13 @@ mod tests {
     use super::*;
 
     /// Dummy cost function to be used in the following tests.
-    fn cost(_: &Operator) -> (u64, u64, u64, u64, u64) {
-        (1, 0, 0, 0, 0)
+    fn cost(_: &Operator) -> MeteringCoefficients {
+        (1, 0, 0, 0, 0, 0)
     }
 
     #[test]
     fn debug_for_metering_works() {
-        assert_eq!((1, 0, 0, 0, 0), cost(&Operator::Nop));
+        assert_eq!((1, 0, 0, 0, 0, 0), cost(&Operator::Nop));
         assert_eq!(
             "Metering { initial_limit: 0, cost_function: \"<cost_function>\", global_indexes: Mutex { data: None, poisoned: false, .. }, function_locals: [] }",
             format!("{:?}", Metering::new(0, cost, None))
@@ -492,7 +640,7 @@ mod tests {
 
     #[test]
     fn debug_for_function_metering_works() {
-        assert_eq!((1, 0, 0, 0, 0), cost(&Operator::Nop));
+        assert_eq!((1, 0, 0, 0, 0, 0), cost(&Operator::Nop));
         let metering = Metering::new(0, cost, None);
         metering
             .transform_module_info(&mut ModuleInfo::new())
@@ -508,7 +656,7 @@ mod tests {
         expected = "Metering::transform_module_info: Attempting to use a `Metering` middleware from multiple modules."
     )]
     fn using_metering_multiple_times_should_panic() {
-        assert_eq!((1, 0, 0, 0, 0), cost(&Operator::Nop));
+        assert_eq!((1, 0, 0, 0, 0, 0), cost(&Operator::Nop));
         let metering = Metering::new(0, cost, None);
         let mut module_1 = ModuleInfo::new();
         let mut module_2 = ModuleInfo::new();
