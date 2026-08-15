@@ -123,13 +123,84 @@ fn limit_to_pages(limit: Size) -> Pages {
 mod tests {
     use super::*;
 
+    fn linear(p: (u64, u64, u64, u64, u64), x: i32) -> u64 {
+        assert_eq!(0, p.3);
+        assert_eq!(0, p.4);
+        (x as u64).div_ceil(p.2) * p.1 + p.0
+    }
+
+    fn planar(p: (u64, u64, u64, u64, u64), x: i32, y: i32) -> u64 {
+        (x as u64).div_ceil(p.2) * p.1 + (y as u64).div_ceil(p.4) * p.3 + p.0
+    }
+
     #[test]
     fn cost_works() {
-        // accounting operator
+        // accounting operators
+        // --------------------
         assert_eq!(cost(&Operator::Br { relative_depth: 3 }).0, 1610);
         assert_eq!(cost(&Operator::Return {}).0, 1610);
 
+        // bulk-memory operators
+        // ---------------------
+
+        // memory.init
+        let m_init = &Operator::MemoryInit {
+            data_index: 0,
+            mem: 0,
+        };
+        assert_eq!(310_000, linear(cost(m_init), 0));
+        assert_eq!(1_099_511_937_776, linear(cost(m_init), i32::MAX));
+
+        // memory.grow
+        let m_grow = &Operator::MemoryGrow { mem: 0 };
+        assert_eq!(2_300_000, linear(cost(m_grow), 0));
+        assert_eq!(2_300_256, linear(cost(m_grow), 65_535));
+        assert_eq!(10_688_608, linear(cost(m_grow), i32::MAX));
+
+        // memory.fill
+        let m_fill = &Operator::MemoryFill { mem: 0 };
+        assert_eq!(2_900_000, linear(cost(m_fill), 0));
+        assert_eq!(1_099_514_527_776, linear(cost(m_fill), i32::MAX));
+
+        // memory.copy
+        let m_copy = &Operator::MemoryCopy {
+            src_mem: 0,
+            dst_mem: 0,
+        };
+        assert_eq!(4_500_000, linear(cost(m_copy), 0));
+        assert_eq!(1_683_631_680_032, linear(cost(m_copy), i32::MAX));
+
+        // table.init
+        let t_init = &Operator::TableInit {
+            table: 0,
+            elem_index: 0,
+        };
+        assert_eq!(70_000, linear(cost(t_init), 0));
+        assert_eq!(16_320_070_000, linear(cost(t_init), 9_999_999));
+        assert_eq!(3_504_693_383_536, linear(cost(t_init), i32::MAX));
+
+        // table.fill
+        let t_fill = &Operator::TableFill { table: 0 };
+        assert_eq!(80_000, linear(cost(t_fill), 0));
+        assert_eq!(7_040_080_000, linear(cost(t_fill), 9_999_999));
+        assert_eq!(1_511_828_568_192, linear(cost(t_fill), i32::MAX));
+
+        // table.grow
+        let t_grow = &Operator::TableGrow { table: 0 };
+        assert_eq!(108_145, planar(cost(t_grow), 0, 0));
+        assert_eq!(16_866_336_671_683, planar(cost(t_grow), i32::MAX, i32::MAX));
+
+        // table.copy
+        let t_copy = &Operator::TableCopy {
+            src_table: 0,
+            dst_table: 0,
+        };
+        assert_eq!(70_000, linear(cost(t_copy), 0));
+        assert_eq!(10_880_070_000, linear(cost(t_copy), 9_999_999));
+        assert_eq!(2_336_462_279_024, linear(cost(t_copy), i32::MAX));
+
         // anything else
+        // -------------
         assert_eq!(cost(&Operator::I64Const { value: 7 }).0, 115);
         assert_eq!(cost(&Operator::I64Extend8S {}).0, 115);
     }
