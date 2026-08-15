@@ -32,7 +32,6 @@ fn cost(operator: &Operator) -> (u64, u64, u64) {
     // compared to newly compiled ones.
     const GAS_PER_OPERATION: u64 = 115;
     const BRANCHING_MULTIPLIER: u64 = 14;
-    const BULK_MEMORY_MULTIPLIER: u64 = 1;
 
     if is_branching_operator(operator) {
         // Accounting operators are operators where the `Metering` middleware injects instructions
@@ -47,14 +46,14 @@ fn cost(operator: &Operator) -> (u64, u64, u64) {
         return (GAS_PER_OPERATION * BRANCHING_MULTIPLIER, 0, 0);
     }
     match operator {
-        Operator::MemoryInit { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
-        Operator::MemoryGrow { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
-        Operator::MemoryFill { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
-        Operator::MemoryCopy { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
-        Operator::TableInit { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
-        Operator::TableGrow { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
-        Operator::TableFill { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
-        Operator::TableCopy { .. } => (GAS_PER_OPERATION * BULK_MEMORY_MULTIPLIER, 0, 0),
+        Operator::MemoryInit { .. } => (310_000, 32_768, 64),
+        Operator::MemoryGrow { .. } => (2_300_000, 32, 8192),
+        Operator::MemoryFill { .. } => (2_900_000, 32_768, 64),
+        Operator::MemoryCopy { .. } => (4_500_000, 50_176, 64),
+        Operator::TableInit { .. } => (70_000, 52_224, 32),
+        Operator::TableGrow { .. } => (108_145, 4_383, 1 /*, 3_471, 1 */),
+        Operator::TableFill { .. } => (80_000, 45_056, 64),
+        Operator::TableCopy { .. } => (70_000, 34816, 32),
         _ => (GAS_PER_OPERATION, 0, 0),
     }
 }
