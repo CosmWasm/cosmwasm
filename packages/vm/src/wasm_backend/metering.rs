@@ -277,34 +277,30 @@ impl<F: Fn(&Operator) -> MeteringCoefficients + Send + Sync> FunctionMiddleware
             self.accumulated_cost = 0;
         }
 
-        // When the unit_cost_x, unit_size_x, unit_cost_y and unit_size_y are non-zero
-        // (only for bulk-memory operators), then inject approximated PLANAR cost
-        // calculations and perform necessary checks.
-        if unit_cost_x > 0 && unit_size_x > 0 && unit_cost_y > 0 && unit_size_y > 0 {
-            // Inject code for charging gas before the bulk-memory operator.
-            state.extend(gas_check_planar_bulk_memory_wasm_code(
-                &self.global_indexes,
-                unit_cost_x,
-                unit_size_x,
-                unit_cost_y,
-                unit_size_y,
-                self.accumulated_cost,
-                index,
-            ));
-            self.accumulated_cost = 0;
-        }
-
-        // When the unit_cost_x and unit_size_x are non-zero (only for bulk-memory operators),
-        // then inject approximated LINEAR cost calculations and perform necessary checks.
+        // Bulk-memory operators have nonzero unit cost and unit size.
         if unit_cost_x > 0 && unit_size_x > 0 {
-            // Inject code for charging gas before the bulk-memory operator.
-            state.extend(gas_check_linear_bulk_memory_wasm_code(
-                &self.global_indexes,
-                unit_cost_x,
-                unit_size_x,
-                self.accumulated_cost,
-            ));
-            self.accumulated_cost = 0;
+            if unit_cost_y > 0 && unit_size_y > 0 {
+                // Inject code for charging planar gas for bulk-memory operator.
+                state.extend(gas_check_planar_bulk_memory_wasm_code(
+                    &self.global_indexes,
+                    unit_cost_x,
+                    unit_size_x,
+                    unit_cost_y,
+                    unit_size_y,
+                    self.accumulated_cost,
+                    index,
+                ));
+                self.accumulated_cost = 0;
+            } else {
+                // Inject code for charging linear gas for bulk-memory operator.
+                state.extend(gas_check_linear_bulk_memory_wasm_code(
+                    &self.global_indexes,
+                    unit_cost_x,
+                    unit_size_x,
+                    self.accumulated_cost,
+                ));
+                self.accumulated_cost = 0;
+            }
         }
 
         // Push current operator.
@@ -506,7 +502,7 @@ fn gas_check_linear_bulk_memory_wasm_code<'a>(
 /// i64.const 32         ;; Push $unitSizeY onto the stack
 /// i64.div_u            ;; Div ($length + ($unitSizeY - 1)) / $unitSizeY
 /// i64.const 13         ;; Push $unitCostY onto the stack
-/// i64.mul              ;; Mul (($length + ($unitSizeY - 1)) / $unitSizeY) * $unitCostY
+/// i64.mul              ;; Mul (($length + ($unitSizeY - 1)) / $unitSizeY) * $unitCostY -> $grow
 /// table.size 0         ;; Push table size onto the stack
 /// i64.extend_i32_u     ;; Convert i32 $tableSize to i64 value
 /// i64.const 63         ;; Push precalculated ($unitSizeX - 1) onto the stack
@@ -514,7 +510,8 @@ fn gas_check_linear_bulk_memory_wasm_code<'a>(
 /// i64.const 64         ;; Push $unitSizeX onto the stack
 /// i64.div_u            ;; Div ($tableSize + ($unitSizeX - 1)) / $unitSizeX
 /// i64.const 183        ;; Push $unitCostX onto the stack
-/// i64.mul              ;; Mul (($tableSize + ($unitSizeX - 1)) / $unitSizeX) * $unitCostX
+/// i64.mul              ;; Mul (($tableSize + ($unitSizeX - 1)) / $unitSizeX) * $unitCostX -> $initialś
+/// i64.add              ;; Add $initial + $grow
 /// i64.const 3          ;; Push $accumulatedCost onto the stack
 /// i64.add              ;; $dynamicCost is on the top of the stack
 /// global.set 3         ;; Pop $dynamicCost from the stack and save in global variable
@@ -540,7 +537,7 @@ fn gas_check_planar_bulk_memory_wasm_code<'a>(
     unit_size_y: u64,
     accumulated_cost: u64,
     index: u32,
-) -> [Operator<'a>; 33] {
+) -> [Operator<'a>; 34] {
     let idx_remaining_points = global_indexes.remaining_points().as_u32();
     let idx_points_exhausted = global_indexes.points_exhausted().as_u32();
     let idx_data_length = global_indexes.data_length().as_u32();
@@ -581,6 +578,7 @@ fn gas_check_planar_bulk_memory_wasm_code<'a>(
             value: unit_cost_x as i64,
         },
         Operator::I64Mul,
+        Operator::I64Add,
         Operator::I64Const {
             value: accumulated_cost as i64,
         },
