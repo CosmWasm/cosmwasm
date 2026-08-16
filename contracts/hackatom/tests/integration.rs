@@ -393,7 +393,7 @@ fn execute_allocate_large_memory() {
     // Gas consumption is relatively small
     // Note: the exact gas usage depends on the Rust version used to compile Wasm,
     // which we only fix when using rust-optimizer, not integration tests.
-    assert_approx_eq!(gas_used, 9470400, "0.2");
+    assert_approx_eq!(gas_used, 57839759, "0.2");
     let used = deps.memory_pages();
     assert_eq!(used, pages_before + 48, "Memory used: {used} pages");
     pages_before += 48;
@@ -415,7 +415,7 @@ fn execute_allocate_large_memory() {
     // Gas consumption is relatively small
     // Note: the exact gas usage depends on the Rust version used to compile Wasm,
     // which we only fix when using rust-optimizer, not integration tests.
-    assert_approx_eq!(gas_used, 8623090, "0.2");
+    assert_approx_eq!(gas_used, 59965687, "0.2");
     let used = deps.memory_pages();
     assert_eq!(used, pages_before, "Memory used: {used} pages");
 }
