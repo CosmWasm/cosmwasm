@@ -1163,14 +1163,14 @@ mod tests {
             (module
               (memory 1)
               (func (export "fun") (result i32)
-                (local;;LOCALS;;)
+                (local <LOCALS>)
                 i32.const 10
               )
               (export "memory" (memory 0))
             )"#;
             let backend = mock_backend(&[]);
             let (instance_options, memory_limit) = mock_instance_options();
-            let wasm = wat::parse_str(TEMPLATE.replace(";;LOCALS;;", &" i32".repeat(n))).unwrap();
+            let wasm = wat::parse_str(TEMPLATE.replace("<LOCALS>", &" i32".repeat(n))).unwrap();
             let mut instance =
                 Instance::from_code(&wasm, backend, instance_options, memory_limit).unwrap();
             let gas_before = instance.get_gas_left();
@@ -1220,14 +1220,14 @@ mod tests {
                 i32.const 10
               )
               (func (export "wrapper") (result i32)
-                (local;;LOCALS;;)
+                (local <LOCALS>)
                 call $fun
               )
               (export "memory" (memory 0))
             )"#;
             let backend = mock_backend(&[]);
             let (instance_options, memory_limit) = mock_instance_options();
-            let wasm = wat::parse_str(TEMPLATE.replace(";;LOCALS;;", &" i32".repeat(n))).unwrap();
+            let wasm = wat::parse_str(TEMPLATE.replace("<LOCALS>", &" i32".repeat(n))).unwrap();
             let mut instance =
                 Instance::from_code(&wasm, backend, instance_options, memory_limit).unwrap();
             let gas_before = instance.get_gas_left();
@@ -1271,5 +1271,43 @@ mod tests {
         //      gas used:         5751610
         #[cfg(not(target_os = "windows"))]
         assert_eq!(5751610, gas_usage(50000));
+    }
+
+    #[test]
+    fn charging_gas_for_memory_copy_works() {
+        fn gas_usage(length: usize) -> u64 {
+            const TEMPLATE: &str = r#"
+            (module
+              (memory (export "memory") 1)
+              (func (export "fun")
+                i32.const 10           ;; Destination offset in memory
+                i32.const 0            ;; Source offset in memory
+                i32.const <LENGTH>     ;; Length in bytes to be copied
+                memory.copy            ;; Execute memory copy
+              )
+            )"#;
+            let backend = mock_backend(&[]);
+            let (instance_options, memory_limit) = mock_instance_options();
+            let wasm = wat::parse_str(TEMPLATE.replace("<LENGTH>", &length.to_string())).unwrap();
+            let mut instance =
+                Instance::from_code(&wasm, backend, instance_options, memory_limit).unwrap();
+            let gas_before = instance.get_gas_left();
+            instance.call_function0("fun", &[]).unwrap();
+            gas_before - instance.get_gas_left()
+        }
+
+        // function call:           1_610
+        //  instructions:   3 x 115 = 345
+        //   memory.copy:       4_500_000
+        //               -----------------
+        //      gas used:       4_501_955
+        assert_eq!(4_501_955, gas_usage(0));
+
+        // function call:           1_610
+        //  instructions:   3 x 115 = 345
+        //   memory.copy:       4_550_176
+        //               -----------------
+        //      gas used:       4_552_131
+        assert_eq!(4_552_131, gas_usage(20));
     }
 }
