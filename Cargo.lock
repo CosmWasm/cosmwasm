@@ -644,25 +644,31 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-check"
-version = "3.1.0-dev"
+version = "3.1.0-rc.1"
 dependencies = [
  "anyhow",
  "assert_cmd",
  "clap",
  "colored",
- "cosmwasm-std",
- "cosmwasm-vm",
+ "cosmwasm-std 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-vm 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "predicates",
  "tempfile",
 ]
 
 [[package]]
 name = "cosmwasm-core"
-version = "3.1.0-dev"
+version = "3.1.0-rc.1"
+
+[[package]]
+name = "cosmwasm-core"
+version = "3.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffa2a22c61b6a0be03fd9274a55e2225130e798bb2d5be6edd6693f96fdb52c0"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "3.1.0-dev"
+version = "3.1.0-rc.1"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -670,7 +676,7 @@ dependencies = [
  "ark-serialize",
  "base64 0.22.1",
  "base64-serde",
- "cosmwasm-core",
+ "cosmwasm-core 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "criterion",
  "curve25519-dalek",
  "digest",
@@ -694,8 +700,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-crypto"
+version = "3.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "affd8ff00791d931c85e7feb3537ef826236b7e4725e8b13e6967223c94c0428"
+dependencies = [
+ "ark-bls12-381",
+ "ark-ec",
+ "ark-ff",
+ "ark-serialize",
+ "cosmwasm-core 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "curve25519-dalek",
+ "digest",
+ "ecdsa",
+ "ed25519-zebra",
+ "k256",
+ "num-bigint",
+ "num-traits",
+ "p256",
+ "rand_core 0.6.4",
+ "rayon",
+ "sha2",
+ "thiserror",
+]
+
+[[package]]
 name = "cosmwasm-derive"
-version = "3.1.0-dev"
+version = "3.1.0-rc.1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "cosmwasm-derive"
+version = "3.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0eb78c7042b10e1da9f9b77035f88ef15f7d868c81f26276490b998e9859162c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -704,11 +746,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "3.1.0-dev"
+version = "3.1.0-rc.1"
 dependencies = [
  "anyhow",
- "cosmwasm-schema-derive",
- "cw-schema",
+ "cosmwasm-schema-derive 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cw-schema 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "insta",
  "schemars 0.8.22",
  "semver",
@@ -719,8 +761,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-schema"
+version = "3.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f9b82ed9c1886f63ce2ea6fd24fc274cac67d543c5adef5da7574a576a181ff"
+dependencies = [
+ "cosmwasm-schema-derive 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cw-schema 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "cosmwasm-schema-derive"
-version = "3.1.0-dev"
+version = "3.1.0-rc.1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "cosmwasm-schema-derive"
+version = "3.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4710dff271a815bf95006c44528de81506a919f073d601b5222fd1fd6764f0fb"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -729,18 +796,18 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "3.1.0-dev"
+version = "3.1.0-rc.1"
 dependencies = [
  "base64 0.22.1",
  "bech32",
  "bnum",
  "chrono",
- "cosmwasm-core",
- "cosmwasm-crypto",
- "cosmwasm-derive",
- "cosmwasm-schema",
+ "cosmwasm-core 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-crypto 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-derive 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-schema 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "crc32fast",
- "cw-schema",
+ "cw-schema 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 2.0.1",
  "hex",
  "hex-literal",
@@ -757,18 +824,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-std"
+version = "3.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68895f95987eb4dcaeb2e65c93fd12d4d541f958708fb34ec43eb010dc056651"
+dependencies = [
+ "base64 0.22.1",
+ "bech32",
+ "bnum",
+ "cosmwasm-core 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-crypto 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-derive 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cw-schema 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "derive_more 2.0.1",
+ "hex",
+ "rand_core 0.6.4",
+ "rmp-serde",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "sha2",
+ "static_assertions",
+ "thiserror",
+]
+
+[[package]]
 name = "cosmwasm-vm"
-version = "3.1.0-dev"
+version = "3.1.0-rc.1"
 dependencies = [
  "bech32",
  "blake2",
  "bytes",
  "clap",
  "clru",
- "cosmwasm-core",
- "cosmwasm-crypto",
- "cosmwasm-std",
- "cosmwasm-vm-derive",
+ "cosmwasm-core 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-crypto 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-std 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-vm-derive 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "crc32fast",
  "criterion",
  "derive_more 1.0.0-beta.6",
@@ -799,8 +891,52 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-vm"
+version = "3.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1478fab79658721e5f47c311309f7b1e3ca0aeb33f9e67ddc01723c3b9f2abc"
+dependencies = [
+ "bech32",
+ "blake2",
+ "bytes",
+ "clru",
+ "cosmwasm-core 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-crypto 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-std 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-vm-derive 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "crc32fast",
+ "derive_more 1.0.0-beta.6",
+ "hex",
+ "rand_core 0.6.4",
+ "rkyv",
+ "rustls-webpki",
+ "serde",
+ "serde_json",
+ "sha2",
+ "strum",
+ "tar",
+ "thiserror",
+ "tracing",
+ "wasmer",
+ "wasmer-middlewares",
+ "wasmer-types",
+]
+
+[[package]]
 name = "cosmwasm-vm-derive"
-version = "3.1.0-dev"
+version = "3.1.0-rc.1"
+dependencies = [
+ "blake2",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "cosmwasm-vm-derive"
+version = "3.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c81222adba8943e88874178c5e7740ca6523cf79cd82dc9274655a5c230875b8"
 dependencies = [
  "blake2",
  "proc-macro2",
@@ -961,9 +1097,9 @@ dependencies = [
 
 [[package]]
 name = "cw-schema"
-version = "3.1.0-dev"
+version = "3.1.0-rc.1"
 dependencies = [
- "cw-schema-derive",
+ "cw-schema-derive 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "indexmap",
  "insta",
  "pretty_assertions",
@@ -976,8 +1112,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-schema"
+version = "3.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cbecbcf83026f1d38fc13484c9d61ae583cb644d9f2c0bae70298eefe61f20d0"
+dependencies = [
+ "cw-schema-derive 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "indexmap",
+ "schemars 1.0.4",
+ "serde",
+ "serde_with",
+ "siphasher",
+ "typeid",
+]
+
+[[package]]
 name = "cw-schema-derive"
-version = "3.1.0-dev"
+version = "3.1.0-rc.1"
+dependencies = [
+ "heck",
+ "itertools",
+ "owo-colors",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "cw-schema-derive"
+version = "3.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "241ecaf997ffbbe2b55a289668a9fd02ab4a47890fce365a9bff9d5dce1ea56e"
 dependencies = [
  "heck",
  "itertools",
@@ -1520,8 +1685,8 @@ name = "go-gen"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "cosmwasm-schema",
- "cosmwasm-std",
+ "cosmwasm-schema 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-std 3.1.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "heck",
  "indenter",
  "schemars 0.8.22",
