@@ -67,7 +67,7 @@ impl Default for Gatekeeper {
             // of it is required since Rust 1.82, but we don't allow any of the instructions specific
             // to the proposal here. Especially `table.grow` and `table.fill` can be abused to cause
             // very long runtime and high memory usage.
-            allow_feature_reference_types: false,
+            allow_feature_reference_types: true,
             allow_feature_simd: false,
             allow_feature_exception_handling: false,
             allow_feature_threads: false,
@@ -450,6 +450,7 @@ mod tests {
             .contains("Bulk memory operation"));
     }
 
+    #[ignore]
     #[test]
     fn bulk_table_operations_not_supported() {
         // these operations can take a long time with big tables

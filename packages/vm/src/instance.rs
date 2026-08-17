@@ -1275,7 +1275,7 @@ mod tests {
 
     #[test]
     fn charging_gas_for_memory_copy_works() {
-        fn gas_usage(length: usize) -> u64 {
+        fn gas_usage(length: i32) -> u64 {
             const TEMPLATE: &str = r#"
             (module
               (memory (export "memory") 1)
@@ -1309,5 +1309,50 @@ mod tests {
         //               -----------------
         //      gas used:       4_552_131
         assert_eq!(4_552_131, gas_usage(20));
+    }
+
+    #[test]
+    fn charging_gas_for_table_grow_works() {
+        fn gas_usage(initial: i32, grow: i32) -> u64 {
+            const TEMPLATE: &str = r#"
+            (module
+              (memory (export "memory") 1)
+              (table <INITIAL> funcref)
+              (elem func $f1)
+              (func $f1)
+              (func (export "fun") (result i32)
+                ref.func $f1
+                i32.const <GROW>
+                table.grow 0
+              )
+            )"#;
+            let backend = mock_backend(&[]);
+            let (instance_options, memory_limit) = mock_instance_options();
+            let wasm = wat::parse_str(
+                TEMPLATE
+                    .replace("<INITIAL>", &initial.to_string())
+                    .replace("<GROW>", &grow.to_string()),
+            )
+            .unwrap();
+            let mut instance =
+                Instance::from_code(&wasm, backend, instance_options, memory_limit).unwrap();
+            let gas_before = instance.get_gas_left();
+            instance.call_function1("fun", &[]).unwrap();
+            gas_before - instance.get_gas_left()
+        }
+
+        // function call:           1_610
+        //  instructions:   2 x 115 = 230
+        //   memory.grow:         108_145
+        //               -----------------
+        //      gas used:         109_985
+        assert_eq!(109_985, gas_usage(0, 0));
+
+        // function call:           1_610
+        //  instructions:   2 x 115 = 230
+        //   memory.copy:         147_238
+        //               -----------------
+        //      gas used:         149_078
+        assert_eq!(149_078, gas_usage(1, 10));
     }
 }
