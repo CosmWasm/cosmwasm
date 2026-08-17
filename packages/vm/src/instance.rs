@@ -33,7 +33,7 @@ pub struct GasReport {
     pub remaining: u64,
     /// The amount of gas that was spent and metered externally in operations triggered by this instance
     pub used_externally: u64,
-    /// The amount of gas that was spend and metered internally (i.e. by executing Wasm and calling
+    /// The amount of gas that was spent and metered internally (i.e. by executing Wasm and calling
     /// API methods which are not metered externally)
     pub used_internally: u64,
 }
