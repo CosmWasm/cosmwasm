@@ -9,7 +9,8 @@ use cosmwasm_std::{
 pub const KEY_CONFIG: &[u8] = b"config";
 /// accounts is lookup of channel_id to reflect contract
 pub const PREFIX_ACCOUNTS: &[u8] = b"accounts";
-/// Upper bound for ranging over accounts
+/// Exclusive upper bound for the `accounts` prefix. Incrementing its final byte
+/// (`s` to `t`) includes every length-prefixed account key in the range.
 const PREFIX_ACCOUNTS_UPPER_BOUND: &[u8] = b"accountt"; // spellchecker:disable-line
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
