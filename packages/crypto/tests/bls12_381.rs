@@ -81,6 +81,9 @@ struct AggregateVerifyFile {
     output: bool,
 }
 
+// These mirror the `batch_verify` test vector schema. No test consumes them yet,
+// so they are kept (and silenced) rather than dropped.
+#[allow(dead_code)]
 #[derive(serde::Deserialize, serde::Serialize)]
 struct BatchVerifyInput {
     pubkeys: Vec<String>,
@@ -88,6 +91,7 @@ struct BatchVerifyInput {
     signatures: Vec<String>,
 }
 
+#[allow(dead_code)]
 #[derive(serde::Deserialize, serde::Serialize)]
 struct BatchVerifyFile {
     input: BatchVerifyInput,

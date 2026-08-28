@@ -6,6 +6,8 @@ description = "VM bindings to run CosmWasm contracts"
 repository = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
+# Wasmer 7.3 requires Rust 1.95 or newer
+rust-version = "1.95"
 
 [features]
 default = ["iterator", "staking"]
@@ -48,9 +50,9 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 sha2 = "0.10.3"
 thiserror = { workspace = true }
-wasmer = { version = "=4.3.7", default-features = false, features = ["singlepass"] }
-wasmer-middlewares = "=4.3.7"
-wasmer-types = "=4.3.7"
+wasmer = { version = "=7.3.0", default-features = false, features = ["singlepass"] }
+wasmer-middlewares = "=7.3.0"
+wasmer-types = "=7.3.0"
 strum = { version = "0.26.2", default-features = false, features = ["derive"] }
 # For heap profiling. Only used in the "heap_profiling" example. This has to be a non-dev dependency
 # because cargo currently does not support optional dev-dependencies.
@@ -76,7 +78,7 @@ wat = "1.0"
 wasm-encoder = "0.205.0"
 clap = "4"
 leb128 = "0.2"
-target-lexicon = "0.12"
+target-lexicon = "0.13"
 time = { version = "0.3.28", features = ["formatting"] }
 
 [[bench]]

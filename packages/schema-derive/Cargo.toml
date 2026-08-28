@@ -6,6 +6,10 @@ description = "Derive macros for cosmwasm-schema"
 repository = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
+# Contracts are built with Rust 1.81 (the last version without reference-types;
+# see Taskfile.yml / devtools/check-contracts.sh), so this crate must keep
+# compiling on that version.
+rust-version = "1.81"
 
 [dependencies]
 proc-macro2 = "1"

@@ -9,6 +9,10 @@ description = "A dev-dependency for CosmWasm contracts to generate JSON Schema f
 repository = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
+# Contracts are built with Rust 1.81 (the last version without reference-types;
+# see Taskfile.yml / devtools/check-contracts.sh), so this crate must keep
+# compiling on that version.
+rust-version = "1.81"
 
 [dependencies]
 cosmwasm-schema-derive = { workspace = true }

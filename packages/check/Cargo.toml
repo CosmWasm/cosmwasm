@@ -6,6 +6,8 @@ description = "A CLI tool for verifying CosmWasm smart contracts"
 repository = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
+# Wasmer 7.3 requires Rust 1.95 or newer
+rust-version = "1.95"
 
 [dependencies]
 anyhow = "1.0.57"

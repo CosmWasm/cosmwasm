@@ -122,7 +122,8 @@ fn check_wasm_tables(module: &ParsedWasm, wasm_limits: &WasmLimits) -> VmResult<
         1 => {
             let limits = &module.tables[0];
             if let Some(maximum) = limits.maximum {
-                if maximum > wasm_limits.table_size_limit_elements() {
+                // `TableType::maximum` widened to u64 in wasmparser (table64 proposal)
+                if maximum > u64::from(wasm_limits.table_size_limit_elements()) {
                     return Err(VmError::static_validation_err(
                         "Wasm contract's first table section has a too large max limit",
                     ));
@@ -175,10 +176,7 @@ fn check_interface_version(module: &ParsedWasm) -> VmResult<()> {
         } else {
             // Exactly one interface version found
             let version_str = first_interface_version_export.as_str();
-            if SUPPORTED_INTERFACE_VERSIONS
-                .iter()
-                .any(|&v| v == version_str)
-            {
+            if SUPPORTED_INTERFACE_VERSIONS.contains(&version_str) {
                 Ok(())
             } else {
                 Err(VmError::static_validation_err(

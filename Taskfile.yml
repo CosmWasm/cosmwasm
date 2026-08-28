@@ -4,8 +4,8 @@ silent: true
 
 vars:
   COSMWASM_CHECK_VERSION: 2.3.3 # The last released version of cosmwasm-check tool before v2.3.4.
-  TOOLCHAIN: +1.81.0            # The last Rust toolchain without 'reference-types'.
-  TOOLCHAIN_CHECK: +1.82.0      # Rust toolchain for building cosmwasm-check tool
+  TOOLCHAIN: +1.95.0            # Rust toolchain for building packages (Wasmer 7.3 requires >= 1.95).
+  TOOLCHAIN_CHECK: +1.95.0      # Rust toolchain for building cosmwasm-check tool (depends on cosmwasm-vm)
 
 tasks:
 

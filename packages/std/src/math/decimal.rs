@@ -10,7 +10,7 @@ use crate::errors::{
     OverflowOperation, RoundUpOverflowError, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use crate::{Decimal256, SignedDecimal, SignedDecimal256, __internal::forward_ref_partial_eq};
+use crate::{__internal::forward_ref_partial_eq, Decimal256, SignedDecimal, SignedDecimal256};
 
 use super::Fraction;
 use super::Isqrt;
@@ -2047,11 +2047,11 @@ mod tests {
         );
         assert!(matches!(
             Decimal::MAX.checked_div(Decimal::zero()),
-            Err(CheckedFromRatioError::DivideByZero {})
+            Err(CheckedFromRatioError::DivideByZero)
         ));
         assert!(matches!(
             Decimal::MAX.checked_div(Decimal::percent(1)),
-            Err(CheckedFromRatioError::Overflow {})
+            Err(CheckedFromRatioError::Overflow)
         ));
 
         // checked rem

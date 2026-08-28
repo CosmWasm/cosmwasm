@@ -11,7 +11,7 @@ use crate::errors::{
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
-    Decimal, SignedDecimal, SignedDecimal256, Uint512, __internal::forward_ref_partial_eq,
+    __internal::forward_ref_partial_eq, Decimal, SignedDecimal, SignedDecimal256, Uint512,
 };
 
 use super::Fraction;
@@ -2111,11 +2111,11 @@ mod tests {
         );
         assert!(matches!(
             Decimal256::MAX.checked_div(Decimal256::zero()),
-            Err(CheckedFromRatioError::DivideByZero { .. })
+            Err(CheckedFromRatioError::DivideByZero)
         ));
         assert!(matches!(
             Decimal256::MAX.checked_div(Decimal256::percent(1)),
-            Err(CheckedFromRatioError::Overflow { .. })
+            Err(CheckedFromRatioError::Overflow)
         ));
 
         // checked rem

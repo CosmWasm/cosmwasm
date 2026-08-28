@@ -5,10 +5,8 @@ use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
 use cosmwasm_vm_derive::hash_function;
 use std::sync::Arc;
-use wasmer::NativeEngineExt;
-use wasmer::{
-    sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
-};
+use wasmer::sys::{BaseTunables, CompilerConfig, NativeEngineExt, Singlepass, Target};
+use wasmer::{wasmparser::Operator, Engine, Pages, WASM_PAGE_SIZE};
 
 /// WebAssembly linear memory objects have sizes measured in pages. Each page
 /// is 65536 (2^16) bytes. In WebAssembly version 1, a linear memory can have at
@@ -50,7 +48,7 @@ fn cost(operator: &Operator) -> u64 {
 
 /// Creates a compiler config using Wasmer Singlepass.
 pub fn make_compiler_config() -> impl CompilerConfig + Into<Engine> {
-    wasmer::Singlepass::new()
+    Singlepass::new()
 }
 
 /// Creates an engine without a compiler.

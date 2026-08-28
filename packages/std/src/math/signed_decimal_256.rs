@@ -12,7 +12,7 @@ use crate::errors::{
     OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use crate::{Decimal, Decimal256, Int512, SignedDecimal, __internal::forward_ref_partial_eq};
+use crate::{__internal::forward_ref_partial_eq, Decimal, Decimal256, Int512, SignedDecimal};
 
 use super::Fraction;
 use super::Int256;
@@ -2762,11 +2762,11 @@ mod tests {
         );
         assert!(matches!(
             SignedDecimal256::MAX.checked_div(SignedDecimal256::zero()),
-            Err(CheckedFromRatioError::DivideByZero {})
+            Err(CheckedFromRatioError::DivideByZero)
         ));
         assert!(matches!(
             SignedDecimal256::MAX.checked_div(SignedDecimal256::percent(1)),
-            Err(CheckedFromRatioError::Overflow {})
+            Err(CheckedFromRatioError::Overflow)
         ));
         assert_eq!(
             SignedDecimal256::percent(-88)

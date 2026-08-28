@@ -6,6 +6,10 @@ description = "Crypto bindings for CosmWasm contracts"
 repository = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
+# Contracts are built with Rust 1.81 (the last version without reference-types;
+# see Taskfile.yml / devtools/check-contracts.sh), so this crate must keep
+# compiling on that version.
+rust-version = "1.81"
 
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options

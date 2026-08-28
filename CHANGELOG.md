@@ -4,7 +4,31 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
-(empty)
+### Changed
+
+- Upgraded Wasmer from 4.3.7 to 7.3.0. This bumps the minimum supported Rust
+  version of `cosmwasm-vm` and `cosmwasm-check` to **1.95** and invalidates all
+  previously cached compiled modules (`MODULE_SERIALIZATION_VERSION` bumped to
+  `v22`, Wasmer artifact header version 7 -> 23). Contracts are still built with
+  Rust 1.81, and the crates that end up in a contract now declare that as their
+  `rust-version`.
+- The `Gatekeeper` rejects any Wasm operator it does not explicitly know about.
+  `wasmparser`'s `Operator` enum became `#[non_exhaustive]` and keeps gaining
+  operators for proposals that did not exist when the allow-list was written
+  (stack switching, wide arithmetic, custom descriptors, ...).
+- The validator's feature set is unchanged. It was translated from the old
+  `WasmFeatures` struct literal to the newer bitflags form, which is an
+  allow-list, so reference types stay disabled and Wasm modules using reference
+  types in a function signature are still rejected on upload.
+
+### Fixed
+
+- `FileSystemCache::store` now writes the compiled module to a temporary file and
+  renames it into place instead of writing to the destination directly. Modules are
+  memory-mapped when loaded, so an in-place write truncated a file that other threads
+  were mapping and made them fault with SIGBUS. This could crash a node that called
+  `store_code` for an already-cached checksum while other threads were instantiating
+  it. The race predates the Wasmer upgrade.
 
 ## [2.3.4] - 2026-06-24
 

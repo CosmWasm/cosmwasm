@@ -4,10 +4,12 @@ use std::hash::Hash;
 use std::io;
 use std::panic::catch_unwind;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::OnceLock;
 use thiserror::Error;
 
-use wasmer::{DeserializeError, Module, Target};
+use wasmer::sys::Target;
+use wasmer::{DeserializeError, Module};
 
 use cosmwasm_std::Checksum;
 
@@ -69,7 +71,11 @@ use super::CachedModule;
 ///   Module compatibility between Wasmer versions is not guaranteed.
 /// - **v21**:<br>
 ///   New version because of additional gas charging for function locals.
-const MODULE_SERIALIZATION_VERSION: &str = "v21";
+/// - **v22**:<br>
+///   New version because of Wasmer 4.3.7 -> 7.3.0 upgrade.
+///   Module compatibility between Wasmer versions is not guaranteed
+///   (the serialized artifact header version went from 7 to 23).
+const MODULE_SERIALIZATION_VERSION: &str = "v22";
 
 /// Function that actually does the heavy lifting of creating the module version discriminator.
 ///
@@ -81,7 +87,7 @@ fn raw_module_version_discriminator() -> String {
     let mut hasher = Blake2b::<U5>::new();
 
     hasher.update(MODULE_SERIALIZATION_VERSION.as_bytes());
-    hasher.update(wasmer::VERSION.as_bytes());
+    hasher.update(wasmer_types::VERSION.as_bytes());
 
     for hash in hashes {
         hasher.update(hash);
@@ -227,19 +233,61 @@ impl FileSystemCache {
     }
 
     /// Stores a serialized module to the file system. Returns the size of the serialized module.
+    ///
+    /// The module is written to a temporary file first and then renamed into place.
+    /// This matters because [`Self::load`] memory-maps the module file: writing directly
+    /// to the destination truncates it, and any thread that currently has it mapped
+    /// faults with SIGBUS as soon as it touches a page past the new (shorter) end of
+    /// file. A rename leaves the previously mapped inode intact, so readers either see
+    /// the complete old file or the complete new one, never a partially written one.
     pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<usize> {
         mkdir_p(&self.modules_path)
             .map_err(|_e| VmError::cache_err("Error creating modules directory"))?;
 
         let path = self.module_file(checksum);
-        catch_unwind(|| {
+        let temp_path = self.temporary_module_file(checksum);
+
+        let serialized = catch_unwind(|| {
             module
-                .serialize_to_file(&path)
+                .serialize_to_file(&temp_path)
                 .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {e}")))
         })
-        .map_err(|_| VmError::cache_err("Could not write module to disk"))??;
+        .map_err(|_| VmError::cache_err("Could not write module to disk"))?;
+        if let Err(err) = serialized {
+            // Best effort clean-up; the error from serializing is the interesting one.
+            let _ = fs::remove_file(&temp_path);
+            return Err(err);
+        }
+
+        if let Err(err) = fs::rename(&temp_path, &path) {
+            let _ = fs::remove_file(&temp_path);
+            // On Windows the rename fails while another thread has the destination file
+            // mapped. The file name is derived from the code checksum and compilation is
+            // deterministic, so an existing destination already holds an equivalent
+            // artifact and there is nothing left to do.
+            if !path.exists() {
+                return Err(VmError::cache_err(format!(
+                    "Error writing module to disk: {err}"
+                )));
+            }
+        }
+
         let module_size = module_size(&path)?;
         Ok(module_size)
+    }
+
+    /// Returns a process-wide unique path used to stage a module before it is renamed
+    /// to its final location. It lives in the same directory as the destination so that
+    /// the rename stays within one file system and is therefore atomic.
+    fn temporary_module_file(&self, checksum: &Checksum) -> PathBuf {
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        let unique = COUNTER.fetch_add(1, Ordering::Relaxed);
+        self.modules_path.join(format!(
+            "{}.{}.{}.tmp",
+            checksum.to_hex(),
+            std::process::id(),
+            unique
+        ))
     }
 
     /// Removes a serialized module from the file system.
@@ -367,7 +415,7 @@ mod tests {
 
         let discriminator = raw_module_version_discriminator();
         let mut globber = glob::glob(&format!(
-            "{}/{}-wasmer7/**/{}.module",
+            "{}/{}-wasmer23/**/{}.module",
             tmp_dir.path().to_string_lossy(),
             discriminator,
             checksum
@@ -413,20 +461,20 @@ mod tests {
 
     #[test]
     fn target_id_works() {
-        let triple = wasmer::Triple {
-            architecture: wasmer::Architecture::X86_64,
+        let triple = wasmer::sys::Triple {
+            architecture: wasmer::sys::Architecture::X86_64,
             vendor: target_lexicon::Vendor::Nintendo,
             operating_system: target_lexicon::OperatingSystem::Fuchsia,
             environment: target_lexicon::Environment::Gnu,
             binary_format: target_lexicon::BinaryFormat::Coff,
         };
-        let target = Target::new(triple.clone(), wasmer::CpuFeature::POPCNT.into());
+        let target = Target::new(triple.clone(), wasmer::sys::CpuFeature::POPCNT.into());
         let id = target_id(&target);
-        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE");
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-305F9BA3");
         // Changing CPU features changes the hash part
-        let target = Target::new(triple, wasmer::CpuFeature::AVX512DQ.into());
+        let target = Target::new(triple, wasmer::sys::CpuFeature::AVX512DQ.into());
         let id = target_id(&target);
-        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-93001945");
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-A2B67B18");
 
         // Works for durrect target (hashing is deterministic);
         let target = Target::default();
@@ -438,14 +486,14 @@ mod tests {
     #[test]
     fn modules_path_works() {
         let base = PathBuf::from("modules");
-        let triple = wasmer::Triple {
-            architecture: wasmer::Architecture::X86_64,
+        let triple = wasmer::sys::Triple {
+            architecture: wasmer::sys::Architecture::X86_64,
             vendor: target_lexicon::Vendor::Nintendo,
             operating_system: target_lexicon::OperatingSystem::Fuchsia,
             environment: target_lexicon::Environment::Gnu,
             binary_format: target_lexicon::BinaryFormat::Coff,
         };
-        let target = Target::new(triple, wasmer::CpuFeature::POPCNT.into());
+        let target = Target::new(triple, wasmer::sys::CpuFeature::POPCNT.into());
         let p = modules_path(&base, 17, &target);
         let discriminator = raw_module_version_discriminator();
 
@@ -453,11 +501,11 @@ mod tests {
             p.as_os_str(),
             if cfg!(windows) {
                 format!(
-                    "modules\\{discriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                    "modules\\{discriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-305F9BA3"
                 )
             } else {
                 format!(
-                    "modules/{discriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                    "modules/{discriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-305F9BA3"
                 )
             }
             .as_str()
@@ -479,6 +527,6 @@ mod tests {
     #[test]
     fn module_version_static() {
         let version = raw_module_version_discriminator();
-        assert_eq!(version, "cf5cdf0dce");
+        assert_eq!(version, "129b51fdf8");
     }
 }

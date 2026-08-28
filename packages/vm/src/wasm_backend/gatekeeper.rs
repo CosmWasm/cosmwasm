@@ -1,8 +1,6 @@
+use wasmer::sys::{FunctionMiddleware, MiddlewareError, MiddlewareReaderState, ModuleMiddleware};
 use wasmer::wasmparser::Operator;
-use wasmer::{
-    FunctionMiddleware, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
-    ModuleMiddleware,
-};
+use wasmer::LocalFunctionIndex;
 
 #[derive(Debug, Clone, Copy)]
 struct GatekeeperConfig {
@@ -69,7 +67,10 @@ impl Default for Gatekeeper {
 
 impl ModuleMiddleware for Gatekeeper {
     /// Generates a `FunctionMiddleware` for a given function.
-    fn generate_function_middleware(&self, _: LocalFunctionIndex) -> Box<dyn FunctionMiddleware> {
+    fn generate_function_middleware<'a>(
+        &self,
+        _: LocalFunctionIndex,
+    ) -> Box<dyn FunctionMiddleware<'a> + 'a> {
         Box::new(FunctionGatekeeper::new(self.config))
     }
 }
@@ -89,8 +90,8 @@ impl FunctionGatekeeper {
 /// The name used in errors
 const MIDDLEWARE_NAME: &str = "Gatekeeper";
 
-impl FunctionMiddleware for FunctionGatekeeper {
-    fn feed<'a>(
+impl<'a> FunctionMiddleware<'a> for FunctionGatekeeper {
+    fn feed(
         &mut self,
         operator: Operator<'a>,
         state: &mut MiddlewareReaderState<'a>,
@@ -739,6 +740,15 @@ impl FunctionMiddleware for FunctionGatekeeper {
                 let msg = format!("Memory control operation detected: {operator:?}. Memory control is not supported.");
                 Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
             }
+            // `Operator` is `#[non_exhaustive]` since wasmparser 0.216, and newer
+            // releases keep adding operators for proposals that did not exist when
+            // the list above was written (stack switching, wide arithmetic, custom
+            // descriptors, ...). This match is an allow-list, so anything unknown is
+            // rejected rather than silently forwarded to the compiler.
+            _ => {
+                let msg = format!("Unknown operator detected: {operator:?}. This operator is not supported.");
+                Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+            }
         }
     }
 }
@@ -748,7 +758,8 @@ mod tests {
     use super::*;
     use crate::wasm_backend::make_compiler_config;
     use std::sync::Arc;
-    use wasmer::{CompilerConfig, Module, Store};
+    use wasmer::sys::CompilerConfig;
+    use wasmer::{Module, Store};
 
     #[test]
     fn valid_wasm_instance_sanity() {
