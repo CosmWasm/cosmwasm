@@ -5,7 +5,9 @@ silent: true
 vars:
   COSMWASM_CHECK_VERSION: 2.3.3 # The last released version of cosmwasm-check tool before v2.3.4.
   TOOLCHAIN: +1.95.0            # Rust toolchain for building packages (Wasmer 7.3 requires >= 1.95).
-  TOOLCHAIN_CHECK: +1.95.0      # Rust toolchain for building cosmwasm-check tool (depends on cosmwasm-vm)
+  TOOLCHAIN_CHECK: +1.95.0      # Rust toolchain for building the in-tree cosmwasm-check (depends on cosmwasm-vm)
+  TOOLCHAIN_CHECK_RELEASED: +1.82.0 # Toolchain for the last released cosmwasm-check: it still uses Wasmer 4, which
+                                    # fails to link on rustc >= 1.90 (undefined symbol: __rust_probestack).
 
 tasks:
 
@@ -229,7 +231,7 @@ tasks:
     desc: Installs cosmwasm-check tool (released version and currently developed version)
     cmds:
       # Install recently released cosmwasm-check and rename it to cosmwasm-check-released
-      - cmd: cargo {{.TOOLCHAIN_CHECK}} install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
+      - cmd: cargo {{.TOOLCHAIN_CHECK_RELEASED}} install cosmwasm-check@{{.COSMWASM_CHECK_VERSION}} --locked --force
       - cmd: mv ~/.cargo/bin/cosmwasm-check ~/.cargo/bin/cosmwasm-check-released
       # Install currently developed version of cosmwasm-check
       - cmd: cargo {{.TOOLCHAIN_CHECK}} install --path ./packages/check --locked --force
