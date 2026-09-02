@@ -5,7 +5,7 @@ use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
 use cosmwasm_vm_derive::hash_function;
 use std::sync::Arc;
-use wasmer::sys::{BaseTunables, CompilerConfig, NativeEngineExt, Singlepass, Target};
+use wasmer::sys::{BaseTunables, CompilerConfig, NativeEngineExt, Singlepass};
 use wasmer::{wasmparser::Operator, Engine, Pages, WASM_PAGE_SIZE};
 
 /// WebAssembly linear memory objects have sizes measured in pages. Each page
@@ -56,7 +56,7 @@ pub fn make_compiler_config() -> impl CompilerConfig + Into<Engine> {
 pub fn make_runtime_engine(memory_limit: Option<Size>) -> Engine {
     let mut engine = Engine::headless();
     if let Some(limit) = memory_limit {
-        let base = BaseTunables::for_target(&Target::default());
+        let base = BaseTunables::new();
         let tunables = LimitingTunables::new(base, limit_to_pages(limit));
         engine.set_tunables(tunables);
     }
@@ -79,7 +79,7 @@ pub fn make_compiling_engine(
     compiler.push_middleware(metering);
     let mut engine: Engine = compiler.into();
     if let Some(limit) = memory_limit {
-        let base = BaseTunables::for_target(&Target::default());
+        let base = BaseTunables::new();
         let tunables = LimitingTunables::new(base, limit_to_pages(limit));
         engine.set_tunables(tunables);
     }

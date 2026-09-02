@@ -7,7 +7,7 @@ on:
   pull_request:
 
 env:
-  TOOLCHAIN_STABLE: 1.95.0 # Rust toolchain for building packages (Wasmer 7.3 requires >= 1.95).
+  TOOLCHAIN_STABLE: 1.95.0 # Rust toolchain for building packages (Wasmer 7.4 requires >= 1.95).
 
 jobs:
   format:

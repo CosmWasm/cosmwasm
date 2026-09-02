@@ -75,7 +75,11 @@ use super::CachedModule;
 ///   New version because of Wasmer 4.3.7 -> 7.3.0 upgrade.
 ///   Module compatibility between Wasmer versions is not guaranteed
 ///   (the serialized artifact header version went from 7 to 23).
-const MODULE_SERIALIZATION_VERSION: &str = "v22";
+/// - **v23**:<br>
+///   New version because of Wasmer 7.3.0 -> 7.4.0 upgrade.
+///   Module compatibility between Wasmer versions is not guaranteed
+///   (the serialized artifact header version went from 23 to 24).
+const MODULE_SERIALIZATION_VERSION: &str = "v23";
 
 /// Function that actually does the heavy lifting of creating the module version discriminator.
 ///
@@ -415,7 +419,7 @@ mod tests {
 
         let discriminator = raw_module_version_discriminator();
         let mut globber = glob::glob(&format!(
-            "{}/{}-wasmer23/**/{}.module",
+            "{}/{}-wasmer24/**/{}.module",
             tmp_dir.path().to_string_lossy(),
             discriminator,
             checksum
@@ -527,6 +531,6 @@ mod tests {
     #[test]
     fn module_version_static() {
         let version = raw_module_version_discriminator();
-        assert_eq!(version, "129b51fdf8");
+        assert_eq!(version, "f70e0dea74");
     }
 }

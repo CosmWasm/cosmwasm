@@ -651,7 +651,7 @@ version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "faf9468729b8cbcea668e36183cb69d317348c2e08e994829fb56ebfdfbaac34"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1400,7 +1400,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2693,7 +2693,7 @@ dependencies = [
  "bitflags",
  "libc",
  "mach2 0.4.2",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2817,7 +2817,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.12.1",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3600,9 +3600,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer"
-version = "7.3.0"
+version = "7.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "730e24fca748ebcd8d3d38062f4abef3b781a15d6cd16e26335bbea2222996e4"
+checksum = "33805fd63489d47c1fb3e76767a2008fefa98ebc458e95146adff523befd8787"
 dependencies = [
  "bindgen",
  "bytes",
@@ -3628,15 +3628,15 @@ dependencies = [
  "wasmer-derive",
  "wasmer-types",
  "wasmer-vm",
- "wasmparser 0.256.0",
+ "wasmparser 0.257.1",
  "windows-sys 0.61.2",
 ]
 
 [[package]]
 name = "wasmer-compiler"
-version = "7.3.0"
+version = "7.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28802416a0c18155f38e986a43116084ebb1e3d1a50ebb754b5e06807b80dc5e"
+checksum = "95bf9f8277152d10cc9a249d0bc61756d0f31ed3033a1bf901418793a6601f76"
 dependencies = [
  "addr2line 0.27.1",
  "backtrace",
@@ -3667,16 +3667,16 @@ dependencies = [
  "thiserror 2.0.20",
  "wasmer-types",
  "wasmer-vm",
- "wasmparser 0.256.0",
+ "wasmparser 0.257.1",
  "which",
  "windows-sys 0.61.2",
 ]
 
 [[package]]
 name = "wasmer-compiler-singlepass"
-version = "7.3.0"
+version = "7.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d98b941a65a00b4fbc7bccee3be16ff43346d79820ca8330c3ada6ae41b604e2"
+checksum = "8c78cbb8f92a315cb42172847c0b40c05ae6570d2cfc3673a89181ab7ef75a6e"
 dependencies = [
  "byteorder",
  "dynasm",
@@ -3696,9 +3696,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-derive"
-version = "7.3.0"
+version = "7.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec59bc30b8d1835682cfae450f42743f549b155917c749f2efab73c99ecc13a1"
+checksum = "4222904655bc2342ed35ce5b10fbd7fdbaf909dadf46c1145fade97765f54ffb"
 dependencies = [
  "proc-macro-error2",
  "proc-macro2",
@@ -3708,9 +3708,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-middlewares"
-version = "7.3.0"
+version = "7.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0d002e23f0ab22d19b96ab40be573dc7a45975f219d468e47a0f607d97b2abc"
+checksum = "9d02a64ce70385c9f6b9b51892844ecb4a843a97f8b4995ba3032bfcc8f4b195"
 dependencies = [
  "wasmer",
  "wasmer-types",
@@ -3719,9 +3719,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-types"
-version = "7.3.0"
+version = "7.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84fa66a876a87f75a996c300bc0058e5027238659634a9c5d16bb173c72af81f"
+checksum = "9994cea2164212ad627660e901b92f47fc0efc2a559661aa7ddfdfffed4d0290"
 dependencies = [
  "bytecheck",
  "crc32fast",
@@ -3740,9 +3740,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-vm"
-version = "7.3.0"
+version = "7.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6b98333506e6b848190e46e8f63efa0e38b675bd7ef3a16957db8aa9712bb14"
+checksum = "3e6ee4fd45b80b27d5a173a4e2264e204e514389f08b3db53a57ce06b55ac544"
 dependencies = [
  "backtrace",
  "bytesize",
@@ -3781,9 +3781,9 @@ dependencies = [
 
 [[package]]
 name = "wasmparser"
-version = "0.256.0"
+version = "0.257.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60bd825ffedc6cba8a642924ba7ae424afbc47811cffbcb7b92031ec24e59b4c"
+checksum = "d92fc335fb6d48f46bda1d8b26b69e28320c15ac3272208333833d6e217e2b4a"
 dependencies = [
  "bitflags",
 ]

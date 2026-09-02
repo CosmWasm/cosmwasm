@@ -6,10 +6,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Changed
 
-- Upgraded Wasmer from 4.3.7 to 7.3.0. This bumps the minimum supported Rust
+- Upgraded Wasmer from 4.3.7 to 7.4.0. This bumps the minimum supported Rust
   version of `cosmwasm-vm` and `cosmwasm-check` to **1.95** and invalidates all
   previously cached compiled modules (`MODULE_SERIALIZATION_VERSION` bumped to
-  `v22`, Wasmer artifact header version 7 -> 23). Contracts are still built with
+  `v23`, Wasmer artifact header version 7 -> 24). Contracts are still built with
   Rust 1.81, and the crates that end up in a contract now declare that as their
   `rust-version`.
 - The `Gatekeeper` rejects any Wasm operator it does not explicitly know about.
