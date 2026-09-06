@@ -782,7 +782,7 @@ impl BankQuerier {
     fn calculate_supplies(balances: &BTreeMap<String, Vec<Coin>>) -> BTreeMap<String, Uint128> {
         let mut supplies = BTreeMap::new();
 
-        let all_coins = balances.iter().flat_map(|(_, coins)| coins);
+        let all_coins = balances.values().flatten();
 
         for coin in all_coins {
             *supplies

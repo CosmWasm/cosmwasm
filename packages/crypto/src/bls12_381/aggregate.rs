@@ -9,6 +9,7 @@ const G2_POINT_SIZE: usize = 96;
 ///
 /// This is like Aggregate from <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bls-signature-05>
 /// but works for signatures as well as public keys.
+#[allow(clippy::manual_is_multiple_of)]
 pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], CryptoError> {
     if points.is_empty() {
         return Err(Aggregation::Empty.into());
@@ -51,6 +52,7 @@ pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], CryptoError> {
 ///
 /// This is like Aggregate from <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bls-signature-05>
 /// but works for signatures as well as public keys.
+#[allow(clippy::manual_is_multiple_of)]
 pub fn bls12_381_aggregate_g2(points: &[u8]) -> Result<[u8; 96], CryptoError> {
     if points.is_empty() {
         return Err(Aggregation::Empty.into());
@@ -235,7 +237,7 @@ mod tests {
 
         // infinity
         let inf = g2_from_fixed(&hex!("c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")).unwrap();
-        let sum = g2_sum(&[inf.clone()]);
+        let sum = g2_sum(std::slice::from_ref(&inf));
         assert_eq!(sum, inf);
     }
 }

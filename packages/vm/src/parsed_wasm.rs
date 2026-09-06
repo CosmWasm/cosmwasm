@@ -1,8 +1,9 @@
 use std::{fmt, mem, str};
 
 use wasmer::wasmparser::{
-    BinaryReaderError, CompositeType, Export, FuncToValidate, FunctionBody, Import, MemoryType,
-    Parser, Payload, TableType, ValidPayload, Validator, ValidatorResources, WasmFeatures,
+    BinaryReaderError, CompositeInnerType, Export, FuncToValidate, FunctionBody, Import,
+    MemoryType, Parser, Payload, TableType, ValidPayload, Validator, ValidatorResources,
+    WasmFeatures,
 };
 
 use crate::{VmError, VmResult};
@@ -78,30 +79,14 @@ pub struct ParsedWasm<'a> {
 
 impl<'a> ParsedWasm<'a> {
     pub fn parse(wasm: &'a [u8]) -> VmResult<Self> {
-        let mut validator = Validator::new_with_features(WasmFeatures {
-            mutable_global: true,
-            saturating_float_to_int: true,
-            sign_extension: true,
-            multi_value: true,
-            floats: true,
+        let features = WasmFeatures::MUTABLE_GLOBAL
+            | WasmFeatures::SATURATING_FLOAT_TO_INT
+            | WasmFeatures::SIGN_EXTENSION
+            | WasmFeatures::MULTI_VALUE
+            | WasmFeatures::FLOATS
+            | WasmFeatures::REFERENCE_TYPES;
 
-            reference_types: false,
-            bulk_memory: false,
-            simd: false,
-            relaxed_simd: false,
-            threads: false,
-            tail_call: false,
-            multi_memory: false,
-            exceptions: false,
-            memory64: false,
-            extended_const: false,
-            component_model: false,
-            function_references: false,
-            memory_control: false,
-            gc: false,
-            component_model_values: false,
-            component_model_nested_names: false,
-        });
+        let mut validator = Validator::new_with_features(features);
 
         let mut this = Self {
             version: 0,
@@ -124,7 +109,7 @@ impl<'a> ParsedWasm<'a> {
 
         for p in Parser::new(0).parse_all(wasm) {
             let p = p?;
-            // Validate the payload.
+            // validate the payload
             if let ValidPayload::Func(fv, body) = validator.payload(&p)? {
                 // Collect local variable counts defined in function.
                 let mut locals_count = 0;
@@ -153,8 +138,8 @@ impl<'a> ParsedWasm<'a> {
                         this.type_count += types.len() as u32;
 
                         for ty in types {
-                            match ty.composite_type {
-                                CompositeType::Func(ft) => {
+                            match ty.composite_type.inner {
+                                CompositeInnerType::Func(ft) => {
                                     this.type_params.push(ft.params().len());
 
                                     this.max_func_params =
@@ -162,9 +147,13 @@ impl<'a> ParsedWasm<'a> {
                                     this.max_func_results =
                                         core::cmp::max(ft.results().len(), this.max_func_results);
                                 }
-                                CompositeType::Array(_) | CompositeType::Struct(_) => {
+                                CompositeInnerType::Array(_) | CompositeInnerType::Struct(_) => {
                                     // ignoring these for now, as they are only available with the GC
-                                    // proposal and we explicitly disabled that above
+                                    // proposal, and we explicitly disabled that above
+                                }
+                                CompositeInnerType::Cont(_) => {
+                                    // ignoring this, as it is only available with the
+                                    // stack switching proposal, which we explicitly disabled above
                                 }
                             }
                         }
@@ -188,7 +177,7 @@ impl<'a> ParsedWasm<'a> {
                 }
                 Payload::Version { num, .. } => this.version = num,
                 Payload::ImportSection(i) => {
-                    this.imports = i.into_iter().collect::<Result<Vec<_>, _>>()?;
+                    this.imports = i.into_imports().collect::<Result<Vec<_>, _>>()?;
                 }
                 Payload::TableSection(t) => {
                     this.tables = t
