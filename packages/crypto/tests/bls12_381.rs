@@ -81,6 +81,7 @@ struct AggregateVerifyFile {
     output: bool,
 }
 
+#[allow(unused)]
 #[derive(serde::Deserialize, serde::Serialize)]
 struct BatchVerifyInput {
     pubkeys: Vec<String>,
@@ -88,6 +89,7 @@ struct BatchVerifyInput {
     signatures: Vec<String>,
 }
 
+#[allow(unused)]
 #[derive(serde::Deserialize, serde::Serialize)]
 struct BatchVerifyFile {
     input: BatchVerifyInput,

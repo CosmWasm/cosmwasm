@@ -318,8 +318,9 @@ mod tests {
     use core::str;
     use std::string;
 
+    #[allow(unused)]
     #[derive(Debug, thiserror::Error)]
-    enum AssertThiserrorWorks {
+    enum AssertThisErrorWorks {
         #[error(transparent)]
         Std(#[from] StdError),
     }

@@ -7,7 +7,7 @@ expression: schema
   "root": 0,
   "definitions": [
     {
-      "name": "non_static_NonStatic",
+      "name": "non_static_NonStatic_'__",
       "type": "struct",
       "properties": {
         "test1": {

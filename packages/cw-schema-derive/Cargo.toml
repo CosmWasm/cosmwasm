@@ -6,6 +6,7 @@ description = "Derive macros for cw-schema"
 repository = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
+rust-version = { workspace = true }
 
 [lib]
 proc-macro = true

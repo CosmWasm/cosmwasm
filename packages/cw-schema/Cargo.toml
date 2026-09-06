@@ -6,6 +6,7 @@ description = "A dependency for CosmWasm contracts to generate schema files for 
 repository = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
+rust-version = { workspace = true }
 
 [dependencies]
 cw-schema-derive = { workspace = true }

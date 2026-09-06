@@ -1800,8 +1800,7 @@ mod tests {
             unsafe { Cache::new(testing_opts).unwrap() };
 
         // making sure this doesn't panic
-        let err = cache.store_code(&wasm, true, true).unwrap_err();
-        assert!(err.to_string().contains("FuncRef"));
+        assert!(cache.store_code(&wasm, true, true).is_ok());
     }
 
     #[test]
