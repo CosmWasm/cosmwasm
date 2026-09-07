@@ -26,6 +26,7 @@ const HUMAN_ADDRESS_BUFFER_LENGTH: usize = 90;
 // This interface will compile into required Wasm imports.
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/CosmWasm/cosmwasm/blob/v1.0.0-beta/packages/vm/src/instance.rs#L89-L206
+#[link(wasm_import_module = "env")]
 extern "C" {
 
     fn abort(source_ptr: u32);
