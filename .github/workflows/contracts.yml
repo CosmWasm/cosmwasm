@@ -8,6 +8,7 @@ on:
 
 env:
   TOOLCHAIN_STABLE: 1.81.0              # Rust toolchain for building contracts in stable channel.
+  TOOLCHAIN_STABLE_INTEGRATION: 1.95.0  # Rust toolchain for running integration tests in stable channel.
   TOOLCHAIN_NIGHTLY: nightly-2024-07-21 # Rust toolchain for building contracts in nightly channel for version 1.81.0.
   TOOLCHAIN_CHECK: 1.95.0               # Rust toolchain for building cosmwasm-check tool.
 
@@ -42,12 +43,17 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v6
 
-      - name: Install Rust
+      - name: Install Rust for compiling contracts
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
+
+      - name: Install Rust for running integration tests
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE_INTEGRATION }}
 
       - name: Check formatting
         run: cargo +${{ env.TOOLCHAIN_STABLE }} fmt -- --check
@@ -62,7 +68,11 @@ jobs:
         run: cargo +${{ env.TOOLCHAIN_STABLE }} clippy --all-targets --tests -- -D warnings
 
       - name: Run integration tests
-        run: cargo +${{ env.TOOLCHAIN_STABLE }} test --test integration --locked
+        run: RUSTFLAGS="-A warnings" cargo +${{ env.TOOLCHAIN_STABLE_INTEGRATION }} test \
+                                           -p integration-${{ matrix.dir }} \
+                                           --test integration \
+                                           --manifest-path=integration/Cargo.toml \
+                                           --locked
 
       - name: Run schema generator
         run: cargo +${{ env.TOOLCHAIN_STABLE }} run --bin schema --locked

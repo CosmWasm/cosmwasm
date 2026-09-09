@@ -2,49 +2,46 @@
 
 set -o errexit -o nounset -o pipefail
 
-if [[ "${1:-}" == "parallel" ]]; then
-  parallel=1
-else
-  parallel=0
-fi
-
 msg() {
-  if (( !parallel )); then
-    printf "\033[1;34m%s\033[0m \033[1;32m%s\e[0m\n" "$1" "$2"
-  fi
+  printf "\033[1;34m%s\033[0m \033[1;32m%s\e[0m\n" "$1" "$2"
 }
 
 check_contract() {
   (
     contract_dir=$1
-    contract="$(basename "$contract_dir" | tr - _)"
+    package="$(basename "$contract_dir")"
+    contract="$(echo "$package" | tr - _)"
     wasm="./target/wasm32-unknown-unknown/release/$contract.wasm"
 
     msg "CHANGE DIRECTORY" "$contract_dir"
     cd "$contract_dir" || exit 1
 
-    msg "CHECK FORMATTING" "$contract"
+    msg "CHECK FORMATTING +$2" "$contract"
     cargo +"$2" fmt -- --check
 
-    msg "RUN UNIT TESTS" "$contract"
+    msg "RUN UNIT TESTS +$2" "$contract"
     cargo +"$2" test --lib --locked
 
-    msg "BUILD WASM" "$contract"
-    RUSTFLAGS="$3" cargo +"$2" build --release --lib --locked --target wasm32-unknown-unknown
+    msg "BUILD WASM +$2" "$contract"
+    RUSTFLAGS="$4" cargo +"$2" build --release --lib --locked --target wasm32-unknown-unknown
 
-    msg "RUN LINTER" "$contract"
+    msg "RUN LINTER +$2" "$contract"
     cargo +"$2" clippy --all-targets --tests --locked -- -D warnings
 
-    msg "RUN INTEGRATION TESTS" "$contract"
-    cargo +"$2" test --test integration --locked
+    msg "RUN INTEGRATION TESTS +$3" "$contract"
+    RUSTFLAGS="-A warnings" cargo +"$3" test \
+                                  -p integration-"$package" \
+                                  --test integration \
+                                  --manifest-path=integration/Cargo.toml \
+                                  --locked
 
-    msg "GENERATE SCHEMA" "$contract"
+    msg "GENERATE SCHEMA +$2" "$contract"
     cargo +"$2" run --bin schema --locked
 
     msg "ENSURE SCHEMA IS UP-TO-DATE" "$contract"
     git diff --quiet ./schema
 
-    msg "cosmwasm-check (develop)" "$contract"
+    msg "COSMWASM CHECK" "$contract"
     cosmwasm-check "$wasm"
   )
 }
@@ -69,25 +66,18 @@ contracts_nightly=(
   contracts/floaty
 )
 
-toolchain_stable=1.81.0 # The last Rust compiler version without 'reference-types'.
-rustflags_stable=""
+toolchain_stable=1.81.0              # last Rust toolchain without 'reference-types'
+toolchain_stable_integration=1.95.0  # Rust toolchain for running integration tests
+rustflags_stable=""                  # no additional Rust flags needed
 
-toolchain_nightly=nightly-2024-07-21 # The last nightly version for 1.81.0
-rustflags_nightly="-C target-feature=+nontrapping-fptoint"
+for dir in "${contracts_stable[@]}"; do
+  check_contract "$dir" "$toolchain_stable" "$toolchain_stable_integration" "$rustflags_stable"
+done
 
-if (( parallel )); then
-  for dir in "${contracts_stable[@]}"; do
-    check_contract "$dir" "$toolchain_stable" "$rustflags_stable" > /dev/null &
-  done
-  for dir in "${contracts_nightly[@]}"; do
-    check_contract "$dir" "$toolchain_nightly" "$rustflags_nightly" > /dev/null &
-  done
-  wait
-else
-  for dir in "${contracts_stable[@]}"; do
-    check_contract "$dir" "$toolchain_stable" "$rustflags_stable"
-  done
-  for dir in "${contracts_nightly[@]}"; do
-    check_contract "$dir" "$toolchain_nightly" "$rustflags_nightly"
-  done
-fi
+toolchain_nightly=nightly-2024-07-21                       # last Rust nightly version for 1.81.0
+toolchain_nightly_integration=nightly-2026-02-28           # last Rust nightly version for 1.95.0
+rustflags_nightly="-C target-feature=+nontrapping-fptoint" # additional Rust flags
+
+for dir in "${contracts_nightly[@]}"; do
+  check_contract "$dir" "$toolchain_nightly" "$toolchain_nightly_integration" "$rustflags_nightly"
+done
