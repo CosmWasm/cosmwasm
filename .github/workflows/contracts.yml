@@ -100,22 +100,22 @@ jobs:
           components: clippy, rustfmt
 
       - name: Check formatting
-        run: cargo fmt -- --check
+        run: cargo +${{ env.TOOLCHAIN_NIGHTLY }} fmt -- --check
 
       - name: Run unit tests
-        run: cargo test --lib --locked
+        run: cargo +${{ env.TOOLCHAIN_NIGHTLY }} test --lib --locked
 
       - name: Build WASM binary
-        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
+        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo +${{ env.TOOLCHAIN_NIGHTLY }} build --release --lib --locked --target wasm32-unknown-unknown
 
       - name: Run linter
-        run: cargo clippy --all-targets --tests -- -D warnings
+        run: cargo +${{ env.TOOLCHAIN_NIGHTLY }} clippy --all-targets --tests -- -D warnings
 
       - name: Run integration tests
-        run: cargo test --test integration --locked
+        run: cargo +${{ env.TOOLCHAIN_NIGHTLY }} test --test integration --locked
 
       - name: Run schema generator
-        run: cargo run --bin schema --locked
+        run: cargo +${{ env.TOOLCHAIN_NIGHTLY }} run --bin schema --locked
 
       - name: Ensure schemas are up-to-date
         run: git diff --quiet ./schema
@@ -144,7 +144,7 @@ jobs:
           toolchain: ${{ env.TOOLCHAIN_CHECK }}
 
       - name: Install currently developed cosmwasm-check
-        run: cargo install --path ./packages/check --force --locked
+        run: cargo +${{ env.TOOLCHAIN_CHECK }} install --path ./packages/check --force --locked
 
       - uses: actions/download-artifact@v7
         with:
