@@ -342,6 +342,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c185f4a3e1591bcd8942844fb73661fece7630ffca7189283060d7e5332eb581"
 
 [[package]]
+name = "cosmwasm-core"
+version = "2.2.10-rc.3"
+
+[[package]]
 name = "cosmwasm-crypto"
 version = "2.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -351,7 +355,29 @@ dependencies = [
  "ark-ec",
  "ark-ff",
  "ark-serialize",
- "cosmwasm-core",
+ "cosmwasm-core 2.2.9",
+ "curve25519-dalek",
+ "digest",
+ "ecdsa",
+ "ed25519-zebra",
+ "k256",
+ "num-traits",
+ "p256",
+ "rand_core",
+ "rayon",
+ "sha2",
+ "thiserror",
+]
+
+[[package]]
+name = "cosmwasm-crypto"
+version = "2.2.10-rc.3"
+dependencies = [
+ "ark-bls12-381",
+ "ark-ec",
+ "ark-ff",
+ "ark-serialize",
+ "cosmwasm-core 2.2.10-rc.3",
  "curve25519-dalek",
  "digest",
  "ecdsa",
@@ -377,10 +403,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-derive"
+version = "2.2.10-rc.3"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
+]
+
+[[package]]
 name = "cosmwasm-schema"
-version = "2.2.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "582bd7e39ec3ab938cafa72537eee8cf22bf97aa0b5db0ee2acf8b98c4bf54b8"
+version = "2.2.10-rc.3"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -391,9 +424,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "2.2.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0828049a198ad42bf79987b543e125db4a80a320fa689634905045b8f989598f"
+version = "2.2.10-rc.3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -409,9 +440,31 @@ dependencies = [
  "base64",
  "bech32",
  "bnum",
- "cosmwasm-core",
- "cosmwasm-crypto",
- "cosmwasm-derive",
+ "cosmwasm-core 2.2.9",
+ "cosmwasm-crypto 2.2.9",
+ "cosmwasm-derive 2.2.9",
+ "derive_more",
+ "hex",
+ "rand_core",
+ "rmp-serde",
+ "schemars",
+ "serde",
+ "serde-json-wasm",
+ "sha2",
+ "static_assertions",
+ "thiserror",
+]
+
+[[package]]
+name = "cosmwasm-std"
+version = "2.2.10-rc.3"
+dependencies = [
+ "base64",
+ "bech32",
+ "bnum",
+ "cosmwasm-core 2.2.10-rc.3",
+ "cosmwasm-crypto 2.2.10-rc.3",
+ "cosmwasm-derive 2.2.10-rc.3",
  "derive_more",
  "hex",
  "rand_core",
@@ -434,9 +487,9 @@ dependencies = [
  "blake2",
  "bytes",
  "clru",
- "cosmwasm-core",
- "cosmwasm-crypto",
- "cosmwasm-std",
+ "cosmwasm-core 2.2.9",
+ "cosmwasm-crypto 2.2.9",
+ "cosmwasm-std 2.2.9",
  "cosmwasm-vm-derive",
  "crc32fast",
  "derivative",
@@ -1266,7 +1319,7 @@ version = "0.0.0"
 dependencies = [
  "backtrace",
  "cosmwasm-schema",
- "cosmwasm-std",
+ "cosmwasm-std 2.2.10-rc.3",
  "cosmwasm-vm",
  "schemars",
  "serde",
