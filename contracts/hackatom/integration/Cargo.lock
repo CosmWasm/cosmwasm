@@ -507,11 +507,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-core"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -533,7 +533,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -542,7 +542,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -553,7 +553,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -562,7 +562,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
  "base64",
  "bech32",
@@ -584,7 +584,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
  "bech32",
  "blake2",
@@ -612,7 +612,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm-derive"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
  "blake2",
  "proc-macro2",
@@ -2936,9 +2936,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer"
-version = "7.4.0"
+version = "7.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33805fd63489d47c1fb3e76767a2008fefa98ebc458e95146adff523befd8787"
+checksum = "91f52ac63ab73e1d9309111558d4014e1311fd5ee0eba488b1e0d524e2eda309"
 dependencies = [
  "bindgen",
  "bytes",
@@ -2970,13 +2970,14 @@ dependencies = [
 
 [[package]]
 name = "wasmer-compiler"
-version = "7.4.0"
+version = "7.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95bf9f8277152d10cc9a249d0bc61756d0f31ed3033a1bf901418793a6601f76"
+checksum = "5d9dda771f82f7858491e4299438e91af95750a3bee8f0fd44042d45fc21aafa"
 dependencies = [
  "addr2line 0.27.1",
  "backtrace",
  "bytes",
+ "cc",
  "crossbeam-channel",
  "enum-iterator",
  "enumset",
@@ -3010,9 +3011,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-compiler-singlepass"
-version = "7.4.0"
+version = "7.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c78cbb8f92a315cb42172847c0b40c05ae6570d2cfc3673a89181ab7ef75a6e"
+checksum = "7df502a8f1193f0752752d838ade8e461b40a12135ef91ca3387d40254dc1614"
 dependencies = [
  "byteorder",
  "dynasm",
@@ -3032,9 +3033,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-derive"
-version = "7.4.0"
+version = "7.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4222904655bc2342ed35ce5b10fbd7fdbaf909dadf46c1145fade97765f54ffb"
+checksum = "e40b4f20dfe6db6719dc7da3f390285336874e579d4a00820c50d8cf5f14d4f4"
 dependencies = [
  "proc-macro-error2",
  "proc-macro2",
@@ -3044,9 +3045,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-middlewares"
-version = "7.4.0"
+version = "7.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d02a64ce70385c9f6b9b51892844ecb4a843a97f8b4995ba3032bfcc8f4b195"
+checksum = "b9b15a357a12547e7ed61db71c7c3c63364969145216ea4d4688135703ff28dc"
 dependencies = [
  "wasmer",
  "wasmer-types",
@@ -3055,9 +3056,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-types"
-version = "7.4.0"
+version = "7.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9994cea2164212ad627660e901b92f47fc0efc2a559661aa7ddfdfffed4d0290"
+checksum = "513f747b710d87f6eeb818db89bcc4e639a517b2443105237b4169358ddd534b"
 dependencies = [
  "bytecheck",
  "crc32fast",
@@ -3076,9 +3077,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-vm"
-version = "7.4.0"
+version = "7.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e6ee4fd45b80b27d5a173a4e2264e204e514389f08b3db53a57ce06b55ac544"
+checksum = "a2e24249e8591a49caf604cf05a5feae720b6b4008deebb9c9fd08ee3999493b"
 dependencies = [
  "backtrace",
  "bytesize",

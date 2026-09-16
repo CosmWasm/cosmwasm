@@ -206,7 +206,7 @@ checksum = "5f6ceb8624260d0d3a67c4e1a1d43fc7e9406720afbcb124521501dd138f90aa"
 
 [[package]]
 name = "cosmwasm-core"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 
 [[package]]
 name = "cosmwasm-crypto"
@@ -233,13 +233,13 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
  "ark-ff",
  "ark-serialize",
- "cosmwasm-core 2.3.5-rc.2",
+ "cosmwasm-core 2.3.5-rc.3",
  "curve25519-dalek",
  "digest",
  "ecdsa",
@@ -266,7 +266,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -288,9 +288,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
- "cosmwasm-schema-derive 2.3.5-rc.2",
+ "cosmwasm-schema-derive 2.3.5-rc.3",
  "schemars",
  "serde",
  "serde_json",
@@ -310,7 +310,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -342,14 +342,14 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "2.3.5-rc.2"
+version = "2.3.5-rc.3"
 dependencies = [
  "base64",
  "bech32",
  "bnum",
- "cosmwasm-core 2.3.5-rc.2",
- "cosmwasm-crypto 2.3.5-rc.2",
- "cosmwasm-derive 2.3.5-rc.2",
+ "cosmwasm-core 2.3.5-rc.3",
+ "cosmwasm-crypto 2.3.5-rc.3",
+ "cosmwasm-derive 2.3.5-rc.3",
  "derive_more",
  "hex",
  "rand_core",
@@ -679,8 +679,8 @@ dependencies = [
 name = "inner-contract"
 version = "0.0.0"
 dependencies = [
- "cosmwasm-schema 2.3.5-rc.2",
- "cosmwasm-std 2.3.5-rc.2",
+ "cosmwasm-schema 2.3.5-rc.3",
+ "cosmwasm-std 2.3.5-rc.3",
  "cw-storage-plus",
  "cw2",
  "rmp",
@@ -733,8 +733,8 @@ checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 name = "nested-contracts"
 version = "0.0.0"
 dependencies = [
- "cosmwasm-schema 2.3.5-rc.2",
- "cosmwasm-std 2.3.5-rc.2",
+ "cosmwasm-schema 2.3.5-rc.3",
+ "cosmwasm-std 2.3.5-rc.3",
  "cw-storage-plus",
  "cw2",
  "inner-contract",

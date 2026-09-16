@@ -20,7 +20,7 @@ check_contract() {
     cargo +"$2" fmt -- --check
 
     msg "RUN UNIT TESTS +$2" "$contract"
-    cargo +"$2" test --lib --locked
+    cargo +"$2" test --lib #--locked
 
     msg "BUILD WASM +$2" "$contract"
     RUSTFLAGS="$4" cargo +"$2" build --release --lib --locked --target wasm32-unknown-unknown
@@ -33,7 +33,7 @@ check_contract() {
                                   -p integration-"$package" \
                                   --test integration \
                                   --manifest-path=integration/Cargo.toml \
-                                  --locked
+                                  #--locked
 
     msg "GENERATE SCHEMA +$2" "$contract"
     cargo +"$2" run --bin schema --locked

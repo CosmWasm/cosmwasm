@@ -32,32 +32,26 @@ tasks:
       - task: install-cosmwasm-check
       - cmd: ./devtools/check-contracts.sh
 
-  check-contracts-parallel:
-    desc: Performs checks in parallel for all contracts
-    cmds:
-      - task: install-cosmwasm-check
-      - cmd: ./devtools/check-contracts.sh parallel
-
   check-contracts-fast:
     desc: Performs checks for all contracts without reinstalling cosmwasm-check tool
     cmds:
       - cmd: ./devtools/check-contracts.sh
-
-  check-contracts-fast-parallel:
-    desc: Performs checks in parallel for all contracts without reinstalling cosmwasm-check tool
-    cmds:
-      - cmd: ./devtools/check-contracts.sh parallel
 
   clean:
     desc: Removes compiled artifacts for crates
     cmds:
       - cmd: cargo clean
 
+  clean-contracts:
+    desc: Removes all compiled artifacts for contracts
+    cmds:
+      - cmd: ./devtools/clean-contracts.sh
+
   clean-all:
     desc: Removes all compiled artifacts (crates and contracts)
     cmds:
       - task: clean
-      - cmd: ./devtools/clean-contracts.sh
+      - task: clean-contracts
 
   clippy:
     desc: Runs linter
