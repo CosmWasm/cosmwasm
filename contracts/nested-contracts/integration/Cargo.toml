@@ -11,8 +11,8 @@ path = "../src/lib.rs"
 
 [dependencies]
 nested-contracts = { path = ".." }
-cosmwasm-schema = { path = "../../../packages/schema" }
-cosmwasm-std = { path = "../../../packages/std", features = ["cosmwasm_2_2"] }
+cosmwasm-schema = { version = "=2.3.5-rc.4" }
+cosmwasm-std = { version = "=2.3.5-rc.4", features = ["cosmwasm_2_2"] }
 cw-storage-plus = "2.0.0"
 cw2 = "2.0.0"
 schemars = "0.8.16"
@@ -21,4 +21,4 @@ thiserror = { version = "1.0.58" }
 inner-contract = { path = "../inner-contract" }
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../../packages/vm" }
+cosmwasm-vm = { version = "=2.3.5-rc.4" }

@@ -11,11 +11,11 @@ path = "../src/lib.rs"
 
 [dependencies]
 staking = { path = ".." }
-cosmwasm-schema = { path = "../../../packages/schema" }
-cosmwasm-std = { path = "../../../packages/std", default-features = false, features = ["staking", "std"] }
+cosmwasm-schema = { version = "=2.3.5-rc.4" }
+cosmwasm-std = { version = "=2.3.5-rc.4", default-features = false, features = ["staking", "std"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = "0.8.2"
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../../packages/vm", default-features = false, features = ["staking"] }
+cosmwasm-vm = { version = "=2.3.5-rc.4", default-features = false, features = ["staking"] }
