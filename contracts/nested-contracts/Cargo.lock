@@ -200,15 +200,15 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 
 [[package]]
 name = "cosmwasm-core"
-version = "2.2.9"
+version = "2.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c185f4a3e1591bcd8942844fb73661fece7630ffca7189283060d7e5332eb581"
+checksum = "0e69421e413b23efb64311ffb6663d999a7b28df82cc88e38582acbdb099533a"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "2.2.9"
+version = "2.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0079badc4b4ee0d2e489caa74b7f0b020adf24f59e21613320add4180c8eb17"
+checksum = "5632e0b408ccc285b3d08310eabbc5153411af5666655e821ec3f4334ceba552"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -230,9 +230,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "2.2.9"
+version = "2.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "927e988457956a2c1ee28cb112c8b664e0d16a83d43d737ea62f77cfa66e733a"
+checksum = "4a0b614d82a528898181cd3d242bbf42b6421f306a3176e2ddb4cb3b575d6bec"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -241,9 +241,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.2.9"
+version = "2.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "582bd7e39ec3ab938cafa72537eee8cf22bf97aa0b5db0ee2acf8b98c4bf54b8"
+checksum = "dc1c9d10c0fd6f78f8b92befefa7938fe6b3bcfafeeb0274dbd3221a8167e5b9"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -254,9 +254,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "2.2.9"
+version = "2.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0828049a198ad42bf79987b543e125db4a80a320fa689634905045b8f989598f"
+checksum = "1fbd37e98a9fd8b4339e5926f878db46ad4480f43de32a41f695e5eb8cb82110"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -265,9 +265,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "2.2.9"
+version = "2.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f4e5be1b1a53c436c3141384a26a28b5a1ef73f11feb62100def0c03eba294c"
+checksum = "2ba17752202ff71effaced8a94dcfac95d98142c7995e73eb87a1a0982cdd050"
 dependencies = [
  "base64",
  "bech32",
