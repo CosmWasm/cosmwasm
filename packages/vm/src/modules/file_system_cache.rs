@@ -7,7 +7,8 @@ use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use thiserror::Error;
 
-use wasmer::{DeserializeError, Module, Target};
+use wasmer::{DeserializeError, Module};
+use wasmer_types::target::Target;
 
 use cosmwasm_std::Checksum;
 
@@ -24,7 +25,7 @@ use super::CachedModule;
 /// This is a value you can manually modify to the cache.
 /// You normally _do not_ need to change this value yourself.
 ///
-/// Cases where you might need to update it yourself, is things like when the memory layout of some types in Rust [std] changes.
+/// Cases where you might need to update it yourself include changes in the memory layout of some types in Rust [std].
 ///
 /// ---
 ///
@@ -52,7 +53,7 @@ use super::CachedModule;
 ///   [issues with module deserialization](https://github.com/CosmWasm/wasmvm/issues/426).
 ///   To work around this, the version was bumped to "v5" here to invalidate these corrupt caches.
 /// - **v6**:<br>
-///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identier for the modules.
+///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identifier for the modules.
 /// - **v7**:<br>
 ///   New version because of Wasmer 2.3.0 -> 4 upgrade.
 ///   This internally changes how rkyv is used for module serialization, making compatibility unlikely.
@@ -69,7 +70,10 @@ use super::CachedModule;
 ///   Module compatibility between Wasmer versions is not guaranteed.
 /// - **v21**:<br>
 ///   New version because of additional gas charging for function locals.
-const MODULE_SERIALIZATION_VERSION: &str = "v21";
+/// - **v22**:<br>
+///   New version because of Wasmer 5.0.6 -> 7.3.0 upgrade.
+///   Module compatibility between Wasmer versions is not guaranteed.
+const MODULE_SERIALIZATION_VERSION: &str = "v22";
 
 /// Function that actually does the heavy lifting of creating the module version discriminator.
 ///
@@ -81,7 +85,7 @@ fn raw_module_version_discriminator() -> String {
     let mut hasher = Blake2b::<U5>::new();
 
     hasher.update(MODULE_SERIALIZATION_VERSION.as_bytes());
-    hasher.update(wasmer::VERSION.as_bytes());
+    hasher.update(wasmer_types::VERSION.as_bytes());
 
     for hash in hashes {
         hasher.update(hash);
@@ -270,7 +274,7 @@ fn module_size(module_path: &Path) -> VmResult<usize> {
 }
 
 /// Creates an identifier for the Wasmer `Target` that is used for
-/// cache invalidation. The output is reasonable human friendly to be useable
+/// cache invalidation. The output is reasonable human friendly to be usable
 /// in file path component.
 fn target_id(target: &Target) -> String {
     // Use a custom Hasher implementation to avoid randomization.
@@ -367,9 +371,10 @@ mod tests {
 
         let discriminator = raw_module_version_discriminator();
         let mut globber = glob::glob(&format!(
-            "{}/{}-wasmer7/**/{}.module",
+            "{}/{}-wasmer{}/**/{}.module",
             tmp_dir.path().to_string_lossy(),
             discriminator,
+            current_wasmer_module_version(),
             checksum
         ))
         .expect("Failed to read glob pattern");
@@ -413,22 +418,22 @@ mod tests {
 
     #[test]
     fn target_id_works() {
-        let triple = wasmer::Triple {
-            architecture: wasmer::Architecture::X86_64,
-            vendor: target_lexicon::Vendor::Nintendo,
-            operating_system: target_lexicon::OperatingSystem::Fuchsia,
-            environment: target_lexicon::Environment::Gnu,
-            binary_format: target_lexicon::BinaryFormat::Coff,
+        let triple = wasmer::sys::Triple {
+            architecture: wasmer::sys::Architecture::X86_64,
+            vendor: wasmer_types::target::Vendor::Nintendo,
+            operating_system: wasmer_types::target::OperatingSystem::Fuchsia,
+            environment: wasmer_types::target::Environment::Gnu,
+            binary_format: wasmer_types::target::BinaryFormat::Coff,
         };
-        let target = Target::new(triple.clone(), wasmer::CpuFeature::POPCNT.into());
+        let target = Target::new(triple.clone(), wasmer::sys::CpuFeature::POPCNT.into());
         let id = target_id(&target);
-        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE");
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-305F9BA3");
         // Changing CPU features changes the hash part
-        let target = Target::new(triple, wasmer::CpuFeature::AVX512DQ.into());
+        let target = Target::new(triple, wasmer::sys::CpuFeature::AVX512DQ.into());
         let id = target_id(&target);
-        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-93001945");
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-A2B67B18");
 
-        // Works for durrect target (hashing is deterministic);
+        // Works for direct target (hashing is deterministic);
         let target = Target::default();
         let id1 = target_id(&target);
         let id2 = target_id(&target);
@@ -438,14 +443,14 @@ mod tests {
     #[test]
     fn modules_path_works() {
         let base = PathBuf::from("modules");
-        let triple = wasmer::Triple {
-            architecture: wasmer::Architecture::X86_64,
-            vendor: target_lexicon::Vendor::Nintendo,
-            operating_system: target_lexicon::OperatingSystem::Fuchsia,
-            environment: target_lexicon::Environment::Gnu,
-            binary_format: target_lexicon::BinaryFormat::Coff,
+        let triple = wasmer::sys::Triple {
+            architecture: wasmer::sys::Architecture::X86_64,
+            vendor: wasmer_types::target::Vendor::Nintendo,
+            operating_system: wasmer_types::target::OperatingSystem::Fuchsia,
+            environment: wasmer_types::target::Environment::Gnu,
+            binary_format: wasmer_types::target::BinaryFormat::Coff,
         };
-        let target = Target::new(triple, wasmer::CpuFeature::POPCNT.into());
+        let target = Target::new(triple, wasmer::sys::CpuFeature::POPCNT.into());
         let p = modules_path(&base, 17, &target);
         let discriminator = raw_module_version_discriminator();
 
@@ -453,11 +458,11 @@ mod tests {
             p.as_os_str(),
             if cfg!(windows) {
                 format!(
-                    "modules\\{discriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                    "modules\\{discriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-305F9BA3"
                 )
             } else {
                 format!(
-                    "modules/{discriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                    "modules/{discriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-305F9BA3"
                 )
             }
             .as_str()
@@ -479,6 +484,6 @@ mod tests {
     #[test]
     fn module_version_static() {
         let version = raw_module_version_discriminator();
-        assert_eq!(version, "cf5cdf0dce");
+        assert_eq!(version, "3858fb5318");
     }
 }

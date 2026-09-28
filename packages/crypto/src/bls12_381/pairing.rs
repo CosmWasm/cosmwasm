@@ -15,6 +15,7 @@ use rayon::{
     slice::ParallelSlice,
 };
 
+#[allow(clippy::manual_is_multiple_of)]
 pub fn bls12_381_pairing_equality(
     ps: &[u8],
     qs: &[u8],
