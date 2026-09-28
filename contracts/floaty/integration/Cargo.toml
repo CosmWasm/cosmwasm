@@ -11,11 +11,11 @@ path = "../src/lib.rs"
 
 [dependencies]
 floaty = { path = ".." }
-cosmwasm-schema = { version = "=2.3.5-rc.4" }
-cosmwasm-std = { version = "=2.3.5-rc.4" }
+cosmwasm-schema = { version = "=2.3.5" }
+cosmwasm-std = { version = "=2.3.5" }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 rand_chacha = { version = "0.3.1", default-features = false }
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=2.3.5-rc.4", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { version = "=2.3.5", default-features = false, features = ["iterator"] }
