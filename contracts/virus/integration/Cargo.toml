@@ -11,11 +11,11 @@ path = "../src/lib.rs"
 
 [dependencies]
 virus = { path = ".." }
-cosmwasm-schema = { version = "=3.0.10-rc.4" }
-cosmwasm-std = { version = "=3.0.10-rc.4", features = ["cosmwasm_1_2"] }
+cosmwasm-schema = { version = "=3.0.10" }
+cosmwasm-std = { version = "=3.0.10", features = ["cosmwasm_1_2"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=3.0.10-rc.4", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { version = "=3.0.10", default-features = false, features = ["iterator"] }
