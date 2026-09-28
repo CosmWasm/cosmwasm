@@ -9,8 +9,8 @@ use core::str::FromStr;
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
-    CheckedMultiplyRatioError, Int128, Int256, Int512, Uint128, Uint256, Uint512, Uint64,
-    __internal::forward_ref_partial_eq,
+    __internal::forward_ref_partial_eq, CheckedMultiplyRatioError, Int128, Int256, Int512, Uint128,
+    Uint256, Uint512, Uint64,
 };
 
 use super::conversion::{

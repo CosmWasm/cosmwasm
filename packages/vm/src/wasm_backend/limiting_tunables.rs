@@ -1,11 +1,10 @@
 use std::ptr::NonNull;
-
 use wasmer::{
-    vm::{
-        MemoryError, MemoryStyle, TableStyle, VMMemory, VMMemoryDefinition, VMTable,
-        VMTableDefinition,
+    sys::{
+        vm::{VMMemory, VMMemoryDefinition, VMTable, VMTableDefinition},
+        Tunables,
     },
-    MemoryType, Pages, TableType, Tunables,
+    MemoryError, MemoryStyle, MemoryType, Pages, TableStyle, TableType,
 };
 
 /// A custom tunables that allows you to set a memory limit.
@@ -38,7 +37,7 @@ impl<T: Tunables> LimitingTunables<T> {
         adjusted
     }
 
-    /// Ensures the a given memory type does not exceed the memory limit.
+    /// Ensures a given memory type does not exceed the memory limit.
     /// Call this after adjusting the memory.
     fn validate_memory(&self, ty: &MemoryType) -> Result<(), MemoryError> {
         if ty.minimum > self.limit {
@@ -128,12 +127,12 @@ impl<T: Tunables> Tunables for LimitingTunables<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wasmer::{sys::BaseTunables, Target};
+    use wasmer::sys::BaseTunables;
 
     #[test]
     fn adjust_memory_works() {
         let limit = Pages(12);
-        let limiting = LimitingTunables::new(BaseTunables::for_target(&Target::default()), limit);
+        let limiting = LimitingTunables::new(BaseTunables::new(), limit);
 
         // No maximum
         let requested = MemoryType::new(3, None, true);
@@ -169,7 +168,7 @@ mod tests {
     #[test]
     fn validate_memory_works() {
         let limit = Pages(12);
-        let limiting = LimitingTunables::new(BaseTunables::for_target(&Target::default()), limit);
+        let limiting = LimitingTunables::new(BaseTunables::new(), limit);
 
         // Maximum smaller than limit
         let memory = MemoryType::new(3, Some(7), true);

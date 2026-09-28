@@ -9,7 +9,7 @@ use core::str::FromStr;
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
-    Int128, Int256, Int64, Uint128, Uint256, Uint512, Uint64, __internal::forward_ref_partial_eq,
+    __internal::forward_ref_partial_eq, Int128, Int256, Int64, Uint128, Uint256, Uint512, Uint64,
 };
 
 /// Used internally - we don't want to leak this type since we might change
