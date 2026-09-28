@@ -11,11 +11,11 @@ path = "../src/lib.rs"
 
 [dependencies]
 burner = { path = ".." }
-cosmwasm-schema = { path = "../../../packages/schema" }
-cosmwasm-std = { path = "../../../packages/std", features = ["cosmwasm_1_4", "iterator"] }
+cosmwasm-schema = { version = "=2.2.10-rc.4" }
+cosmwasm-std = { version = "=2.2.10-rc.4", features = ["cosmwasm_1_4", "iterator"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0
-cosmwasm-vm = { path = "../../../packages/vm", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { version = "=2.2.10-rc.4", default-features = false, features = ["iterator"] }
