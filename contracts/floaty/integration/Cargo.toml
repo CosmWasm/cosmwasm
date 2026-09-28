@@ -1,0 +1,22 @@
+[package]
+name = "integration-floaty"
+version = "0.0.0"
+authors = ["Dariusz Depta <DariuszDepta@users.noreply.github.com>"]
+edition = "2021"
+publish = false
+license = "Apache-2.0"
+
+[lib]
+path = "../src/lib.rs"
+
+[dependencies]
+floaty = { path = ".." }
+cosmwasm-schema = { path = "../../../packages/schema" }
+cosmwasm-std = { path = "../../../packages/std" }
+schemars = "0.8.12"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+rand_chacha = { version = "0.3.1", default-features = false }
+
+[dev-dependencies]
+cosmwasm-vm = { path = "../../../packages/vm", default-features = false, features = ["iterator"] }
+backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0

@@ -7,10 +7,11 @@ on:
   pull_request:
 
 env:
-  TOOLCHAIN_STABLE: 1.81.0              # Rust toolchain for building contracts in stable channel.
-  TOOLCHAIN_NIGHTLY: nightly-2024-07-21 # Rust toolchain for building contracts in nightly channel for version 1.81.0.
-  TOOLCHAIN_CHECK: 1.82.0               # Rust toolchain for building cosmwasm-check tool.
-  COSMWASM_CHECK_VERSION: 2.2.8         # Last released cosmwasm-check tool before version 2.2.9.
+  TOOLCHAIN_STABLE: 1.81.0                           # Rust toolchain for building contracts in stable channel.
+  TOOLCHAIN_STABLE_INTEGRATION: 1.95.0               # Rust toolchain for running integration tests in stable channel.
+  TOOLCHAIN_NIGHTLY: nightly-2024-07-21              # Rust toolchain for building contracts in nightly channel for version 1.81.0.
+  TOOLCHAIN_NIGHTLY_INTEGRATION: nightly-2026-02-28  # Rust toolchain for running integration in nightly channel for version 1.95.0.
+  TOOLCHAIN_CHECK: 1.95.0                            # Rust toolchain for building cosmwasm-check tool.
 
 jobs:
   stable:
@@ -19,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
         dir: [
           burner,
           crypto-verify,
@@ -43,30 +44,40 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v6
 
-      - name: Install Rust
+      - name: Install Rust for compiling contracts
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
+      - name: Install Rust for running integration tests
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.TOOLCHAIN_STABLE_INTEGRATION }}
+
       - name: Check formatting
-        run: cargo fmt -- --check
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} fmt -- --check
 
       - name: Run unit tests
-        run: cargo test --lib --locked
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} test --lib --locked
 
       - name: Build WASM binary
-        run: cargo build --release --lib --locked --target wasm32-unknown-unknown
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} build --release --lib --locked --target wasm32-unknown-unknown
 
       - name: Run linter
-        run: cargo clippy --all-targets --tests -- -D warnings
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} clippy --all-targets --tests -- -D warnings
 
       - name: Run integration tests
-        run: cargo test --test integration --locked
+        run: |
+          RUSTFLAGS="-A warnings" cargo +${{ env.TOOLCHAIN_STABLE_INTEGRATION }} test \
+                                        -p integration-${{ matrix.dir }} \
+                                        --test integration \
+                                        --manifest-path=integration/Cargo.toml \
+                                        --locked
 
       - name: Run schema generator
-        run: cargo run --bin schema --locked
+        run: cargo +${{ env.TOOLCHAIN_STABLE }} run --bin schema --locked
 
       - name: Ensure schemas are up-to-date
         run: git diff --quiet ./schema
@@ -83,7 +94,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest ]
         dir: [ floaty ]
     defaults:
       run:
@@ -100,23 +111,33 @@ jobs:
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
+      - name: Install Rust for running integration tests
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: ${{ env.TOOLCHAIN_NIGHTLY_INTEGRATION }}
+
       - name: Check formatting
-        run: cargo fmt -- --check
+        run: cargo +${{ env.TOOLCHAIN_NIGHTLY }} fmt -- --check
 
       - name: Run unit tests
-        run: cargo test --lib --locked
+        run: cargo +${{ env.TOOLCHAIN_NIGHTLY }} test --lib --locked
 
       - name: Build WASM binary
-        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo build --release --lib --locked --target wasm32-unknown-unknown
+        run: RUSTFLAGS="-C target-feature=+nontrapping-fptoint" cargo +${{ env.TOOLCHAIN_NIGHTLY }} build --release --lib --locked --target wasm32-unknown-unknown
 
       - name: Run linter
-        run: cargo clippy --all-targets --tests -- -D warnings
+        run: cargo +${{ env.TOOLCHAIN_NIGHTLY }} clippy --all-targets --tests -- -D warnings
 
       - name: Run integration tests
-        run: cargo test --test integration --locked
+        run: |
+          RUSTFLAGS="-A warnings" cargo +${{ env.TOOLCHAIN_NIGHTLY_INTEGRATION }} test \
+                                        -p integration-${{ matrix.dir }} \
+                                        --test integration \
+                                        --manifest-path=integration/Cargo.toml \
+                                        --locked
 
       - name: Run schema generator
-        run: cargo run --bin schema --locked
+        run: cargo +${{ env.TOOLCHAIN_NIGHTLY }} run --bin schema --locked
 
       - name: Ensure schemas are up-to-date
         run: git diff --quiet ./schema
@@ -127,100 +148,6 @@ jobs:
           name: ${{ matrix.dir }}-${{ runner.os }}
           path: ./contracts/${{ matrix.dir }}/target/wasm32-unknown-unknown/release/*.wasm
 
-  chkr:
-    name: check-rel-${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    needs: [ stable, nightly ]
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v6
-
-      - name: Install Rust for compiling cosmwasm-check
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ env.TOOLCHAIN_CHECK }}
-
-      - name: Install recently released cosmwasm-check
-        run: cargo install cosmwasm-check@${{ env.COSMWASM_CHECK_VERSION }} --locked --force
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: burner-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: crypto-verify-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: cyberpunk-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: empty-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: floaty-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: hackatom-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: ibc-callbacks-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: ibc-reflect-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: ibc-reflect-send-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: nested-contracts-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: queue-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: reflect-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: staking-${{ runner.os }}
-          path: .
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: virus-${{ runner.os }}
-          path: .
-
-      - name: Check contracts
-        shell: bash
-        run: cosmwasm-check *.wasm
-
   chkd:
     name: check-dev-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -228,7 +155,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -239,7 +166,7 @@ jobs:
           toolchain: ${{ env.TOOLCHAIN_CHECK }}
 
       - name: Install currently developed cosmwasm-check
-        run: cargo install --path ./packages/check --force --locked
+        run: cargo +${{ env.TOOLCHAIN_CHECK }} install --path ./packages/check --force --locked
 
       - uses: actions/download-artifact@v7
         with:

@@ -12,5 +12,8 @@ for dir in contracts/*/; do
     msg "$contract"
     cd "$dir" || exit 1
     cargo clean
+    cd integration
+    cargo clean
+    cd ../.. || exit 1
   )
 done

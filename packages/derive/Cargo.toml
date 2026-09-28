@@ -6,6 +6,7 @@ description = "A package for auto-generated code used for CosmWasm contract deve
 repository = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
+rust-version = { workspace = true }
 readme = "README.md"
 
 [lib]

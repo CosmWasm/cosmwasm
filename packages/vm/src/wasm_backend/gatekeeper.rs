@@ -1,14 +1,15 @@
-use wasmer::wasmparser::Operator;
 use wasmer::{
-    FunctionMiddleware, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
-    ModuleMiddleware,
+    sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware},
+    wasmparser::Operator,
+    LocalFunctionIndex,
 };
+use wasmer_types::MiddlewareError;
 
 #[derive(Debug, Clone, Copy)]
 struct GatekeeperConfig {
     /// True iff float operations are allowed.
     ///
-    /// Note: there are float operations in the SIMD block as well and we do not yet handle
+    /// Note: there are float operations in the SIMD block as well, and we do not yet handle
     /// any combination of `allow_floats` and `allow_feature_simd` properly.
     allow_floats: bool,
     //
@@ -69,7 +70,10 @@ impl Default for Gatekeeper {
 
 impl ModuleMiddleware for Gatekeeper {
     /// Generates a `FunctionMiddleware` for a given function.
-    fn generate_function_middleware(&self, _: LocalFunctionIndex) -> Box<dyn FunctionMiddleware> {
+    fn generate_function_middleware<'a>(
+        &self,
+        _: LocalFunctionIndex,
+    ) -> Box<dyn FunctionMiddleware<'a>> {
         Box::new(FunctionGatekeeper::new(self.config))
     }
 }
@@ -89,7 +93,7 @@ impl FunctionGatekeeper {
 /// The name used in errors
 const MIDDLEWARE_NAME: &str = "Gatekeeper";
 
-impl FunctionMiddleware for FunctionGatekeeper {
+impl FunctionMiddleware<'_> for FunctionGatekeeper {
     fn feed<'a>(
         &mut self,
         operator: Operator<'a>,
@@ -739,6 +743,10 @@ impl FunctionMiddleware for FunctionGatekeeper {
                 let msg = format!("Memory control operation detected: {operator:?}. Memory control is not supported.");
                 Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
             }
+            _ => {
+                let msg = format!("Unsupported operator detected: {operator:?}. Operator is not supported.");
+                Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+            }
         }
     }
 }
@@ -748,7 +756,7 @@ mod tests {
     use super::*;
     use crate::wasm_backend::make_compiler_config;
     use std::sync::Arc;
-    use wasmer::{CompilerConfig, Module, Store};
+    use wasmer::{sys::CompilerConfig, Module, Store};
 
     #[test]
     fn valid_wasm_instance_sanity() {

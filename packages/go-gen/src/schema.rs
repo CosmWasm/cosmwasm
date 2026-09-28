@@ -62,7 +62,7 @@ pub fn schema_object_type(
         replace_custom_type(&replace_acronyms(
             reference
                 .split('/')
-                .last()
+                .next_back()
                 .expect("split should always return at least one item"),
         ))
     } else if let Some(t) = &schema.instance_type {
@@ -273,7 +273,7 @@ pub fn is_null(schema: &SchemaObject) -> bool {
     schema
         .instance_type
         .as_ref()
-        .map_or(false, |s| s.contains(&InstanceType::Null))
+        .is_some_and(|s| s.contains(&InstanceType::Null))
 }
 
 pub fn documentation(schema: &SchemaObject) -> Option<String> {
