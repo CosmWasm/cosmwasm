@@ -1,0 +1,41 @@
+{
+  "contract_name": "nested-contracts",
+  "contract_version": "0.0.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "nested_contracts_msg_InstantiateMsg",
+        "type": "struct",
+        "properties": {}
+      }
+    ]
+  },
+  "execute": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "nested_contracts_msg_ExecuteMsg",
+        "type": "enum",
+        "cases": {}
+      }
+    ]
+  },
+  "query": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "nested_contracts_msg_QueryMsg",
+        "type": "enum",
+        "cases": {}
+      }
+    ]
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {}
+}

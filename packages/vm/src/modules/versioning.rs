@@ -50,6 +50,6 @@ mod tests {
     #[test]
     fn current_wasmer_module_version_works() {
         let version = current_wasmer_module_version();
-        assert_eq!(version, 8);
+        assert_eq!(version, 24);
     }
 }

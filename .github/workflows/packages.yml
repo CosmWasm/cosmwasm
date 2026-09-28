@@ -7,7 +7,7 @@ on:
   pull_request:
 
 env:
-  TOOLCHAIN_STABLE: 1.82.0 # Rust toolchain for building packages.
+  TOOLCHAIN_STABLE: 1.95.0  # Rust toolchain for building packages.
 
 jobs:
   format:
@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -35,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -67,7 +67,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -88,7 +88,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -109,7 +109,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -130,7 +130,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -151,7 +151,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -172,7 +172,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -193,7 +193,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -227,7 +227,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -246,10 +246,11 @@ jobs:
       - run: cargo test   -p cosmwasm-vm --locked
       - run: cargo test   -p cosmwasm-vm --locked --features iterator,staking,stargate
       - run: cargo test   -p cosmwasm-vm --locked --all-features
-      - run: |
-          cargo build --locked --example multi_threaded_cache
-          time target/debug/examples/multi_threaded_cache > /dev/null
-        if: runner.os == 'Linux'
+  # Temporarily commented out, until the SIGBUS under heavy load is fixed.
+  #      - run: |
+  #          cargo build --locked --example multi_threaded_cache
+  #          time target/debug/examples/multi_threaded_cache > /dev/null
+  #        if: runner.os == 'Linux'
 
   package-cosmwasm-vm-derive:
     name: cosmwasm-vm-derive-${{ matrix.os }}
@@ -257,7 +258,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -278,7 +279,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6

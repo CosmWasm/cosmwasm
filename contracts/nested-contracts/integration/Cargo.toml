@@ -1,0 +1,23 @@
+[package]
+name = "integration-nested-contracts"
+version = "0.0.0"
+authors = ["Dariusz Depta <DariuszDepta@users.noreply.github.com>"]
+edition = "2021"
+publish = false
+license = "Apache-2.0"
+
+[lib]
+path = "../src/lib.rs"
+
+[dependencies]
+cosmwasm-schema = { version = "=3.0.10" }
+cosmwasm-std = { version = "=3.0.10", features = ["cosmwasm_2_2"] }
+cw-storage-plus = "2.0.0"
+cw2 = "2.0.0"
+schemars = "0.8.16"
+serde = { version = "1.0.197", default-features = false, features = ["derive"] }
+thiserror = { version = "1.0.58" }
+inner-contract = { path = "../inner-contract" }
+
+[dev-dependencies]
+cosmwasm-vm = { version = "=3.0.10" }
