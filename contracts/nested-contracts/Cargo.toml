@@ -28,8 +28,8 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", features = ["cosmwasm_2_2"] }
+cosmwasm-schema = { version = "=3.0.10-rc.4" }
+cosmwasm-std = { version = "=3.0.10-rc.4", features = ["cosmwasm_2_2"] }
 schemars = "0.8.16"
 serde = { version = "1.0.197", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.58" }

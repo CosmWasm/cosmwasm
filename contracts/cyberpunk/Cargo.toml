@@ -21,8 +21,8 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["cosmwasm_1_3", "exports", "std"] }
+cosmwasm-schema = { version = "=3.0.10-rc.4" }
+cosmwasm-std = { version = "=3.0.10-rc.4", default-features = false, features = ["cosmwasm_1_3", "exports", "std"] }
 rust-argon2 = "2.1"
 thiserror = "1.0.26"
 
