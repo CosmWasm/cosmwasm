@@ -6,6 +6,7 @@ description = "Standard library for Wasm based smart contracts on Cosmos blockch
 repository = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
+rust-version = { workspace = true }
 readme = "README.md"
 
 [package.metadata.docs.rs]

@@ -4,10 +4,10 @@ use crate::parsed_wasm::ParsedWasm;
 use std::sync::{Arc, Mutex};
 use wasmer::wasmparser::{BlockType, Operator};
 use wasmer::{
-    ExportIndex, FunctionMiddleware, GlobalInit, GlobalType, LocalFunctionIndex, MiddlewareError,
-    MiddlewareReaderState, ModuleMiddleware, Mutability, Type,
+    sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware},
+    ExportIndex, GlobalInit, GlobalType, LocalFunctionIndex, Mutability, Type,
 };
-use wasmer_types::{GlobalIndex, ModuleInfo};
+use wasmer_types::{GlobalIndex, MiddlewareError, ModuleInfo};
 
 /// Minimum number of local variables in a function
 /// that incur charging with additional gas points.
@@ -83,7 +83,10 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> Metering<F> {
 
 impl<F: Fn(&Operator) -> u64 + Send + Sync + 'static> ModuleMiddleware for Metering<F> {
     /// Generates a function middleware for a given function identified by provided index.
-    fn generate_function_middleware(&self, idx: LocalFunctionIndex) -> Box<dyn FunctionMiddleware> {
+    fn generate_function_middleware<'a>(
+        &self,
+        idx: LocalFunctionIndex,
+    ) -> Box<dyn FunctionMiddleware<'a>> {
         let locals_count = self
             .function_locals
             .get(idx.as_u32() as usize)
@@ -169,7 +172,7 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> std::fmt::Debug for FunctionMetering
     }
 }
 
-impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware for FunctionMetering<F> {
+impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware<'_> for FunctionMetering<F> {
     fn feed<'a>(
         &mut self,
         operator: Operator<'a>,

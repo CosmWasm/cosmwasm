@@ -6,6 +6,7 @@ description = "Derive macros for cosmwasm-schema"
 repository = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
+rust-version = { workspace = true }
 
 [dependencies]
 proc-macro2 = "1"
