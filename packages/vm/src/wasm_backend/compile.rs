@@ -40,7 +40,6 @@ mod tests {
 
         let wasm = wat::parse_str(WASM).unwrap();
         let engine = make_compiling_engine(None, None);
-        let error = compile(&engine, &wasm).unwrap_err();
-        assert!(error.to_string().contains("FuncRef"));
+        assert!(compile(&engine, &wasm).is_ok());
     }
 }

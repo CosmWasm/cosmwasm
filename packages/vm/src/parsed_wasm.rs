@@ -151,6 +151,10 @@ impl<'a> ParsedWasm<'a> {
                                     // ignoring these for now, as they are only available with the GC
                                     // proposal, and we explicitly disabled that above
                                 }
+                                CompositeInnerType::Cont(_) => {
+                                    // ignoring this, as it is only available with the
+                                    // stack switching proposal, which we explicitly disabled above
+                                }
                             }
                         }
                     }
@@ -173,7 +177,7 @@ impl<'a> ParsedWasm<'a> {
                 }
                 Payload::Version { num, .. } => this.version = num,
                 Payload::ImportSection(i) => {
-                    this.imports = i.into_iter().collect::<Result<Vec<_>, _>>()?;
+                    this.imports = i.into_imports().collect::<Result<Vec<_>, _>>()?;
                 }
                 Payload::TableSection(t) => {
                     this.tables = t

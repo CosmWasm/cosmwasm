@@ -1,0 +1,11 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "nested_contracts_msg_QueryMsg",
+      "type": "enum",
+      "cases": {}
+    }
+  ]
+}
