@@ -28,12 +28,14 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-schema = { version = "=2.3.5" }
-cosmwasm-std = { version = "=2.3.5", features = ["cosmwasm_2_2"] }
-cw-storage-plus = "2.0.0"
-cw2 = "2.0.0"
+cosmwasm-schema = { version = "=2.3.6-rc.0" }
+cosmwasm-std = { version = "=2.3.6-rc.0", features = ["cosmwasm_2_2"] }
 schemars = "0.8.16"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.58" }
 rmp = "=0.8.14"
 rmp-serde = "=1.3.0"
+
+[patch.crates-io]
+cosmwasm-std = { path = "../../../packages/std", version = "=2.3.6-rc.0" }
+cosmwasm-schema = { path = "../../../packages/schema", version = "=2.3.6-rc.0" }

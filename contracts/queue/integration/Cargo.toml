@@ -11,10 +11,15 @@ path = "../src/lib.rs"
 
 [dependencies]
 queue = { path = ".." }
-cosmwasm-schema = { version = "=2.3.5" }
-cosmwasm-std = { version = "=2.3.5", features = ["cosmwasm_1_4", "iterator"] }
+cosmwasm-schema = { version = "=2.3.6-rc.0" }
+cosmwasm-std = { version = "=2.3.6-rc.0", features = ["cosmwasm_1_4", "iterator"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=2.3.5", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { version = "=2.3.6-rc.0", default-features = false, features = ["iterator"] }
+
+[patch.crates-io]
+cosmwasm-std = { path = "../../../packages/std", version = "=2.3.6-rc.0" }
+cosmwasm-schema = { path = "../../../packages/schema", version = "=2.3.6-rc.0" }
+cosmwasm-vm = { path = "../../../packages/vm", version = "=2.3.6-rc.0" }
