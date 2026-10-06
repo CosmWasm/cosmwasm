@@ -711,31 +711,25 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-check"
-version = "2.2.10"
+version = "2.2.11-rc.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
  "clap",
  "colored 2.1.0",
- "cosmwasm-std 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-vm 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-std",
+ "cosmwasm-vm",
  "predicates",
  "tempfile",
 ]
 
 [[package]]
 name = "cosmwasm-core"
-version = "2.2.10"
-
-[[package]]
-name = "cosmwasm-core"
-version = "2.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e69421e413b23efb64311ffb6663d999a7b28df82cc88e38582acbdb099533a"
+version = "2.2.11-rc.0"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "2.2.10"
+version = "2.2.11-rc.0"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -743,7 +737,7 @@ dependencies = [
  "ark-serialize",
  "base64 0.22.1",
  "base64-serde",
- "cosmwasm-core 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-core",
  "criterion",
  "curve25519-dalek",
  "digest 0.10.7",
@@ -766,43 +760,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-crypto"
-version = "2.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5632e0b408ccc285b3d08310eabbc5153411af5666655e821ec3f4334ceba552"
-dependencies = [
- "ark-bls12-381",
- "ark-ec",
- "ark-ff",
- "ark-serialize",
- "cosmwasm-core 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "curve25519-dalek",
- "digest 0.10.7",
- "ecdsa",
- "ed25519-zebra",
- "k256",
- "num-traits",
- "p256",
- "rand_core 0.6.4",
- "rayon",
- "sha2 0.10.8",
- "thiserror 1.0.61",
-]
-
-[[package]]
 name = "cosmwasm-derive"
-version = "2.2.10"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
-name = "cosmwasm-derive"
-version = "2.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a0b614d82a528898181cd3d242bbf42b6421f306a3176e2ddb4cb3b575d6bec"
+version = "2.2.11-rc.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -811,10 +770,10 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.2.10"
+version = "2.2.11-rc.0"
 dependencies = [
  "anyhow",
- "cosmwasm-schema-derive 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-schema-derive",
  "schemars",
  "semver",
  "serde",
@@ -824,32 +783,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-schema"
-version = "2.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc1c9d10c0fd6f78f8b92befefa7938fe6b3bcfafeeb0274dbd3221a8167e5b9"
-dependencies = [
- "cosmwasm-schema-derive 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "schemars",
- "serde",
- "serde_json",
- "thiserror 1.0.61",
-]
-
-[[package]]
 name = "cosmwasm-schema-derive"
-version = "2.2.10"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
-name = "cosmwasm-schema-derive"
-version = "2.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fbd37e98a9fd8b4339e5926f878db46ad4480f43de32a41f695e5eb8cb82110"
+version = "2.2.11-rc.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -858,16 +793,16 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "2.2.10"
+version = "2.2.11-rc.0"
 dependencies = [
  "base64 0.22.1",
  "bech32",
  "bnum",
  "chrono",
- "cosmwasm-core 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-crypto 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-derive 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-schema 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-core",
+ "cosmwasm-crypto",
+ "cosmwasm-derive",
+ "cosmwasm-schema",
  "crc32fast",
  "derive_more 1.0.0-beta.6",
  "hex",
@@ -886,42 +821,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-std"
-version = "2.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ba17752202ff71effaced8a94dcfac95d98142c7995e73eb87a1a0982cdd050"
-dependencies = [
- "base64 0.22.1",
- "bech32",
- "bnum",
- "cosmwasm-core 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-crypto 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-derive 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "derive_more 1.0.0-beta.6",
- "hex",
- "rand_core 0.6.4",
- "rmp-serde",
- "schemars",
- "serde",
- "serde-json-wasm",
- "sha2 0.10.8",
- "static_assertions",
- "thiserror 1.0.61",
-]
-
-[[package]]
 name = "cosmwasm-vm"
-version = "2.2.10"
+version = "2.2.11-rc.0"
 dependencies = [
  "bech32",
  "blake2",
  "bytes",
  "clap",
  "clru",
- "cosmwasm-core 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-crypto 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-std 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-vm-derive 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-core",
+ "cosmwasm-crypto",
+ "cosmwasm-std",
+ "cosmwasm-vm-derive",
  "crc32fast",
  "criterion",
  "derivative",
@@ -950,50 +861,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-vm"
-version = "2.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08c9e53ad96d767944ae1fcd50075118da9cfd871aef0e65a4915b940cf43572"
-dependencies = [
- "bech32",
- "blake2",
- "bytes",
- "clru",
- "cosmwasm-core 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-crypto 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-std 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-vm-derive 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "crc32fast",
- "derivative",
- "hex",
- "rand_core 0.6.4",
- "schemars",
- "serde",
- "serde_json",
- "sha2 0.10.8",
- "strum 0.26.2",
- "thiserror 1.0.61",
- "tracing",
- "wasmer",
- "wasmer-middlewares",
- "wasmer-types",
-]
-
-[[package]]
 name = "cosmwasm-vm-derive"
-version = "2.2.10"
-dependencies = [
- "blake2",
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
-name = "cosmwasm-vm-derive"
-version = "2.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb48938db4d8ac661d30eda70e5ea01ebbbb5853882b3b13e65f1d128301257a"
+version = "2.2.11-rc.0"
 dependencies = [
  "blake2",
  "proc-macro2",
@@ -1702,12 +1571,12 @@ checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
 
 [[package]]
 name = "go-gen"
-version = "2.2.10"
+version = "2.2.11-rc.0"
 dependencies = [
  "Inflector",
  "anyhow",
- "cosmwasm-schema 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "cosmwasm-std 2.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-schema",
+ "cosmwasm-std",
  "indenter",
  "schemars",
 ]
@@ -2089,9 +1958,9 @@ dependencies = [
 
 [[package]]
 name = "mach2"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dae608c151f68243f2b000364e1f7b186d9c29845f7d2d85bd31b9ad77ad552b"
+checksum = "b0d28e293f2b8c9d2b2d1c0193bd3c1cbdc0d2cf396888dc01162f7cf9d6c3f3"
 
 [[package]]
 name = "macho-unwind-info"
@@ -2265,6 +2134,28 @@ checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
  "libm",
+]
+
+[[package]]
+name = "num_enum"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d0bca838442ec211fa11de3a8b0e0e8f3a4522575b5c4c06ed722e005036f26"
+dependencies = [
+ "num_enum_derive",
+ "rustversion",
+]
+
+[[package]]
+name = "num_enum_derive"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "680998035259dcfcafe653688bf2aa6d3e2dc05e98be6ab46afb089dc84f1df8"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -2529,6 +2420,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "353e1ca18966c16d9deb1c69278edbc5f194139612772bd9537af60ac231e1e6"
 dependencies = [
  "elliptic-curve",
+]
+
+[[package]]
+name = "proc-macro-crate"
+version = "3.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f"
+dependencies = [
+ "toml_edit",
 ]
 
 [[package]]
@@ -3517,6 +3417,36 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
+name = "toml_datetime"
+version = "1.1.1+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.25.15+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1340ea94a5856333492c9064b02c778b191dd2c853778d9609debdcdfea3a614"
+dependencies = [
+ "indexmap",
+ "toml_datetime",
+ "toml_parser",
+ "winnow",
+]
+
+[[package]]
+name = "toml_parser"
+version = "1.1.3+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d38ac1cf9b95face32296c0a3ede1fdc270627c9d9c02a7274dd6d960dc4d56"
+dependencies = [
+ "winnow",
+]
+
+[[package]]
 name = "tracing"
 version = "0.1.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3737,9 +3667,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer"
-version = "7.4.2"
+version = "7.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91f52ac63ab73e1d9309111558d4014e1311fd5ee0eba488b1e0d524e2eda309"
+checksum = "ddfde3972691f1082774c71c42e21add1d1838cb6482a6921a0ba8a993e0046a"
 dependencies = [
  "bindgen",
  "bytes",
@@ -3765,15 +3695,15 @@ dependencies = [
  "wasmer-derive",
  "wasmer-types",
  "wasmer-vm",
- "wasmparser 0.257.1",
+ "wasmparser 0.259.0",
  "windows-sys 0.61.2",
 ]
 
 [[package]]
 name = "wasmer-compiler"
-version = "7.4.2"
+version = "7.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d9dda771f82f7858491e4299438e91af95750a3bee8f0fd44042d45fc21aafa"
+checksum = "2a657969bd92c09676e72916b6fed181ebb239f441266458edff37c5e13eb1f8"
 dependencies = [
  "addr2line 0.27.1",
  "backtrace",
@@ -3805,16 +3735,16 @@ dependencies = [
  "thiserror 2.0.20",
  "wasmer-types",
  "wasmer-vm",
- "wasmparser 0.257.1",
+ "wasmparser 0.259.0",
  "which",
  "windows-sys 0.61.2",
 ]
 
 [[package]]
 name = "wasmer-compiler-singlepass"
-version = "7.4.2"
+version = "7.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7df502a8f1193f0752752d838ade8e461b40a12135ef91ca3387d40254dc1614"
+checksum = "ece6505e2270f1083d4e677a7cf36d11870f682c3b05fd0a4687094ef85fdd5b"
 dependencies = [
  "byteorder",
  "dynasm",
@@ -3834,9 +3764,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-derive"
-version = "7.4.2"
+version = "7.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e40b4f20dfe6db6719dc7da3f390285336874e579d4a00820c50d8cf5f14d4f4"
+checksum = "e65a98d988cf249317ec2af01526e04aafafc32503e23525e9d5fbe1c498d2db"
 dependencies = [
  "proc-macro-error2",
  "proc-macro2",
@@ -3846,9 +3776,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-middlewares"
-version = "7.4.2"
+version = "7.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9b15a357a12547e7ed61db71c7c3c63364969145216ea4d4688135703ff28dc"
+checksum = "0b2a523d1c9042378b86abb8a816c894412ce1feef12b9bb10643c0ab2ba7a2f"
 dependencies = [
  "wasmer",
  "wasmer-types",
@@ -3857,9 +3787,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-types"
-version = "7.4.2"
+version = "7.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "513f747b710d87f6eeb818db89bcc4e639a517b2443105237b4169358ddd534b"
+checksum = "e1a2572e35ea0fe9ac0d3c289b83ee457220e2b1a0b0d9e74a8dfef240064223"
 dependencies = [
  "bytecheck",
  "crc32fast",
@@ -3870,6 +3800,7 @@ dependencies = [
  "indexmap",
  "itertools 0.15.0",
  "more-asserts",
+ "num_enum",
  "rkyv",
  "sha2 0.11.0",
  "target-lexicon 0.13.5",
@@ -3878,9 +3809,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-vm"
-version = "7.4.2"
+version = "7.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2e24249e8591a49caf604cf05a5feae720b6b4008deebb9c9fd08ee3999493b"
+checksum = "3b60bc87e4993702174a81a6dd4503d915331b1d50caf868fd0998f61f34afa5"
 dependencies = [
  "backtrace",
  "bytesize",
@@ -3895,7 +3826,7 @@ dependencies = [
  "itertools 0.15.0",
  "libc",
  "libunwind",
- "mach2 0.6.0",
+ "mach2 0.7.0",
  "more-asserts",
  "parking_lot",
  "region",
@@ -3919,9 +3850,9 @@ dependencies = [
 
 [[package]]
 name = "wasmparser"
-version = "0.257.1"
+version = "0.259.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d92fc335fb6d48f46bda1d8b26b69e28320c15ac3272208333833d6e217e2b4a"
+checksum = "0f7c12eac7bb587801590f6a67ff0bc84d0748513864b71108e4b311cc3df694"
 dependencies = [
  "bitflags",
 ]
