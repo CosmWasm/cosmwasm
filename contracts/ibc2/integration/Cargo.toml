@@ -11,11 +11,16 @@ path = "../src/lib.rs"
 
 [dependencies]
 ibc2 = { path = ".." }
-cosmwasm-schema = { version = "=3.0.10" }
-cosmwasm-std = { version = "=3.0.10", features = ["ibc2"] }
+cosmwasm-schema = { version = "=3.0.11-rc.0" }
+cosmwasm-std = { version = "=3.0.11-rc.0", features = ["ibc2"] }
 schemars = "0.8.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=3.0.10", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { version = "=3.0.11-rc.0", default-features = false, features = ["iterator"] }
+
+[patch.crates-io]
+cosmwasm-std = { path = "../../../packages/std", version = "=3.0.11-rc.0" }
+cosmwasm-schema = { path = "../../../packages/schema", version = "=3.0.11-rc.0" }
+cosmwasm-vm = { path = "../../../packages/vm", version = "=3.0.11-rc.0" }

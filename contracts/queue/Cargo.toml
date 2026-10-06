@@ -24,8 +24,12 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { version = "=3.0.10" }
+cosmwasm-schema = { version = "=3.0.11-rc.0" }
 # cosmwasm_1_4 is enabled here for more efficient `range_keys` and `range_values`
-cosmwasm-std = { version = "=3.0.10", features = ["cosmwasm_1_4", "iterator"] }
+cosmwasm-std = { version = "=3.0.11-rc.0", features = ["cosmwasm_1_4", "iterator"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+
+[patch.crates-io]
+cosmwasm-std = { path = "../../packages/std", version = "=3.0.11-rc.0" }
+cosmwasm-schema = { path = "../../packages/schema", version = "=3.0.11-rc.0" }
