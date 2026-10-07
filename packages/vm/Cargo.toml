@@ -6,7 +6,7 @@ description = "VM bindings to run CosmWasm contracts"
 repository = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
-rust-version = "1.95"
+rust-version = "1.96"
 
 [features]
 default = ["iterator", "staking"]
