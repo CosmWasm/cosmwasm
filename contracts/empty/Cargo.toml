@@ -25,6 +25,6 @@ cosmwasm-schema = { version = "=3.0.11-rc.0" }
 cosmwasm-std = { version = "=3.0.11-rc.0", features = ["iterator"] }
 schemars = "0.8.12"
 
-[patch.crates-io]
-cosmwasm-std = { path = "../../packages/std", version = "=3.0.11-rc.0" }
-cosmwasm-schema = { path = "../../packages/schema", version = "=3.0.11-rc.0" }
+# [patch.crates-io]
+# cosmwasm-std = { path = "../../packages/std", version = "=3.0.11-rc.0" }
+# cosmwasm-schema = { path = "../../packages/schema", version = "=3.0.11-rc.0" }
