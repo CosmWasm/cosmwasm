@@ -69,7 +69,7 @@ contracts_nightly=(
 )
 
 toolchain_stable=1.82.0              # Rust toolchain for compiling contracts
-toolchain_stable_integration=1.95.0  # Rust toolchain for running integration tests
+toolchain_stable_integration=1.96.0  # Rust toolchain for running integration tests
 rustflags_stable=""                  # no additional Rust flags needed
 
 for dir in "${contracts_stable[@]}"; do
@@ -77,7 +77,7 @@ for dir in "${contracts_stable[@]}"; do
 done
 
 toolchain_nightly=nightly-2024-09-01                       # last Rust nightly version for 1.82.0
-toolchain_nightly_integration=nightly-2026-02-28           # last Rust nightly version for 1.95.0
+toolchain_nightly_integration=nightly-2026-04-11           # last Rust nightly version for 1.96.0
 rustflags_nightly="-C target-feature=+nontrapping-fptoint" # additional Rust flags
 
 for dir in "${contracts_nightly[@]}"; do

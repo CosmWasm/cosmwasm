@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 (empty)
 
+## [3.0.11] - 2026-10-08
+
+- Upgrade Wasmer to version v7.4.2 for maintenance line v3.0.x ([#2713])
+
+[#2713]: https://github.com/CosmWasm/cosmwasm/pull/2713
+
 ## [3.0.10] - 2026-09-28
 
 - Upgrade Wasmer to version v7.4.2 for maintenance line v3.0.x ([#2709])
@@ -398,6 +404,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2500]: https://github.com/CosmWasm/cosmwasm/pull/2500
 [#2501]: https://github.com/CosmWasm/cosmwasm/pull/2501
 
+## [2.3.6] - 2026-10-08
+
+- Wasmer upgrade to v7.5.0 for maintenance line v2.3.x ([#2712])
+
+[#2712]: https://github.com/CosmWasm/cosmwasm/pull/2712
+
 ## [2.3.5] - 2026-09-28
 
 - Upgrade Wasmer to version v7.4.2 for maintenance line v2.3.x ([#2708])
@@ -460,6 +472,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [#2570]: https://github.com/CosmWasm/cosmwasm/pull/2570
 [#2571]: https://github.com/CosmWasm/cosmwasm/pull/2571
 [#2572]: https://github.com/CosmWasm/cosmwasm/pull/2572
+
+## [2.2.11] - 2026-10-08
+
+- Wasmer upgrade to v7.5.0 for maintenance line v2.2.x ([#2711])
+
+[#2711]: https://github.com/CosmWasm/cosmwasm/pull/2711
 
 ## [2.2.10] - 2026-09-28
 
@@ -1683,7 +1701,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.10...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.11...HEAD
+[3.0.11]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.10...v3.0.11
 [3.0.10]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.9...v3.0.10
 [3.0.9]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.8...v3.0.9
 [3.0.8]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.7...v3.0.8
@@ -1694,13 +1713,15 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [3.0.3]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v3.0.0...v3.0.1
-[3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.5...v3.0.0
+[3.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.6...v3.0.0
+[2.3.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.5...v2.3.6
 [2.3.5]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.4...v2.3.5
 [2.3.4]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.3...v2.3.4
 [2.3.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.3.0...v2.3.1
-[2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.10...v2.3.0
+[2.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.11...v2.3.0
+[2.2.11]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.10...v2.2.11
 [2.2.10]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.9...v2.2.10
 [2.2.9]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.8...v2.2.9
 [2.2.8]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.7...v2.2.8
