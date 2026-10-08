@@ -71,7 +71,7 @@ use super::CachedModule;
 /// - **v21**:<br>
 ///   New version because of additional gas charging for function locals.
 /// - **v22**:<br>
-///   New version because of Wasmer 5.0.6 -> 7.4.2 upgrade.
+///   New version because of Wasmer 4.3.7 -> 7.4.2 upgrade.
 ///   Module compatibility between Wasmer versions is not guaranteed.
 /// - **v23**:<br>
 ///   New version because of Wasmer 7.4.2 -> 7.5.0 upgrade.
