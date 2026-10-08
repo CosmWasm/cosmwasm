@@ -20,7 +20,7 @@ thiserror = "1.0.26"
 cosmwasm-vm = { version = "=2.3.6-rc.0", default-features = false }
 tempfile = "3.1.0"
 
-[patch.crates-io]
-cosmwasm-std = { path = "../../../packages/std", version = "=2.3.6-rc.0" }
-cosmwasm-schema = { path = "../../../packages/schema", version = "=2.3.6-rc.0" }
-cosmwasm-vm = { path = "../../../packages/vm", version = "=2.3.6-rc.0" }
+# [patch.crates-io]
+# cosmwasm-std = { path = "../../../packages/std", version = "=2.3.6-rc.0" }
+# cosmwasm-schema = { path = "../../../packages/schema", version = "=2.3.6-rc.0" }
+# cosmwasm-vm = { path = "../../../packages/vm", version = "=2.3.6-rc.0" }

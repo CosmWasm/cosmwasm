@@ -518,10 +518,14 @@ dependencies = [
 [[package]]
 name = "cosmwasm-core"
 version = "2.3.6-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fd45ffdadf617336c9ca747f6905056c2948f6d898328a8984c1abe1eaa84b4"
 
 [[package]]
 name = "cosmwasm-crypto"
 version = "2.3.6-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9938c743b55d8e8dee2aa7b73a67abe758224f0e593f5ffb66ebe528edab50ac"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -544,6 +548,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-derive"
 version = "2.3.6-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42802d10df10503dcbe5ba78643f7848e7277463b00aff3e8695a4429f8756a8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -553,6 +559,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-schema"
 version = "2.3.6-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "15afd3dfd98ac9f2bd45ff15e29d08160d79e5a8d5bb4997ec8f03e593ac625c"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -564,6 +572,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-schema-derive"
 version = "2.3.6-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7424befb7bc8090801ab202de28166d8af183e663bce905c59b8397da6c86a6c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -573,6 +583,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-std"
 version = "2.3.6-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "783db04487f8bf80c3f2fb7696a1801c2bbae300212ffa5587d29dc7967f650a"
 dependencies = [
  "base64",
  "bech32",
@@ -595,6 +607,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "2.3.6-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20dda171c86ca2e5f2a16090052400b15f2a488c11c84eb31eb3db647930f408"
 dependencies = [
  "bech32",
  "blake2",
@@ -623,6 +637,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-derive"
 version = "2.3.6-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c37360e3f7b99ea13ae682066066156c6ccd8b61fbe15973450e7c54b032516b"
 dependencies = [
  "blake2",
  "proc-macro2",

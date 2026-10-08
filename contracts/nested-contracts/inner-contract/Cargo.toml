@@ -36,6 +36,6 @@ thiserror = { version = "1.0.58" }
 rmp = "=0.8.14"
 rmp-serde = "=1.3.0"
 
-[patch.crates-io]
-cosmwasm-std = { path = "../../../packages/std", version = "=2.3.6-rc.0" }
-cosmwasm-schema = { path = "../../../packages/schema", version = "=2.3.6-rc.0" }
+# [patch.crates-io]
+# cosmwasm-std = { path = "../../../packages/std", version = "=2.3.6-rc.0" }
+# cosmwasm-schema = { path = "../../../packages/schema", version = "=2.3.6-rc.0" }

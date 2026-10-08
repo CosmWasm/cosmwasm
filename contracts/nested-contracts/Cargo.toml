@@ -35,6 +35,6 @@ serde = { version = "1.0.197", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.58" }
 inner-contract = { path = "./inner-contract" }
 
-[patch.crates-io]
-cosmwasm-std = { path = "../../packages/std", version = "=2.3.6-rc.0" }
-cosmwasm-schema = { path = "../../packages/schema", version = "=2.3.6-rc.0" }
+# [patch.crates-io]
+# cosmwasm-std = { path = "../../packages/std", version = "=2.3.6-rc.0" }
+# cosmwasm-schema = { path = "../../packages/schema", version = "=2.3.6-rc.0" }

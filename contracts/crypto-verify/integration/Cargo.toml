@@ -26,7 +26,7 @@ sha3 = "0.10"
 cosmwasm-vm = { version = "=2.3.6-rc.0", default-features = false, features = ["iterator"] }
 hex-literal = "0.4.1"
 
-[patch.crates-io]
-cosmwasm-std = { path = "../../../packages/std", version = "=2.3.6-rc.0" }
-cosmwasm-schema = { path = "../../../packages/schema", version = "=2.3.6-rc.0" }
-cosmwasm-vm = { path = "../../../packages/vm", version = "=2.3.6-rc.0" }
+# [patch.crates-io]
+# cosmwasm-std = { path = "../../../packages/std", version = "=2.3.6-rc.0" }
+# cosmwasm-schema = { path = "../../../packages/schema", version = "=2.3.6-rc.0" }
+# cosmwasm-vm = { path = "../../../packages/vm", version = "=2.3.6-rc.0" }
