@@ -11,17 +11,17 @@ path = "../src/lib.rs"
 
 [dependencies]
 nested-contracts = { path = ".." }
-cosmwasm-schema = { version = "=2.2.11-rc.0" }
-cosmwasm-std = { version = "=2.2.11-rc.0", features = ["cosmwasm_2_2"] }
+cosmwasm-schema = { version = "=2.2.11" }
+cosmwasm-std = { version = "=2.2.11", features = ["cosmwasm_2_2"] }
 schemars = "0.8.16"
 serde = { version = "1.0.197", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.58" }
 inner-contract = { path = "../inner-contract" }
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=2.2.11-rc.0" }
+cosmwasm-vm = { version = "=2.2.11" }
 
 # [patch.crates-io]
-# cosmwasm-std = { path = "../../../packages/std", version = "=2.2.11-rc.0" }
-# cosmwasm-schema = { path = "../../../packages/schema", version = "=2.2.11-rc.0" }
-# cosmwasm-vm = { path = "../../../packages/vm", version = "=2.2.11-rc.0" }
+# cosmwasm-std = { path = "../../../packages/std", version = "=2.2.11" }
+# cosmwasm-schema = { path = "../../../packages/schema", version = "=2.2.11" }
+# cosmwasm-vm = { path = "../../../packages/vm", version = "=2.2.11" }
