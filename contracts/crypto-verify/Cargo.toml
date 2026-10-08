@@ -37,6 +37,6 @@ base64ct = "=1.7.3" # This is only for fixing the Edition 2021 of base64ct crate
 backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0
 hex-literal = "0.4.1"
 
-[patch.crates-io]
-cosmwasm-std = { path = "../../packages/std", version = "=2.2.11-rc.0" }
-cosmwasm-schema = { path = "../../packages/schema", version = "=2.2.11-rc.0" }
+# [patch.crates-io]
+# cosmwasm-std = { path = "../../packages/std", version = "=2.2.11-rc.0" }
+# cosmwasm-schema = { path = "../../packages/schema", version = "=2.2.11-rc.0" }

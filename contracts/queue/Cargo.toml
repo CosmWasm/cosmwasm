@@ -33,6 +33,6 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 [dev-dependencies]
 backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0
 
-[patch.crates-io]
-cosmwasm-std = { path = "../../packages/std", version = "=2.2.11-rc.0" }
-cosmwasm-schema = { path = "../../packages/schema", version = "=2.2.11-rc.0" }
+# [patch.crates-io]
+# cosmwasm-std = { path = "../../packages/std", version = "=2.2.11-rc.0" }
+# cosmwasm-schema = { path = "../../packages/schema", version = "=2.2.11-rc.0" }

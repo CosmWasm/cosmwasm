@@ -514,10 +514,14 @@ dependencies = [
 [[package]]
 name = "cosmwasm-core"
 version = "2.2.11-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17cf7e73a49b7aa9d9ea097ab3e787804810479a481d2d4b515f1fd94058954e"
 
 [[package]]
 name = "cosmwasm-crypto"
 version = "2.2.11-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a76fb3454ea538965d630ef9b8e9aeac97c150704c4ee250c8ac40694377f81"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -540,6 +544,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-derive"
 version = "2.2.11-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4b8db1760203b3882824a399e888ed03952a9ecffe2c8f7b1f5b44b66bc6903"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -549,6 +555,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-schema"
 version = "2.2.11-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67a5c88975f139fb1db011ee05313b9c446e8413bf75a3ec69a094acdc09e490"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -560,6 +568,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-schema-derive"
 version = "2.2.11-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3efef56e2d8ebe9952b78bbe540b570b3a04ea148ec569daa23e370e10d68298"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -569,6 +579,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-std"
 version = "2.2.11-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97efbc5732085bf96c621188cf09de2a49745b13171d90052e814ab02d1c1584"
 dependencies = [
  "base64",
  "bech32",
@@ -591,6 +603,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "2.2.11-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3cb7a9ea8b894d60a0a0b05f2d31e5879e8216b020b3e68433d34e0056f5ff7"
 dependencies = [
  "bech32",
  "blake2",
@@ -619,6 +633,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-derive"
 version = "2.2.11-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "094fa8118cf4440ed2b9bcd75ff9a8593851e5b706f28363e5886f6f03582ed4"
 dependencies = [
  "blake2",
  "proc-macro2",
