@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 (empty)
 
+## [2.2.11] - 2026-10-08
+
+- Wasmer upgrade to v7.5.0 for maintenance line v2.2.x ([#2711])
+
+[#2711]: https://github.com/CosmWasm/cosmwasm/pull/2711
+
 ## [2.2.10] - 2026-09-28
 
 - Upgrade Wasmer to version v7.4.2 for maintenance line v2.2.x ([#2707])
@@ -1229,7 +1235,8 @@ The CHANGELOG for versions before **1.0.0** was moved to
 [CHANGELOG-pre-1.0.0.md](./CHANGELOG-pre-1.0.0.md).
 
 
-[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.10...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.11...HEAD
+[2.2.11]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.10...v2.2.11
 [2.2.10]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.9...v2.2.10
 [2.2.9]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.8...v2.2.9
 [2.2.8]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.7...v2.2.8
