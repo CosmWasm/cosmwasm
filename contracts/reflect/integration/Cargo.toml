@@ -12,12 +12,17 @@ path = "../src/lib.rs"
 
 [dependencies]
 reflect = { path = ".." }
-cosmwasm-schema = { version = "=2.2.10" }
-cosmwasm-std = { version = "=2.2.10", default-features = false, features = ["cosmwasm_2_2", "staking", "stargate", "std"] }
+cosmwasm-schema = { version = "=2.2.11" }
+cosmwasm-std = { version = "=2.2.11", default-features = false, features = ["cosmwasm_2_2", "staking", "stargate", "std"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-vm = { version = "=2.2.10", default-features = false, features = ["stargate"] }
+cosmwasm-vm = { version = "=2.2.11", default-features = false, features = ["stargate"] }
 backtrace = "=0.3.74" # This fixes the last version that compiles with 1.81.0
+
+# [patch.crates-io]
+# cosmwasm-std = { path = "../../../packages/std", version = "=2.2.11" }
+# cosmwasm-schema = { path = "../../../packages/schema", version = "=2.2.11" }
+# cosmwasm-vm = { path = "../../../packages/vm", version = "=2.2.11" }
