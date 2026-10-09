@@ -8,10 +8,10 @@ on:
 
 env:
   TOOLCHAIN_STABLE: 1.81.0                           # Rust toolchain for building contracts in stable channel.
-  TOOLCHAIN_STABLE_INTEGRATION: 1.95.0               # Rust toolchain for running integration tests in stable channel.
+  TOOLCHAIN_STABLE_INTEGRATION: 1.96.0               # Rust toolchain for running integration tests in stable channel.
   TOOLCHAIN_NIGHTLY: nightly-2024-07-21              # Rust toolchain for building contracts in nightly channel for version 1.81.0.
-  TOOLCHAIN_NIGHTLY_INTEGRATION: nightly-2026-02-28  # Rust toolchain for running integration in nightly channel for version 1.95.0.
-  TOOLCHAIN_CHECK: 1.95.0                            # Rust toolchain for building cosmwasm-check tool.
+  TOOLCHAIN_NIGHTLY_INTEGRATION: nightly-2026-04-11  # Rust toolchain for running integration in nightly channel for version 1.96.0.
+  TOOLCHAIN_CHECK: 1.96.0                            # Rust toolchain for building cosmwasm-check tool.
 
 jobs:
   stable:

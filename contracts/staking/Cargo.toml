@@ -21,8 +21,12 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm-schema = { version = "=2.3.5" }
-cosmwasm-std = { version = "=2.3.5", default-features = false, features = ["staking", "std"] }
+cosmwasm-schema = { version = "=2.3.6" }
+cosmwasm-std = { version = "=2.3.6", default-features = false, features = ["staking", "std"] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = "0.8.2"
+
+# [patch.crates-io]
+# cosmwasm-std = { path = "../../packages/std", version = "=2.3.6" }
+# cosmwasm-schema = { path = "../../packages/schema", version = "=2.3.6" }
