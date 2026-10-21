@@ -19,7 +19,7 @@ use std::time::Instant;
 const DEFAULT_AVAILABLE_CAPABILITIES: &str =
     "ibc2,iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1,cosmwasm_2_2";
 
-pub fn main() {
+pub fn main() -> anyhow::Result<()> {
     let matches = Command::new("Contract checking")
         .version(env!("CARGO_PKG_VERSION"))
         .long_about("Checks the given wasm file (memories, exports, imports, available capabilities, and non-determinism).")
@@ -73,7 +73,8 @@ If this is not provided, the default values are used.")
     // Wasm limits
     let wasm_limits = matches
         .get_one::<String>("LIMITS")
-        .map(|input| read_wasm_limits(input).unwrap())
+        .map(|input| read_wasm_limits(input))
+        .transpose()?
         .unwrap_or_default();
 
     // File
@@ -117,6 +118,8 @@ If this is not provided, the default values are used.")
         );
         exit(1);
     }
+
+    Ok(())
 }
 
 fn read_wasm_limits(input: &str) -> anyhow::Result<WasmLimits> {
