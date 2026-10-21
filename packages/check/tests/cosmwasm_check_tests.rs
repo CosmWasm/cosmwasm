@@ -112,3 +112,31 @@ fn wasm_limits_file_check() {
         .failure()
         .stdout(contains("more than 15 functions"));
 }
+
+#[test]
+fn wasm_limits_missing_file_check() {
+    let tmp_dir = tempfile::tempdir().unwrap();
+    let missing_file = tmp_dir.path().join("missing-limits.json");
+
+    Command::new(cargo_bin!())
+        .arg("--wasm-limits")
+        .arg(missing_file)
+        .arg("../vm/testdata/hackatom.wasm")
+        .assert()
+        .code(1)
+        .stderr(contains("Error: error reading wasm limits file").and(contains("panicked").not()));
+}
+
+#[test]
+fn wasm_limits_invalid_file_check() {
+    let mut tmp_file = NamedTempFile::new().unwrap();
+    tmp_file.write_all(b"not valid json").unwrap();
+
+    Command::new(cargo_bin!())
+        .arg("--wasm-limits")
+        .arg(tmp_file.path())
+        .arg("../vm/testdata/hackatom.wasm")
+        .assert()
+        .code(1)
+        .stderr(contains("Error: error parsing wasm limits file").and(contains("panicked").not()));
+}
