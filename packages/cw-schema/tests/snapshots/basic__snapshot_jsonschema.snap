@@ -450,6 +450,9 @@ expression: schema
             "null"
           ]
         },
+        "flattening": {
+          "type": "boolean"
+        },
         "value": {
           "type": "integer",
           "format": "uint",

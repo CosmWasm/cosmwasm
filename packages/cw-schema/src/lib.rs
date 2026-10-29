@@ -1,6 +1,16 @@
 //! CosmWasm is a smart contract platform for the Cosmos ecosystem.
 //! This crate is a dependency for CosmWasm contracts to generate schema files for their messages.
 //!
+//! `Schemaifier` follows Serde's serialization-side names, including `rename`,
+//! `rename_all`, and `rename_all_fields`. Directional renames use the `serialize`
+//! value. Fields and variants marked `skip` are omitted, defaulted fields are
+//! recorded as defaulting, and flattened fields carry a `flattening` marker.
+//! Internally tagged enums record their tag as the discriminator; untagged
+//! enums retain their untagged representation.
+//!
+//! This does not add support for all Serde attributes: aliases, custom
+//! serializers, and one-directional skipping still need separate handling.
+//!
 //! For more information, see: <https://cosmwasm.cosmos.network>
 
 #![no_std]
@@ -30,6 +40,8 @@ mod default_impls;
 pub struct StructProperty {
     #[serde(default, skip_serializing_if = "core::ops::Not::not")]
     pub defaulting: bool,
+    #[serde(default, skip_serializing_if = "core::ops::Not::not")]
+    pub flattening: bool,
     pub description: Option<Cow<'static, str>>,
     pub value: DefinitionReference,
 }

@@ -60,16 +60,67 @@ pub fn cw_serde_impl(options: Options, input: DeriveInput) -> syn::Result<Derive
         #[schemars(crate = #schemars_path)]
     };
 
-    match input.data {
+    match &input.data {
         syn::Data::Struct(..) => (),
         syn::Data::Enum(..) => {
-            stream.extend(quote! { #[serde(rename_all = "snake_case")] });
+            let rename_all = serde_rename_all(&input.attrs)?;
+            if !rename_all.has_serialize {
+                if rename_all.has_any {
+                    stream.extend(quote! { #[serde(rename_all(serialize = "snake_case"))] });
+                } else {
+                    stream.extend(quote! { #[serde(rename_all = "snake_case")] });
+                }
+            }
         }
         syn::Data::Union(..) => bail!(input, "unions are not supported"),
     }
 
     stream.extend(input.to_token_stream());
     syn::parse2(stream)
+}
+
+#[derive(Default)]
+struct SerdeRenameAll {
+    has_any: bool,
+    has_serialize: bool,
+}
+
+fn serde_rename_all(attributes: &[syn::Attribute]) -> syn::Result<SerdeRenameAll> {
+    let mut rename_all = SerdeRenameAll::default();
+
+    for attribute in attributes
+        .iter()
+        .filter(|attr| attr.path().is_ident("serde"))
+    {
+        attribute.parse_nested_meta(|meta| {
+            if meta.path.is_ident("rename_all") {
+                rename_all.has_any = true;
+
+                if meta.input.peek(Token![=]) {
+                    let value = meta.value()?;
+                    let _ = value.parse::<proc_macro2::TokenTree>()?;
+                    rename_all.has_serialize = true;
+                } else if meta.input.peek(syn::token::Paren) {
+                    let params;
+                    syn::parenthesized!(params in meta.input);
+                    let params = Punctuated::<MetaNameValue, Token![,]>::parse_terminated(&params)?;
+                    rename_all.has_serialize |=
+                        params.iter().any(|param| param.path.is_ident("serialize"));
+                }
+            } else if meta.input.peek(syn::token::Paren) {
+                let content;
+                syn::parenthesized!(content in meta.input);
+                let _ = content.parse::<proc_macro2::TokenStream>()?;
+            } else if meta.input.peek(Token![=]) {
+                let value = meta.value()?;
+                let _ = value.parse::<proc_macro2::TokenTree>()?;
+            }
+
+            Ok(())
+        })?;
+    }
+
+    Ok(rename_all)
 }
 
 #[cfg(test)]

@@ -647,7 +647,6 @@ dependencies = [
 name = "cw-schema-derive"
 version = "3.1.0-dev"
 dependencies = [
- "heck",
  "itertools",
  "owo-colors",
  "proc-macro2",
