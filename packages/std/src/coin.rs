@@ -42,8 +42,14 @@ impl FromStr for Coin {
             return Err(CoinFromStrError::MissingAmount);
         }
 
+        let amount = amount.parse::<Uint256>().map_err(|_| {
+            // `amount` is a non-empty ASCII digit string, so a Uint256 parsing error means it
+            // also overflows u128. Keep returning the existing public error type.
+            CoinFromStrError::InvalidAmount(amount.parse::<u128>().unwrap_err())
+        })?;
+
         Ok(Coin {
-            amount: amount.parse::<u128>()?.into(),
+            amount,
             denom: denom.to_string(),
         })
     }
@@ -236,10 +242,24 @@ mod tests {
             Coin::from_str("�1ucosm").unwrap_err(), // other broken data
             CoinFromStrError::MissingAmount
         );
+    }
+
+    #[test]
+    fn coin_from_str_supports_full_uint256_range() {
+        let coin = Coin::new(Uint256::MAX, "ucosm");
+
+        assert_eq!(coin.to_string().parse::<Coin>().unwrap(), coin);
+    }
+
+    #[test]
+    fn coin_from_str_rejects_amount_above_uint256_max() {
+        let above_max =
+            "115792089237316195423570985008687907853269984665640564039457584007913129639936ucosm";
+        let error = Coin::from_str(above_max).unwrap_err();
+
+        assert!(matches!(&error, CoinFromStrError::InvalidAmount(_)));
         assert_eq!(
-            Coin::from_str("340282366920938463463374607431768211456ucosm")
-                .unwrap_err()
-                .to_string(),
+            error.to_string(),
             "Invalid amount: number too large to fit in target type"
         );
     }
