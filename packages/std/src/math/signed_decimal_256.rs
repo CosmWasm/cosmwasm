@@ -377,11 +377,13 @@ impl SignedDecimal256 {
 
     /// Rounds value up after decimal places. Returns OverflowError on overflow.
     pub fn checked_ceil(&self) -> Result<Self, RoundUpOverflowError> {
-        let floor = self.floor();
-        if floor == self {
-            Ok(floor)
+        let truncated = self.trunc();
+        // Negative values round up by truncation. Going through `floor` instead
+        // would overflow (and panic) for values below `MIN.trunc()`.
+        if self.is_negative() || truncated == self {
+            Ok(truncated)
         } else {
-            floor
+            truncated
                 .checked_add(SignedDecimal256::one())
                 .map_err(|_| RoundUpOverflowError)
         }
@@ -3036,6 +3038,12 @@ mod tests {
         assert_eq!(
             SignedDecimal256::MAX.checked_ceil(),
             Err(RoundUpOverflowError)
+        );
+        assert_eq!(SignedDecimal256::MIN.checked_ceil(), Ok(SignedDecimal256::MIN.trunc()));
+        assert_eq!(SignedDecimal256::MIN.ceil(), SignedDecimal256::MIN.trunc());
+        assert_eq!(
+            SignedDecimal256::from_str("-5.8").unwrap().checked_ceil(),
+            Ok(SignedDecimal256::from_str("-5").unwrap())
         );
     }
 
