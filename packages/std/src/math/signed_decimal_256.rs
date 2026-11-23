@@ -3039,7 +3039,10 @@ mod tests {
             SignedDecimal256::MAX.checked_ceil(),
             Err(RoundUpOverflowError)
         );
-        assert_eq!(SignedDecimal256::MIN.checked_ceil(), Ok(SignedDecimal256::MIN.trunc()));
+        assert_eq!(
+            SignedDecimal256::MIN.checked_ceil(),
+            Ok(SignedDecimal256::MIN.trunc())
+        );
         assert_eq!(SignedDecimal256::MIN.ceil(), SignedDecimal256::MIN.trunc());
         assert_eq!(
             SignedDecimal256::from_str("-5.8").unwrap().checked_ceil(),

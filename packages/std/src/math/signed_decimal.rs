@@ -2907,7 +2907,10 @@ mod tests {
             Ok(SignedDecimal::percent(200))
         );
         assert_eq!(SignedDecimal::MAX.checked_ceil(), Err(RoundUpOverflowError));
-        assert_eq!(SignedDecimal::MIN.checked_ceil(), Ok(SignedDecimal::MIN.trunc()));
+        assert_eq!(
+            SignedDecimal::MIN.checked_ceil(),
+            Ok(SignedDecimal::MIN.trunc())
+        );
         assert_eq!(SignedDecimal::MIN.ceil(), SignedDecimal::MIN.trunc());
         assert_eq!(
             SignedDecimal::from_str("-5.8").unwrap().checked_ceil(),
