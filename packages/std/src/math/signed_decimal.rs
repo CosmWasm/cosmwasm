@@ -364,11 +364,13 @@ impl SignedDecimal {
 
     /// Rounds value up after decimal places. Returns OverflowError on overflow.
     pub fn checked_ceil(&self) -> Result<Self, RoundUpOverflowError> {
-        let floor = self.floor();
-        if floor == self {
-            Ok(floor)
+        let truncated = self.trunc();
+        // Negative values round up by truncation. Going through `floor` instead
+        // would overflow (and panic) for values below `MIN.trunc()`.
+        if self.is_negative() || truncated == self {
+            Ok(truncated)
         } else {
-            floor
+            truncated
                 .checked_add(SignedDecimal::one())
                 .map_err(|_| RoundUpOverflowError)
         }
@@ -2905,6 +2907,15 @@ mod tests {
             Ok(SignedDecimal::percent(200))
         );
         assert_eq!(SignedDecimal::MAX.checked_ceil(), Err(RoundUpOverflowError));
+        assert_eq!(
+            SignedDecimal::MIN.checked_ceil(),
+            Ok(SignedDecimal::MIN.trunc())
+        );
+        assert_eq!(SignedDecimal::MIN.ceil(), SignedDecimal::MIN.trunc());
+        assert_eq!(
+            SignedDecimal::from_str("-5.8").unwrap().checked_ceil(),
+            Ok(SignedDecimal::from_str("-5").unwrap())
+        );
     }
 
     #[test]
