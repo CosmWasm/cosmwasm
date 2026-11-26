@@ -1,5 +1,9 @@
+#![no_std]
 #![allow(dead_code)] // We never construct these types. Introspection is done at compile time.
 
+extern crate alloc;
+
+use alloc::{boxed::Box, string::String};
 use cw_schema::Schemaifier;
 
 #[derive(Schemaifier)]

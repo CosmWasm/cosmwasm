@@ -7,6 +7,7 @@ use alloc::{
     vec,
     vec::Vec,
 };
+use core::any::type_name;
 
 impl Schemaifier for () {
     #[inline]
@@ -121,7 +122,7 @@ where
     #[inline]
     fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
         let node = Node {
-            name: Cow::Borrowed(std::any::type_name::<Self>()),
+            name: Cow::Borrowed(type_name::<Self>()),
             description: None,
             value: NodeType::Boxed {
                 inner: T::visit_schema(visitor),
@@ -139,7 +140,7 @@ where
     #[inline]
     fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
         let node = Node {
-            name: Cow::Borrowed(std::any::type_name::<Self>()),
+            name: Cow::Borrowed(type_name::<Self>()),
             description: None,
             value: NodeType::Array {
                 items: T::visit_schema(visitor),
@@ -157,7 +158,7 @@ macro_rules! all_the_tuples {
                 #[inline]
                 fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
                     let node = Node {
-                        name: Cow::Borrowed(std::any::type_name::<Self>()),
+                        name: Cow::Borrowed(type_name::<Self>()),
                         description: None,
                         value: NodeType::Tuple {
                             items: vec![
@@ -201,7 +202,7 @@ where
     #[inline]
     fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
         let node = Node {
-            name: Cow::Borrowed(std::any::type_name::<Self>()),
+            name: Cow::Borrowed(type_name::<Self>()),
             description: None,
             value: NodeType::Optional {
                 inner: T::visit_schema(visitor),
@@ -220,7 +221,7 @@ where
     #[inline]
     fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
         let node = Node {
-            name: Cow::Borrowed(std::any::type_name::<Self>()),
+            name: Cow::Borrowed(type_name::<Self>()),
             description: None,
             value: NodeType::Map {
                 kind: MapKind::BTree,
@@ -242,7 +243,7 @@ where
     #[inline]
     fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
         let node = Node {
-            name: Cow::Borrowed(std::any::type_name::<Self>()),
+            name: Cow::Borrowed(type_name::<Self>()),
             description: None,
             value: NodeType::Map {
                 kind: MapKind::Hash,

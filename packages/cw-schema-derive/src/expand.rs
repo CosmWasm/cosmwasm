@@ -385,7 +385,7 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
 
                 quote! {
                     #crate_path::EnumValue::Tuple {
-                        items: vec![
+                        items: #crate_path::reexport::vec![
                             #( <#types as #crate_path::Schemaifier>::visit_schema(visitor), )*
                         ]
                     }
@@ -435,7 +435,7 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
                 visitor.reserve_spot(Self::id());
 
                 let node = #crate_path::Node {
-                    name: std::any::type_name::<Self>()
+                    name: ::core::any::type_name::<Self>()
                         .replace("::", "_")
                         .replace(['<', '>'], "_")
                         .into(),
@@ -497,7 +497,7 @@ fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<Toke
 
                     quote! {
                         #crate_path::StructType::Tuple {
-                            items: vec![
+                            items: #crate_path::reexport::vec![
                                 #(
                                     <#type_names as #crate_path::Schemaifier>::visit_schema(visitor),
                                 )*
@@ -515,7 +515,7 @@ fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<Toke
 
         quote! {
             #crate_path::Node {
-                name: std::any::type_name::<Self>()
+                name: ::core::any::type_name::<Self>()
                     .replace("::", "_")
                     .replace(['<', '>'], "_")
                     .into(),

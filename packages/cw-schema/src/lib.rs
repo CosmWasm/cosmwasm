@@ -246,5 +246,5 @@ pub fn schema_of<T: Schemaifier + ?Sized>() -> Schema {
 
 #[doc(hidden)]
 pub mod reexport {
-    pub use alloc::collections::BTreeMap;
+    pub use alloc::{collections::BTreeMap, vec};
 }
