@@ -97,10 +97,12 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.TOOLCHAIN_STABLE }}
+          targets: thumbv7em-none-eabi
           components: clippy
 
       - run: cargo clippy -p cw-schema --all-targets -- -D warnings
       - run: cargo build  -p cw-schema --locked
+      - run: cargo check  -p cw-schema --locked --no-default-features --lib --target thumbv7em-none-eabi
       - run: cargo test   -p cw-schema --locked
 
   package-cw-schema-derive:
