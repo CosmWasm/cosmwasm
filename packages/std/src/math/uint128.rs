@@ -97,6 +97,7 @@ impl Uint128 {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn pow(self, exp: u32) -> Self {
         match self.0.checked_pow(exp) {
             Some(val) => Self(val),
@@ -110,6 +111,7 @@ impl Uint128 {
     ///
     /// This function will panic if `self` is zero.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn ilog2(self) -> u32 {
         self.0.checked_ilog2().unwrap()
     }
@@ -120,6 +122,7 @@ impl Uint128 {
     ///
     /// This function will panic if `self` is zero.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn ilog10(self) -> u32 {
         self.0.checked_ilog10().unwrap()
     }
@@ -129,6 +132,7 @@ impl Uint128 {
     /// Due to the nature of the integer division involved, the result is always floored.
     /// E.g. 5 * 99/100 = 4.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn multiply_ratio<A: Into<u128>, B: Into<u128>>(
         &self,
         numerator: A,
@@ -295,6 +299,7 @@ impl Uint128 {
     ///
     /// This is the same as [`Uint128::add`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn strict_add(self, rhs: Self) -> Self {
         match self.0.checked_add(rhs.u128()) {
             None => panic!("attempt to add with overflow"),
@@ -306,6 +311,7 @@ impl Uint128 {
     ///
     /// This is the same as [`Uint128::sub`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn strict_sub(self, other: Self) -> Self {
         match self.0.checked_sub(other.u128()) {
             None => panic!("attempt to subtract with overflow"),
@@ -393,6 +399,7 @@ impl fmt::Display for Uint128 {
 impl Add<Uint128> for Uint128 {
     type Output = Self;
 
+    #[track_caller]
     fn add(self, rhs: Self) -> Self {
         self.strict_add(rhs)
     }
@@ -402,6 +409,7 @@ forward_ref_binop!(impl Add, add for Uint128, Uint128);
 impl Sub<Uint128> for Uint128 {
     type Output = Self;
 
+    #[track_caller]
     fn sub(self, rhs: Self) -> Self {
         self.strict_sub(rhs)
     }
@@ -409,6 +417,7 @@ impl Sub<Uint128> for Uint128 {
 forward_ref_binop!(impl Sub, sub for Uint128, Uint128);
 
 impl SubAssign<Uint128> for Uint128 {
+    #[track_caller]
     fn sub_assign(&mut self, rhs: Uint128) {
         *self = *self - rhs;
     }
@@ -418,6 +427,7 @@ forward_ref_op_assign!(impl SubAssign, sub_assign for Uint128, Uint128);
 impl Mul<Uint128> for Uint128 {
     type Output = Self;
 
+    #[track_caller]
     fn mul(self, rhs: Self) -> Self::Output {
         Self(
             self.u128()
@@ -429,6 +439,7 @@ impl Mul<Uint128> for Uint128 {
 forward_ref_binop!(impl Mul, mul for Uint128, Uint128);
 
 impl MulAssign<Uint128> for Uint128 {
+    #[track_caller]
     fn mul_assign(&mut self, rhs: Self) {
         *self = *self * rhs;
     }
@@ -438,6 +449,7 @@ forward_ref_op_assign!(impl MulAssign, mul_assign for Uint128, Uint128);
 impl Div<Uint128> for Uint128 {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, rhs: Self) -> Self::Output {
         Self(
             self.u128()
@@ -450,6 +462,7 @@ impl Div<Uint128> for Uint128 {
 impl<'a> Div<&'a Uint128> for Uint128 {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, rhs: &'a Uint128) -> Self::Output {
         self / *rhs
     }
@@ -458,6 +471,7 @@ impl<'a> Div<&'a Uint128> for Uint128 {
 impl Shr<u32> for Uint128 {
     type Output = Self;
 
+    #[track_caller]
     fn shr(self, rhs: u32) -> Self::Output {
         Self(
             self.u128()
@@ -470,6 +484,7 @@ impl Shr<u32> for Uint128 {
 impl<'a> Shr<&'a u32> for Uint128 {
     type Output = Self;
 
+    #[track_caller]
     fn shr(self, rhs: &'a u32) -> Self::Output {
         self >> *rhs
     }
@@ -478,6 +493,7 @@ impl<'a> Shr<&'a u32> for Uint128 {
 impl Shl<u32> for Uint128 {
     type Output = Self;
 
+    #[track_caller]
     fn shl(self, rhs: u32) -> Self::Output {
         Self(
             self.u128()
@@ -490,30 +506,35 @@ impl Shl<u32> for Uint128 {
 impl<'a> Shl<&'a u32> for Uint128 {
     type Output = Self;
 
+    #[track_caller]
     fn shl(self, rhs: &'a u32) -> Self::Output {
         self.shl(*rhs)
     }
 }
 
 impl AddAssign<Uint128> for Uint128 {
+    #[track_caller]
     fn add_assign(&mut self, rhs: Uint128) {
         *self = *self + rhs;
     }
 }
 
 impl<'a> AddAssign<&'a Uint128> for Uint128 {
+    #[track_caller]
     fn add_assign(&mut self, rhs: &'a Uint128) {
         *self = *self + rhs;
     }
 }
 
 impl DivAssign<Uint128> for Uint128 {
+    #[track_caller]
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs;
     }
 }
 
 impl<'a> DivAssign<&'a Uint128> for Uint128 {
+    #[track_caller]
     fn div_assign(&mut self, rhs: &'a Uint128) {
         *self = *self / rhs;
     }
@@ -526,6 +547,7 @@ impl Rem for Uint128 {
     ///
     /// This operation will panic if `rhs` is zero.
     #[inline]
+    #[track_caller]
     fn rem(self, rhs: Self) -> Self {
         Self(self.0.rem(rhs.0))
     }
@@ -541,6 +563,7 @@ impl Not for Uint128 {
 }
 
 impl RemAssign<Uint128> for Uint128 {
+    #[track_caller]
     fn rem_assign(&mut self, rhs: Uint128) {
         *self = *self % rhs;
     }
@@ -548,24 +571,28 @@ impl RemAssign<Uint128> for Uint128 {
 forward_ref_op_assign!(impl RemAssign, rem_assign for Uint128, Uint128);
 
 impl ShrAssign<u32> for Uint128 {
+    #[track_caller]
     fn shr_assign(&mut self, rhs: u32) {
         *self = *self >> rhs;
     }
 }
 
 impl<'a> ShrAssign<&'a u32> for Uint128 {
+    #[track_caller]
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = *self >> rhs;
     }
 }
 
 impl ShlAssign<u32> for Uint128 {
+    #[track_caller]
     fn shl_assign(&mut self, rhs: u32) {
         *self = Shl::<u32>::shl(*self, rhs);
     }
 }
 
 impl<'a> ShlAssign<&'a u32> for Uint128 {
+    #[track_caller]
     fn shl_assign(&mut self, rhs: &'a u32) {
         *self = Shl::<u32>::shl(*self, *rhs);
     }

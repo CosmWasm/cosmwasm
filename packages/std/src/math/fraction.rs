@@ -60,6 +60,7 @@ macro_rules! impl_mul_fraction {
 
             /// Same operation as `checked_mul_floor` except unwrapped
             #[must_use = "this returns the result of the operation, without modifying the original"]
+            #[track_caller]
             pub fn mul_floor<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self {
                 self.checked_mul_floor(rhs).unwrap()
             }
@@ -92,6 +93,7 @@ macro_rules! impl_mul_fraction {
 
             /// Same operation as `checked_mul_ceil` except unwrapped
             #[must_use = "this returns the result of the operation, without modifying the original"]
+            #[track_caller]
             pub fn mul_ceil<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self {
                 self.checked_mul_ceil(rhs).unwrap()
             }
@@ -123,6 +125,7 @@ macro_rules! impl_mul_fraction {
 
             /// Same operation as `checked_div_floor` except unwrapped
             #[must_use = "this returns the result of the operation, without modifying the original"]
+            #[track_caller]
             pub fn div_floor<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self
             where
                 Self: Sized,
@@ -161,6 +164,7 @@ macro_rules! impl_mul_fraction {
 
             /// Same operation as `checked_div_ceil` except unwrapped
             #[must_use = "this returns the result of the operation, without modifying the original"]
+            #[track_caller]
             pub fn div_ceil<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self
             where
                 Self: Sized,

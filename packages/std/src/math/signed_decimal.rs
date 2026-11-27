@@ -205,6 +205,7 @@ impl SignedDecimal {
     ///     "0.333333333333333333"
     /// );
     /// ```
+    #[track_caller]
     pub fn from_ratio(numerator: impl Into<Int128>, denominator: impl Into<Int128>) -> Self {
         match SignedDecimal::checked_from_ratio(numerator, denominator) {
             Ok(value) => value,
@@ -320,6 +321,7 @@ impl SignedDecimal {
     /// assert_eq!(SignedDecimal::from_str("-5.2").unwrap().floor().to_string(), "-6");
     /// ```
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn floor(&self) -> Self {
         match self.checked_floor() {
             Ok(value) => value,
@@ -355,6 +357,7 @@ impl SignedDecimal {
     /// assert_eq!(SignedDecimal::from_str("-5.8").unwrap().ceil().to_string(), "-5");
     /// ```
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn ceil(&self) -> Self {
         match self.checked_ceil() {
             Ok(value) => value,
@@ -402,6 +405,7 @@ impl SignedDecimal {
 
     /// Raises a value to the power of `exp`, panics if an overflow occurred.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn pow(self, exp: u32) -> Self {
         match self.checked_pow(exp) {
             Ok(value) => value,
@@ -616,6 +620,7 @@ impl Fraction<Int128> for SignedDecimal {
 impl Neg for SignedDecimal {
     type Output = Self;
 
+    #[track_caller]
     fn neg(self) -> Self::Output {
         Self(-self.0)
     }
@@ -754,6 +759,7 @@ impl fmt::Debug for SignedDecimal {
 impl Add for SignedDecimal {
     type Output = Self;
 
+    #[track_caller]
     fn add(self, other: Self) -> Self {
         SignedDecimal(self.0 + other.0)
     }
@@ -761,6 +767,7 @@ impl Add for SignedDecimal {
 forward_ref_binop!(impl Add, add for SignedDecimal, SignedDecimal);
 
 impl AddAssign for SignedDecimal {
+    #[track_caller]
     fn add_assign(&mut self, rhs: SignedDecimal) {
         *self = *self + rhs;
     }
@@ -770,6 +777,7 @@ forward_ref_op_assign!(impl AddAssign, add_assign for SignedDecimal, SignedDecim
 impl Sub for SignedDecimal {
     type Output = Self;
 
+    #[track_caller]
     fn sub(self, other: Self) -> Self {
         SignedDecimal(self.0 - other.0)
     }
@@ -777,6 +785,7 @@ impl Sub for SignedDecimal {
 forward_ref_binop!(impl Sub, sub for SignedDecimal, SignedDecimal);
 
 impl SubAssign for SignedDecimal {
+    #[track_caller]
     fn sub_assign(&mut self, rhs: SignedDecimal) {
         *self = *self - rhs;
     }
@@ -787,6 +796,7 @@ impl Mul for SignedDecimal {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
+    #[track_caller]
     fn mul(self, other: Self) -> Self {
         // SignedDecimals are fractions. We can multiply two decimals a and b
         // via
@@ -804,6 +814,7 @@ impl Mul for SignedDecimal {
 forward_ref_binop!(impl Mul, mul for SignedDecimal, SignedDecimal);
 
 impl MulAssign for SignedDecimal {
+    #[track_caller]
     fn mul_assign(&mut self, rhs: SignedDecimal) {
         *self = *self * rhs;
     }
@@ -813,6 +824,7 @@ forward_ref_op_assign!(impl MulAssign, mul_assign for SignedDecimal, SignedDecim
 impl Div for SignedDecimal {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, other: Self) -> Self {
         match SignedDecimal::checked_from_ratio(self.numerator(), other.numerator()) {
             Ok(ratio) => ratio,
@@ -828,6 +840,7 @@ impl Div for SignedDecimal {
 forward_ref_binop!(impl Div, div for SignedDecimal, SignedDecimal);
 
 impl DivAssign for SignedDecimal {
+    #[track_caller]
     fn div_assign(&mut self, rhs: SignedDecimal) {
         *self = *self / rhs;
     }
@@ -837,12 +850,14 @@ forward_ref_op_assign!(impl DivAssign, div_assign for SignedDecimal, SignedDecim
 impl Div<Int128> for SignedDecimal {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, rhs: Int128) -> Self::Output {
         SignedDecimal(self.0 / rhs)
     }
 }
 
 impl DivAssign<Int128> for SignedDecimal {
+    #[track_caller]
     fn div_assign(&mut self, rhs: Int128) {
         self.0 /= rhs;
     }
@@ -855,6 +870,7 @@ impl Rem for SignedDecimal {
     ///
     /// This operation will panic if `rhs` is zero
     #[inline]
+    #[track_caller]
     fn rem(self, rhs: Self) -> Self {
         Self(self.0.rem(rhs.0))
     }
@@ -862,6 +878,7 @@ impl Rem for SignedDecimal {
 forward_ref_binop!(impl Rem, rem for SignedDecimal, SignedDecimal);
 
 impl RemAssign<SignedDecimal> for SignedDecimal {
+    #[track_caller]
     fn rem_assign(&mut self, rhs: SignedDecimal) {
         *self = *self % rhs;
     }

@@ -96,6 +96,7 @@ impl Int128 {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn pow(self, exp: u32) -> Self {
         match self.0.checked_pow(exp) {
             Some(val) => Self(val),
@@ -263,6 +264,7 @@ impl Int128 {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn abs(self) -> Self {
         match self.0.checked_abs() {
             Some(val) => Self(val),
@@ -278,6 +280,7 @@ impl Int128 {
     /// Strict negation. Computes -self, panicking if self == MIN.
     ///
     /// This is the same as [`Int128::neg`] but const.
+    #[track_caller]
     pub const fn strict_neg(self) -> Self {
         match self.0.checked_neg() {
             Some(val) => Self(val),
@@ -366,6 +369,7 @@ impl fmt::Display for Int128 {
 impl Add<Int128> for Int128 {
     type Output = Self;
 
+    #[track_caller]
     fn add(self, rhs: Self) -> Self {
         Int128(self.0.checked_add(rhs.0).unwrap())
     }
@@ -375,6 +379,7 @@ forward_ref_binop!(impl Add, add for Int128, Int128);
 impl Sub<Int128> for Int128 {
     type Output = Self;
 
+    #[track_caller]
     fn sub(self, rhs: Self) -> Self {
         Int128(self.0.checked_sub(rhs.0).unwrap())
     }
@@ -382,6 +387,7 @@ impl Sub<Int128> for Int128 {
 forward_ref_binop!(impl Sub, sub for Int128, Int128);
 
 impl SubAssign<Int128> for Int128 {
+    #[track_caller]
     fn sub_assign(&mut self, rhs: Int128) {
         self.0 = self.0.checked_sub(rhs.0).unwrap();
     }
@@ -391,6 +397,7 @@ forward_ref_op_assign!(impl SubAssign, sub_assign for Int128, Int128);
 impl Div<Int128> for Int128 {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, rhs: Self) -> Self::Output {
         Self(self.0.checked_div(rhs.0).unwrap())
     }
@@ -404,6 +411,7 @@ impl Rem for Int128 {
     ///
     /// This operation will panic if `rhs` is zero.
     #[inline]
+    #[track_caller]
     fn rem(self, rhs: Self) -> Self {
         Self(self.0.rem(rhs.0))
     }
@@ -421,12 +429,14 @@ impl Not for Int128 {
 impl Neg for Int128 {
     type Output = Self;
 
+    #[track_caller]
     fn neg(self) -> Self::Output {
         self.strict_neg()
     }
 }
 
 impl RemAssign<Int128> for Int128 {
+    #[track_caller]
     fn rem_assign(&mut self, rhs: Int128) {
         *self = *self % rhs;
     }
@@ -436,6 +446,7 @@ forward_ref_op_assign!(impl RemAssign, rem_assign for Int128, Int128);
 impl Mul<Int128> for Int128 {
     type Output = Self;
 
+    #[track_caller]
     fn mul(self, rhs: Self) -> Self::Output {
         Self(self.0.checked_mul(rhs.0).unwrap())
     }
@@ -443,6 +454,7 @@ impl Mul<Int128> for Int128 {
 forward_ref_binop!(impl Mul, mul for Int128, Int128);
 
 impl MulAssign<Int128> for Int128 {
+    #[track_caller]
     fn mul_assign(&mut self, rhs: Self) {
         self.0 = self.0.checked_mul(rhs.0).unwrap();
     }
@@ -452,10 +464,14 @@ forward_ref_op_assign!(impl MulAssign, mul_assign for Int128, Int128);
 impl Shr<u32> for Int128 {
     type Output = Self;
 
+    #[track_caller]
     fn shr(self, rhs: u32) -> Self::Output {
-        self.checked_shr(rhs).unwrap_or_else(|_| {
-            panic!("right shift error: {rhs} is larger or equal than the number of bits in Int128",)
-        })
+        match self.checked_shr(rhs) {
+            Ok(value) => value,
+            Err(_) => panic!(
+                "right shift error: {rhs} is larger or equal than the number of bits in Int128",
+            ),
+        }
     }
 }
 forward_ref_binop!(impl Shr, shr for Int128, u32);
@@ -463,15 +479,20 @@ forward_ref_binop!(impl Shr, shr for Int128, u32);
 impl Shl<u32> for Int128 {
     type Output = Self;
 
+    #[track_caller]
     fn shl(self, rhs: u32) -> Self::Output {
-        self.checked_shl(rhs).unwrap_or_else(|_| {
-            panic!("left shift error: {rhs} is larger or equal than the number of bits in Int128",)
-        })
+        match self.checked_shl(rhs) {
+            Ok(value) => value,
+            Err(_) => panic!(
+                "left shift error: {rhs} is larger or equal than the number of bits in Int128",
+            ),
+        }
     }
 }
 forward_ref_binop!(impl Shl, shl for Int128, u32);
 
 impl AddAssign<Int128> for Int128 {
+    #[track_caller]
     fn add_assign(&mut self, rhs: Int128) {
         self.0 = self.0.checked_add(rhs.0).unwrap();
     }
@@ -479,6 +500,7 @@ impl AddAssign<Int128> for Int128 {
 forward_ref_op_assign!(impl AddAssign, add_assign for Int128, Int128);
 
 impl DivAssign<Int128> for Int128 {
+    #[track_caller]
     fn div_assign(&mut self, rhs: Self) {
         self.0 = self.0.checked_div(rhs.0).unwrap();
     }
@@ -486,6 +508,7 @@ impl DivAssign<Int128> for Int128 {
 forward_ref_op_assign!(impl DivAssign, div_assign for Int128, Int128);
 
 impl ShrAssign<u32> for Int128 {
+    #[track_caller]
     fn shr_assign(&mut self, rhs: u32) {
         *self = Shr::<u32>::shr(*self, rhs);
     }
@@ -493,6 +516,7 @@ impl ShrAssign<u32> for Int128 {
 forward_ref_op_assign!(impl ShrAssign, shr_assign for Int128, u32);
 
 impl ShlAssign<u32> for Int128 {
+    #[track_caller]
     fn shl_assign(&mut self, rhs: u32) {
         *self = Shl::<u32>::shl(*self, rhs);
     }

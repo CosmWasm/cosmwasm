@@ -218,6 +218,7 @@ impl Uint512 {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn pow(self, exp: u32) -> Self {
         match self.0.checked_pow(exp) {
             Some(val) => Self(val),
@@ -231,6 +232,7 @@ impl Uint512 {
     ///
     /// This function will panic if `self` is zero.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn ilog2(self) -> u32 {
         self.0.checked_ilog2().unwrap()
     }
@@ -344,6 +346,7 @@ impl Uint512 {
     ///
     /// This is the same as [`Uint512::add`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn strict_add(self, rhs: Self) -> Self {
         match self.0.checked_add(rhs.0) {
             None => panic!("attempt to add with overflow"),
@@ -355,6 +358,7 @@ impl Uint512 {
     ///
     /// This is the same as [`Uint512::sub`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn strict_sub(self, other: Self) -> Self {
         match self.0.checked_sub(other.0) {
             None => panic!("attempt to subtract with overflow"),
@@ -463,6 +467,7 @@ impl fmt::Display for Uint512 {
 impl Add<Uint512> for Uint512 {
     type Output = Self;
 
+    #[track_caller]
     fn add(self, rhs: Self) -> Self {
         self.strict_add(rhs)
     }
@@ -472,6 +477,7 @@ forward_ref_binop!(impl Add, add for Uint512, Uint512);
 impl Sub<Uint512> for Uint512 {
     type Output = Self;
 
+    #[track_caller]
     fn sub(self, rhs: Self) -> Self {
         self.strict_sub(rhs)
     }
@@ -479,6 +485,7 @@ impl Sub<Uint512> for Uint512 {
 forward_ref_binop!(impl Sub, sub for Uint512, Uint512);
 
 impl SubAssign<Uint512> for Uint512 {
+    #[track_caller]
     fn sub_assign(&mut self, rhs: Uint512) {
         self.0 = self.0.checked_sub(rhs.0).unwrap();
     }
@@ -488,6 +495,7 @@ forward_ref_op_assign!(impl SubAssign, sub_assign for Uint512, Uint512);
 impl Div<Uint512> for Uint512 {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, rhs: Self) -> Self::Output {
         Self(self.0.checked_div(rhs.0).unwrap())
     }
@@ -496,6 +504,7 @@ impl Div<Uint512> for Uint512 {
 impl<'a> Div<&'a Uint512> for Uint512 {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, rhs: &'a Uint512) -> Self::Output {
         Self(self.0.checked_div(rhs.0).unwrap())
     }
@@ -508,6 +517,7 @@ impl Rem for Uint512 {
     ///
     /// This operation will panic if `rhs` is zero.
     #[inline]
+    #[track_caller]
     fn rem(self, rhs: Self) -> Self {
         Self(self.0.rem(rhs.0))
     }
@@ -523,6 +533,7 @@ impl Not for Uint512 {
 }
 
 impl RemAssign<Uint512> for Uint512 {
+    #[track_caller]
     fn rem_assign(&mut self, rhs: Uint512) {
         *self = *self % rhs;
     }
@@ -532,6 +543,7 @@ forward_ref_op_assign!(impl RemAssign, rem_assign for Uint512, Uint512);
 impl Mul<Uint512> for Uint512 {
     type Output = Self;
 
+    #[track_caller]
     fn mul(self, rhs: Self) -> Self::Output {
         Self(self.0.checked_mul(rhs.0).unwrap())
     }
@@ -539,6 +551,7 @@ impl Mul<Uint512> for Uint512 {
 forward_ref_binop!(impl Mul, mul for Uint512, Uint512);
 
 impl MulAssign<Uint512> for Uint512 {
+    #[track_caller]
     fn mul_assign(&mut self, rhs: Self) {
         self.0 = self.0.checked_mul(rhs.0).unwrap();
     }
@@ -548,18 +561,21 @@ forward_ref_op_assign!(impl MulAssign, mul_assign for Uint512, Uint512);
 impl Shr<u32> for Uint512 {
     type Output = Self;
 
+    #[track_caller]
     fn shr(self, rhs: u32) -> Self::Output {
-        self.checked_shr(rhs).unwrap_or_else(|_| {
-            panic!(
+        match self.checked_shr(rhs) {
+            Ok(value) => value,
+            Err(_) => panic!(
                 "right shift error: {rhs} is larger or equal than the number of bits in Uint512",
-            )
-        })
+            ),
+        }
     }
 }
 
 impl<'a> Shr<&'a u32> for Uint512 {
     type Output = Self;
 
+    #[track_caller]
     fn shr(self, rhs: &'a u32) -> Self::Output {
         Shr::<u32>::shr(self, *rhs)
     }
@@ -568,6 +584,7 @@ impl<'a> Shr<&'a u32> for Uint512 {
 impl Shl<u32> for Uint512 {
     type Output = Self;
 
+    #[track_caller]
     fn shl(self, rhs: u32) -> Self::Output {
         self.checked_shl(rhs)
             .expect("attempt to shift left with overflow")
@@ -577,54 +594,63 @@ impl Shl<u32> for Uint512 {
 impl<'a> Shl<&'a u32> for Uint512 {
     type Output = Self;
 
+    #[track_caller]
     fn shl(self, rhs: &'a u32) -> Self::Output {
         self.shl(*rhs)
     }
 }
 
 impl AddAssign<Uint512> for Uint512 {
+    #[track_caller]
     fn add_assign(&mut self, rhs: Uint512) {
         self.0 = self.0.checked_add(rhs.0).unwrap();
     }
 }
 
 impl<'a> AddAssign<&'a Uint512> for Uint512 {
+    #[track_caller]
     fn add_assign(&mut self, rhs: &'a Uint512) {
         self.0 = self.0.checked_add(rhs.0).unwrap();
     }
 }
 
 impl DivAssign<Uint512> for Uint512 {
+    #[track_caller]
     fn div_assign(&mut self, rhs: Self) {
         self.0 = self.0.checked_div(rhs.0).unwrap();
     }
 }
 
 impl<'a> DivAssign<&'a Uint512> for Uint512 {
+    #[track_caller]
     fn div_assign(&mut self, rhs: &'a Uint512) {
         self.0 = self.0.checked_div(rhs.0).unwrap();
     }
 }
 
 impl ShrAssign<u32> for Uint512 {
+    #[track_caller]
     fn shr_assign(&mut self, rhs: u32) {
         *self = Shr::<u32>::shr(*self, rhs);
     }
 }
 
 impl<'a> ShrAssign<&'a u32> for Uint512 {
+    #[track_caller]
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = Shr::<u32>::shr(*self, *rhs);
     }
 }
 
 impl ShlAssign<u32> for Uint512 {
+    #[track_caller]
     fn shl_assign(&mut self, rhs: u32) {
         *self = self.shl(rhs);
     }
 }
 
 impl<'a> ShlAssign<&'a u32> for Uint512 {
+    #[track_caller]
     fn shl_assign(&mut self, rhs: &'a u32) {
         *self = self.shl(*rhs);
     }

@@ -93,6 +93,7 @@ impl Uint64 {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn pow(self, exp: u32) -> Self {
         match self.0.checked_pow(exp) {
             Some(val) => Self(val),
@@ -106,6 +107,7 @@ impl Uint64 {
     ///
     /// This function will panic if `self` is zero.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn ilog2(self) -> u32 {
         self.0.checked_ilog2().unwrap()
     }
@@ -115,6 +117,7 @@ impl Uint64 {
     /// Due to the nature of the integer division involved, the result is always floored.
     /// E.g. 5 * 99/100 = 4.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn multiply_ratio<A: Into<u64>, B: Into<u64>>(
         &self,
         numerator: A,
@@ -281,6 +284,7 @@ impl Uint64 {
     ///
     /// This is the same as [`Uint64::add`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn strict_add(self, rhs: Self) -> Self {
         match self.0.checked_add(rhs.u64()) {
             None => panic!("attempt to add with overflow"),
@@ -292,6 +296,7 @@ impl Uint64 {
     ///
     /// This is the same as [`Uint64::sub`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn strict_sub(self, other: Self) -> Self {
         match self.0.checked_sub(other.u64()) {
             None => panic!("attempt to subtract with overflow"),
@@ -363,6 +368,7 @@ impl fmt::Display for Uint64 {
 impl Add<Uint64> for Uint64 {
     type Output = Self;
 
+    #[track_caller]
     fn add(self, rhs: Self) -> Self {
         self.strict_add(rhs)
     }
@@ -372,6 +378,7 @@ forward_ref_binop!(impl Add, add for Uint64, Uint64);
 impl Sub<Uint64> for Uint64 {
     type Output = Self;
 
+    #[track_caller]
     fn sub(self, rhs: Self) -> Self {
         self.strict_sub(rhs)
     }
@@ -379,6 +386,7 @@ impl Sub<Uint64> for Uint64 {
 forward_ref_binop!(impl Sub, sub for Uint64, Uint64);
 
 impl SubAssign<Uint64> for Uint64 {
+    #[track_caller]
     fn sub_assign(&mut self, rhs: Uint64) {
         *self = *self - rhs;
     }
@@ -388,6 +396,7 @@ forward_ref_op_assign!(impl SubAssign, sub_assign for Uint64, Uint64);
 impl Mul<Uint64> for Uint64 {
     type Output = Self;
 
+    #[track_caller]
     fn mul(self, rhs: Self) -> Self::Output {
         Self(
             self.u64()
@@ -399,6 +408,7 @@ impl Mul<Uint64> for Uint64 {
 forward_ref_binop!(impl Mul, mul for Uint64, Uint64);
 
 impl MulAssign<Uint64> for Uint64 {
+    #[track_caller]
     fn mul_assign(&mut self, rhs: Self) {
         *self = *self * rhs;
     }
@@ -408,6 +418,7 @@ forward_ref_op_assign!(impl MulAssign, mul_assign for Uint64, Uint64);
 impl Div<Uint64> for Uint64 {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, rhs: Self) -> Self::Output {
         Self(self.u64().checked_div(rhs.u64()).unwrap())
     }
@@ -416,6 +427,7 @@ impl Div<Uint64> for Uint64 {
 impl<'a> Div<&'a Uint64> for Uint64 {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, rhs: &'a Uint64) -> Self::Output {
         Self(self.u64().checked_div(rhs.u64()).unwrap())
     }
@@ -428,6 +440,7 @@ impl Rem for Uint64 {
     ///
     /// This operation will panic if `rhs` is zero.
     #[inline]
+    #[track_caller]
     fn rem(self, rhs: Self) -> Self {
         Self(self.0.rem(rhs.0))
     }
@@ -443,6 +456,7 @@ impl Not for Uint64 {
 }
 
 impl RemAssign<Uint64> for Uint64 {
+    #[track_caller]
     fn rem_assign(&mut self, rhs: Uint64) {
         *self = *self % rhs;
     }
@@ -452,6 +466,7 @@ forward_ref_op_assign!(impl RemAssign, rem_assign for Uint64, Uint64);
 impl Shr<u32> for Uint64 {
     type Output = Self;
 
+    #[track_caller]
     fn shr(self, rhs: u32) -> Self::Output {
         Self(self.u64().checked_shr(rhs).unwrap())
     }
@@ -460,6 +475,7 @@ impl Shr<u32> for Uint64 {
 impl<'a> Shr<&'a u32> for Uint64 {
     type Output = Self;
 
+    #[track_caller]
     fn shr(self, rhs: &'a u32) -> Self::Output {
         Self(self.u64().checked_shr(*rhs).unwrap())
     }
@@ -468,6 +484,7 @@ impl<'a> Shr<&'a u32> for Uint64 {
 impl Shl<u32> for Uint64 {
     type Output = Self;
 
+    #[track_caller]
     fn shl(self, rhs: u32) -> Self::Output {
         Self(
             self.u64()
@@ -480,54 +497,63 @@ impl Shl<u32> for Uint64 {
 impl<'a> Shl<&'a u32> for Uint64 {
     type Output = Self;
 
+    #[track_caller]
     fn shl(self, rhs: &'a u32) -> Self::Output {
         self.shl(*rhs)
     }
 }
 
 impl AddAssign<Uint64> for Uint64 {
+    #[track_caller]
     fn add_assign(&mut self, rhs: Uint64) {
         self.0 = self.0.checked_add(rhs.u64()).unwrap();
     }
 }
 
 impl<'a> AddAssign<&'a Uint64> for Uint64 {
+    #[track_caller]
     fn add_assign(&mut self, rhs: &'a Uint64) {
         self.0 = self.0.checked_add(rhs.u64()).unwrap();
     }
 }
 
 impl DivAssign<Uint64> for Uint64 {
+    #[track_caller]
     fn div_assign(&mut self, rhs: Self) {
         self.0 = self.0.checked_div(rhs.u64()).unwrap();
     }
 }
 
 impl<'a> DivAssign<&'a Uint64> for Uint64 {
+    #[track_caller]
     fn div_assign(&mut self, rhs: &'a Uint64) {
         self.0 = self.0.checked_div(rhs.u64()).unwrap();
     }
 }
 
 impl ShrAssign<u32> for Uint64 {
+    #[track_caller]
     fn shr_assign(&mut self, rhs: u32) {
         self.0 = self.0.checked_shr(rhs).unwrap();
     }
 }
 
 impl<'a> ShrAssign<&'a u32> for Uint64 {
+    #[track_caller]
     fn shr_assign(&mut self, rhs: &'a u32) {
         self.0 = self.0.checked_shr(*rhs).unwrap();
     }
 }
 
 impl ShlAssign<u32> for Uint64 {
+    #[track_caller]
     fn shl_assign(&mut self, rhs: u32) {
         *self = self.shl(rhs);
     }
 }
 
 impl<'a> ShlAssign<&'a u32> for Uint64 {
+    #[track_caller]
     fn shl_assign(&mut self, rhs: &'a u32) {
         *self = self.shl(*rhs);
     }
