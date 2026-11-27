@@ -197,6 +197,7 @@ impl Decimal {
     }
 
     /// Returns the ratio (numerator / denominator) as a Decimal
+    #[track_caller]
     pub fn from_ratio(numerator: impl Into<Uint128>, denominator: impl Into<Uint128>) -> Self {
         match Decimal::checked_from_ratio(numerator, denominator) {
             Ok(value) => value,
@@ -273,6 +274,7 @@ impl Decimal {
 
     /// Rounds value up after decimal places. Panics on overflow.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn ceil(&self) -> Self {
         match self.checked_ceil() {
             Ok(value) => value,
@@ -318,6 +320,7 @@ impl Decimal {
 
     /// Raises a value to the power of `exp`, panics if an overflow occurred.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn pow(self, exp: u32) -> Self {
         match self.checked_pow(exp) {
             Ok(value) => value,
@@ -627,6 +630,7 @@ impl fmt::Debug for Decimal {
 impl Add for Decimal {
     type Output = Self;
 
+    #[track_caller]
     fn add(self, other: Self) -> Self {
         Decimal(self.0 + other.0)
     }
@@ -634,6 +638,7 @@ impl Add for Decimal {
 forward_ref_binop!(impl Add, add for Decimal, Decimal);
 
 impl AddAssign for Decimal {
+    #[track_caller]
     fn add_assign(&mut self, rhs: Decimal) {
         *self = *self + rhs;
     }
@@ -643,6 +648,7 @@ forward_ref_op_assign!(impl AddAssign, add_assign for Decimal, Decimal);
 impl Sub for Decimal {
     type Output = Self;
 
+    #[track_caller]
     fn sub(self, other: Self) -> Self {
         Decimal(self.0 - other.0)
     }
@@ -650,6 +656,7 @@ impl Sub for Decimal {
 forward_ref_binop!(impl Sub, sub for Decimal, Decimal);
 
 impl SubAssign for Decimal {
+    #[track_caller]
     fn sub_assign(&mut self, rhs: Decimal) {
         *self = *self - rhs;
     }
@@ -660,6 +667,7 @@ impl Mul for Decimal {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
+    #[track_caller]
     fn mul(self, other: Self) -> Self {
         // Decimals are fractions. We can multiply two decimals a and b
         // via
@@ -677,6 +685,7 @@ impl Mul for Decimal {
 forward_ref_binop!(impl Mul, mul for Decimal, Decimal);
 
 impl MulAssign for Decimal {
+    #[track_caller]
     fn mul_assign(&mut self, rhs: Decimal) {
         *self = *self * rhs;
     }
@@ -686,6 +695,7 @@ forward_ref_op_assign!(impl MulAssign, mul_assign for Decimal, Decimal);
 impl Div for Decimal {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, other: Self) -> Self {
         match Decimal::checked_from_ratio(self.numerator(), other.numerator()) {
             Ok(ratio) => ratio,
@@ -701,6 +711,7 @@ impl Div for Decimal {
 forward_ref_binop!(impl Div, div for Decimal, Decimal);
 
 impl DivAssign for Decimal {
+    #[track_caller]
     fn div_assign(&mut self, rhs: Decimal) {
         *self = *self / rhs;
     }
@@ -710,12 +721,14 @@ forward_ref_op_assign!(impl DivAssign, div_assign for Decimal, Decimal);
 impl Div<Uint128> for Decimal {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, rhs: Uint128) -> Self::Output {
         Decimal(self.0 / rhs)
     }
 }
 
 impl DivAssign<Uint128> for Decimal {
+    #[track_caller]
     fn div_assign(&mut self, rhs: Uint128) {
         self.0 /= rhs;
     }
@@ -728,6 +741,7 @@ impl Rem for Decimal {
     ///
     /// This operation will panic if `rhs` is zero
     #[inline]
+    #[track_caller]
     fn rem(self, rhs: Self) -> Self {
         Self(self.0.rem(rhs.0))
     }
@@ -735,6 +749,7 @@ impl Rem for Decimal {
 forward_ref_binop!(impl Rem, rem for Decimal, Decimal);
 
 impl RemAssign<Decimal> for Decimal {
+    #[track_caller]
     fn rem_assign(&mut self, rhs: Decimal) {
         *self = *self % rhs;
     }

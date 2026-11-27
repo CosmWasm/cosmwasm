@@ -182,6 +182,7 @@ impl Uint256 {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn pow(self, exp: u32) -> Self {
         match self.0.checked_pow(exp) {
             Some(val) => Self(val),
@@ -195,6 +196,7 @@ impl Uint256 {
     ///
     /// This function will panic if `self` is zero.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn ilog2(self) -> u32 {
         self.0.checked_ilog2().unwrap()
     }
@@ -205,6 +207,7 @@ impl Uint256 {
     ///
     /// This function will panic if `self` is zero.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn ilog10(self) -> u32 {
         self.0.checked_ilog10().unwrap()
     }
@@ -214,6 +217,7 @@ impl Uint256 {
     /// Due to the nature of the integer division involved, the result is always floored.
     /// E.g. 5 * 99/100 = 4.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub fn multiply_ratio<A: Into<Uint256>, B: Into<Uint256>>(
         &self,
         numerator: A,
@@ -380,6 +384,7 @@ impl Uint256 {
     ///
     /// This is the same as [`Uint256::add`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn strict_add(self, rhs: Self) -> Self {
         match self.0.checked_add(rhs.0) {
             None => panic!("attempt to add with overflow"),
@@ -391,6 +396,7 @@ impl Uint256 {
     ///
     /// This is the same as [`Uint256::sub`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[track_caller]
     pub const fn strict_sub(self, other: Self) -> Self {
         match self.0.checked_sub(other.0) {
             None => panic!("attempt to subtract with overflow"),
@@ -483,6 +489,7 @@ impl fmt::Display for Uint256 {
 impl Add<Uint256> for Uint256 {
     type Output = Self;
 
+    #[track_caller]
     fn add(self, rhs: Self) -> Self {
         self.strict_add(rhs)
     }
@@ -492,6 +499,7 @@ forward_ref_binop!(impl Add, add for Uint256, Uint256);
 impl Sub<Uint256> for Uint256 {
     type Output = Self;
 
+    #[track_caller]
     fn sub(self, rhs: Self) -> Self {
         self.strict_sub(rhs)
     }
@@ -499,6 +507,7 @@ impl Sub<Uint256> for Uint256 {
 forward_ref_binop!(impl Sub, sub for Uint256, Uint256);
 
 impl SubAssign<Uint256> for Uint256 {
+    #[track_caller]
     fn sub_assign(&mut self, rhs: Uint256) {
         *self = *self - rhs;
     }
@@ -508,6 +517,7 @@ forward_ref_op_assign!(impl SubAssign, sub_assign for Uint256, Uint256);
 impl Div<Uint256> for Uint256 {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, rhs: Self) -> Self::Output {
         Self(
             self.0
@@ -520,6 +530,7 @@ impl Div<Uint256> for Uint256 {
 impl<'a> Div<&'a Uint256> for Uint256 {
     type Output = Self;
 
+    #[track_caller]
     fn div(self, rhs: &'a Uint256) -> Self::Output {
         self / *rhs
     }
@@ -532,6 +543,7 @@ impl Rem for Uint256 {
     ///
     /// This operation will panic if `rhs` is zero.
     #[inline]
+    #[track_caller]
     fn rem(self, rhs: Self) -> Self {
         Self(self.0.rem(rhs.0))
     }
@@ -547,6 +559,7 @@ impl Not for Uint256 {
 }
 
 impl RemAssign<Uint256> for Uint256 {
+    #[track_caller]
     fn rem_assign(&mut self, rhs: Uint256) {
         *self = *self % rhs;
     }
@@ -556,6 +569,7 @@ forward_ref_op_assign!(impl RemAssign, rem_assign for Uint256, Uint256);
 impl Mul<Uint256> for Uint256 {
     type Output = Self;
 
+    #[track_caller]
     fn mul(self, rhs: Self) -> Self::Output {
         Self(
             self.0
@@ -567,6 +581,7 @@ impl Mul<Uint256> for Uint256 {
 forward_ref_binop!(impl Mul, mul for Uint256, Uint256);
 
 impl MulAssign<Uint256> for Uint256 {
+    #[track_caller]
     fn mul_assign(&mut self, rhs: Self) {
         *self = *self * rhs;
     }
@@ -576,18 +591,21 @@ forward_ref_op_assign!(impl MulAssign, mul_assign for Uint256, Uint256);
 impl Shr<u32> for Uint256 {
     type Output = Self;
 
+    #[track_caller]
     fn shr(self, rhs: u32) -> Self::Output {
-        self.checked_shr(rhs).unwrap_or_else(|_| {
-            panic!(
+        match self.checked_shr(rhs) {
+            Ok(value) => value,
+            Err(_) => panic!(
                 "right shift error: {rhs} is larger or equal than the number of bits in Uint256",
-            )
-        })
+            ),
+        }
     }
 }
 
 impl<'a> Shr<&'a u32> for Uint256 {
     type Output = Self;
 
+    #[track_caller]
     fn shr(self, rhs: &'a u32) -> Self::Output {
         self.shr(*rhs)
     }
@@ -596,6 +614,7 @@ impl<'a> Shr<&'a u32> for Uint256 {
 impl Shl<u32> for Uint256 {
     type Output = Self;
 
+    #[track_caller]
     fn shl(self, rhs: u32) -> Self::Output {
         self.checked_shl(rhs)
             .expect("attempt to shift left with overflow")
@@ -605,54 +624,63 @@ impl Shl<u32> for Uint256 {
 impl<'a> Shl<&'a u32> for Uint256 {
     type Output = Self;
 
+    #[track_caller]
     fn shl(self, rhs: &'a u32) -> Self::Output {
         self.shl(*rhs)
     }
 }
 
 impl AddAssign<Uint256> for Uint256 {
+    #[track_caller]
     fn add_assign(&mut self, rhs: Uint256) {
         *self = *self + rhs;
     }
 }
 
 impl<'a> AddAssign<&'a Uint256> for Uint256 {
+    #[track_caller]
     fn add_assign(&mut self, rhs: &'a Uint256) {
         *self = *self + rhs;
     }
 }
 
 impl DivAssign<Uint256> for Uint256 {
+    #[track_caller]
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs;
     }
 }
 
 impl<'a> DivAssign<&'a Uint256> for Uint256 {
+    #[track_caller]
     fn div_assign(&mut self, rhs: &'a Uint256) {
         *self = *self / rhs;
     }
 }
 
 impl ShrAssign<u32> for Uint256 {
+    #[track_caller]
     fn shr_assign(&mut self, rhs: u32) {
         *self = Shr::<u32>::shr(*self, rhs);
     }
 }
 
 impl<'a> ShrAssign<&'a u32> for Uint256 {
+    #[track_caller]
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = Shr::<u32>::shr(*self, *rhs);
     }
 }
 
 impl ShlAssign<u32> for Uint256 {
+    #[track_caller]
     fn shl_assign(&mut self, rhs: u32) {
         *self = self.shl(rhs);
     }
 }
 
 impl<'a> ShlAssign<&'a u32> for Uint256 {
+    #[track_caller]
     fn shl_assign(&mut self, rhs: &'a u32) {
         *self = self.shl(*rhs);
     }
